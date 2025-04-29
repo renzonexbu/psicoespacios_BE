@@ -1,0 +1,465 @@
+{
+  "info": {
+    "name": "PsicoEspacios API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": {
+                "email": "ejemplo@psicoespacios.cl",
+                "password": "contraseña123"
+              },
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Registro",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": {
+                "email": "nuevo@psicoespacios.cl",
+                "password": "contraseña123",
+                "firstName": "Juan",
+                "lastName": "Pérez",
+                "role": "PSICOLOGO"
+              },
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Refrescar Token",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/auth/refresh-token",
+            "headers": {
+              "Authorization": "Bearer {{token}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sedes",
+      "item": [
+        {
+          "name": "Listar Sedes",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/sedes",
+            "headers": {
+              "Authorization": "Bearer {{token}}"
+            }
+          }
+        },
+        {
+          "name": "Obtener Sede",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/sedes/:id",
+            "headers": {
+              "Authorization": "Bearer {{token}}"
+            }
+          }
+        },
+        {
+          "name": "Listar Boxes por Sede",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/sedes/:sede_id/boxes",
+            "headers": {
+              "Authorization": "Bearer {{token}}"
+            }
+          }
+        },
+        {
+          "name": "Verificar Disponibilidad",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/sedes/:sede_id/disponibilidad",
+            "headers": {
+              "Authorization": "Bearer {{token}}"
+            },
+            "params": {
+              "fecha": "",
+              "hora_inicio": "",
+              "hora_fin": ""
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reservas",
+      "item": [
+        {
+          "name": "Obtener Reserva",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/reservas/:id",
+            "headers": {
+              "Authorization": "Bearer {{token}}"
+            }
+          }
+        },
+        {
+          "name": "Cancelar Reserva",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/reservas/:id/cancel",
+            "headers": {
+              "Authorization": "Bearer {{token}}"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": {
+                "notasCancelacion": "El paciente canceló la sesión"
+              },
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gestión",
+      "item": [
+        {
+          "name": "Planes",
+          "item": [
+            {
+              "name": "Listar Planes",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/api/v1/gestion/planes",
+                "headers": {
+                  "Authorization": "Bearer {{token}}"
+                }
+              }
+            },
+            {
+              "name": "Obtener Plan",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/api/v1/gestion/planes/:id",
+                "headers": {
+                  "Authorization": "Bearer {{token}}"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suscripciones",
+          "item": [
+            {
+              "name": "Crear Suscripción",
+              "request": {
+                "method": "POST",
+                "url": "{{base_url}}/api/v1/gestion/suscripciones",
+                "headers": {
+                  "Authorization": "Bearer {{token}}"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": {
+                    "planId": "550e8400-e29b-41d4-a716-446655440000",
+                    "precioTotal": 29990,
+                    "datosPago": {
+                      "metodoPago": "TARJETA",
+                      "referencia": "TR123456"
+                    }
+                  },
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Mi Suscripción",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/api/v1/gestion/suscripciones/mi-suscripcion",
+                "headers": {
+                  "Authorization": "Bearer {{token}}"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pacientes",
+          "item": [
+            {
+              "name": "Listar Pacientes",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/api/v1/gestion/pacientes",
+                "headers": {
+                  "Authorization": "Bearer {{token}}"
+                }
+              }
+            },
+            {
+              "name": "Crear Paciente",
+              "request": {
+                "method": "POST",
+                "url": "{{base_url}}/api/v1/gestion/pacientes",
+                "headers": {
+                  "Authorization": "Bearer {{token}}"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": {
+                    "nombre": "María",
+                    "apellido": "González",
+                    "email": "maria.gonzalez@email.com",
+                    "telefono": "+56912345678",
+                    "fechaNacimiento": "1990-05-15",
+                    "notas": "Primera consulta programada"
+                  },
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Derivación",
+      "item": [
+        {
+          "name": "Perfiles",
+          "item": [
+            {
+              "name": "Mi Perfil",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/api/v1/derivacion/perfiles/mi-perfil",
+                "headers": {
+                  "Authorization": "Bearer {{token}}"
+                }
+              }
+            },
+            {
+              "name": "Buscar Perfiles",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/api/v1/derivacion/perfiles/search",
+                "headers": {
+                  "Authorization": "Bearer {{token}}"
+                }
+              }
+            },
+            {
+              "name": "Crear/Actualizar Perfil",
+              "request": {
+                "method": "POST",
+                "url": "{{base_url}}/api/v1/derivacion/perfiles",
+                "headers": {
+                  "Authorization": "Bearer {{token}}"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": {
+                    "descripcion": "Psicólogo clínico especializado en terapia cognitivo-conductual",
+                    "especialidades": [
+                      "Psicología Clínica",
+                      "Terapia Cognitivo-Conductual"
+                    ],
+                    "modalidades": ["PRESENCIAL", "ONLINE"],
+                    "disponible": true,
+                    "horariosAtencion": {
+                      "dias": ["LUNES", "MARTES", "MIERCOLES"],
+                      "horaInicio": "09:00",
+                      "horaFin": "18:00"
+                    },
+                    "tarifaHora": 35000
+                  },
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Solicitudes",
+          "item": [
+            {
+              "name": "Crear Solicitud",
+              "request": {
+                "method": "POST",
+                "url": "{{base_url}}/api/v1/derivacion/solicitudes",
+                "headers": {
+                  "Authorization": "Bearer {{token}}"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": {
+                    "pacienteId": "550e8400-e29b-41d4-a716-446655440000",
+                    "psicologoDestinoId": "660e8400-e29b-41d4-a716-446655440000",
+                    "motivoDerivacion": "Necesidad de especialista en terapia familiar",
+                    "notasAdicionales": "Paciente requiere atención familiar conjunta"
+                  },
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pagos",
+      "item": [
+        {
+          "name": "Crear Pago Suscripción",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/pagos/suscripcion",
+            "headers": {
+              "Authorization": "Bearer {{token}}"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": {
+                "tipo": "SUSCRIPCION",
+                "suscripcionId": "550e8400-e29b-41d4-a716-446655440000",
+                "monto": 29990,
+                "datosTransaccion": {
+                  "metodoPago": "TARJETA",
+                  "referencia": "PAY123456",
+                  "datosTarjeta": {
+                    "ultimos4": "4532",
+                    "marca": "VISA"
+                  }
+                }
+              },
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Crear Pago Derivación",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/pagos/derivacion",
+            "headers": {
+              "Authorization": "Bearer {{token}}"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": {
+                "tipo": "DERIVACION",
+                "solicitudDerivacionId": "770e8400-e29b-41d4-a716-446655440000",
+                "monto": 35000,
+                "datosTransaccion": {
+                  "metodoPago": "TRANSFERENCIA",
+                  "referencia": "TR789012",
+                  "datosTransferencia": {
+                    "banco": "Banco Estado",
+                    "numeroOperacion": "987654321"
+                  }
+                }
+              },
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reportes",
+      "item": [
+        {
+          "name": "Crear Reporte",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/reportes",
+            "headers": {
+              "Authorization": "Bearer {{token}}"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": {
+                "tipo": "SESIONES",
+                "parametros": {
+                  "fechaInicio": "2025-04-01T00:00:00Z",
+                  "fechaFin": "2025-04-30T23:59:59Z",
+                  "filtros": {
+                    "estado": "COMPLETADA",
+                    "modalidad": "PRESENCIAL"
+                  },
+                  "agrupamiento": ["psicologo", "sede"],
+                  "ordenamiento": ["fecha"]
+                },
+                "formato": "PDF",
+                "observaciones": "Reporte mensual de sesiones abril 2025"
+              },
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    }
+  ]
+}
