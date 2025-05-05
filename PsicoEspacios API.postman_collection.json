@@ -1,0 +1,709 @@
+{
+	"info": {
+		"_postman_id": "fe817a1f-88bb-4fcd-88e0-57833f9c0908",
+		"name": "PsicoEspacios API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "43836950",
+		"_collection_link": "https://francsicoarenas.postman.co/workspace/FrancsicoArenas's-Workspace~e9834285-7148-407d-82c0-2abb2a4af15e/collection/43836950-fe817a1f-88bb-4fcd-88e0-57833f9c0908?action=share&source=collection_link&creator=43836950"
+	},
+	"item": [
+		{
+			"name": "Autenticación",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Registro",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refrescar Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/refresh-token",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"refresh-token"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Sedes",
+			"item": [
+				{
+					"name": "Listar Sedes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/sedes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"sedes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Sede",
+					"request": {
+						"method": "GET",
+						"header": [
+							{}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/sedes/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"sedes",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Boxes por Sede",
+					"request": {
+						"method": "GET",
+						"header": [
+							{}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/sedes/:sede_id/boxes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"sedes",
+								":sede_id",
+								"boxes"
+							],
+							"variable": [
+								{
+									"key": "sede_id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verificar Disponibilidad",
+					"request": {
+						"method": "GET",
+						"header": [
+							{}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/sedes/:sede_id/disponibilidad",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"sedes",
+								":sede_id",
+								"disponibilidad"
+							],
+							"variable": [
+								{
+									"key": "sede_id"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Reservas",
+			"item": [
+				{
+					"name": "Obtener Reserva",
+					"request": {
+						"method": "GET",
+						"header": [
+							{}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/reservas/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"reservas",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancelar Reserva",
+					"request": {
+						"method": "POST",
+						"header": [
+							{}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/reservas/:id/cancel",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"reservas",
+								":id",
+								"cancel"
+							],
+							"variable": [
+								{
+									"key": "id"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Gestión",
+			"item": [
+				{
+					"name": "Planes",
+					"item": [
+						{
+							"name": "Listar Planes",
+							"request": {
+								"method": "GET",
+								"header": [
+									{}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/gestion/planes",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"gestion",
+										"planes"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Obtener Plan",
+							"request": {
+								"method": "GET",
+								"header": [
+									{}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/gestion/planes/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"gestion",
+										"planes",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Suscripciones",
+					"item": [
+						{
+							"name": "Crear Suscripción",
+							"request": {
+								"method": "POST",
+								"header": [
+									{}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/gestion/suscripciones",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"gestion",
+										"suscripciones"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Mi Suscripción",
+							"request": {
+								"method": "GET",
+								"header": [
+									{}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/gestion/suscripciones/mi-suscripcion",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"gestion",
+										"suscripciones",
+										"mi-suscripcion"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Pacientes",
+					"item": [
+						{
+							"name": "Listar Pacientes",
+							"request": {
+								"method": "GET",
+								"header": [
+									{}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/gestion/pacientes",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"gestion",
+										"pacientes"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Crear Paciente",
+							"request": {
+								"method": "POST",
+								"header": [
+									{}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/gestion/pacientes",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"gestion",
+										"pacientes"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Derivación",
+			"item": [
+				{
+					"name": "Perfiles",
+					"item": [
+						{
+							"name": "Mi Perfil",
+							"request": {
+								"method": "GET",
+								"header": [
+									{}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/derivacion/perfiles/mi-perfil",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"derivacion",
+										"perfiles",
+										"mi-perfil"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Buscar Perfiles",
+							"request": {
+								"method": "GET",
+								"header": [
+									{}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/derivacion/perfiles/search",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"derivacion",
+										"perfiles",
+										"search"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Crear/Actualizar Perfil",
+							"request": {
+								"method": "POST",
+								"header": [
+									{}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/derivacion/perfiles",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"derivacion",
+										"perfiles"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Solicitudes",
+					"item": [
+						{
+							"name": "Crear Solicitud",
+							"request": {
+								"method": "POST",
+								"header": [
+									{}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/derivacion/solicitudes",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"derivacion",
+										"solicitudes"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Pagos",
+			"item": [
+				{
+					"name": "Crear Pago Suscripción",
+					"request": {
+						"method": "POST",
+						"header": [
+							{}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/pagos/suscripcion",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"pagos",
+								"suscripcion"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Crear Pago Derivación",
+					"request": {
+						"method": "POST",
+						"header": [
+							{}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/pagos/derivacion",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"pagos",
+								"derivacion"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Reportes",
+			"item": [
+				{
+					"name": "Crear Reporte",
+					"request": {
+						"method": "POST",
+						"header": [
+							{}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/reportes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"reportes"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000"
+		},
+		{
+			"key": "token_admin",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2Y2FjMWMwZC0zMDI4LTRjMTctYmUwYS1iMTIzYzUwMDYxNGMiLCJlbWFpbCI6ImFkbWluQHBzaWNvZXNwYWNpb3MuY2wiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NDU5MzM5MjMsImV4cCI6MTc0NTk3NzEyM30.DIxhqQkhp1bQKn7HsbaYbPPh71DL6lPfqyCLQ49fChM",
+			"type": "string"
+		}
+	]
+}

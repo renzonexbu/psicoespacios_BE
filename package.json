@@ -18,8 +18,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed:config": "ts-node ./node_modules/typeorm-seeding/dist/cli.js config",
-    "seed:run": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed",
+    "seed:config": "ts-node ./node_modules/@jorgebodega/typeorm-seeding/dist/cli.js config",
+    "seed:run": "ts-node ./node_modules/@jorgebodega/typeorm-seeding/dist/cli.js seed",
     "db:seed": "ts-node src/database/seeds/seed.ts"
   },
   "dependencies": {
@@ -48,6 +48,8 @@
     "typeorm": "^0.3.22"
   },
   "devDependencies": {
+    "@jorgebodega/typeorm-seeding": "^5.0.0",
+    "@faker-js/faker": "^8.0.0",
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
     "@nestjs/cli": "^11.0.0",
@@ -71,7 +73,6 @@
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typeorm-seeding": "^1.6.1",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
   },

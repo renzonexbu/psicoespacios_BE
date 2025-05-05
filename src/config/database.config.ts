@@ -1,9 +1,10 @@
-export default () => ({
-  database: {
-    host: process.env.DATABASE_HOST || 'localhost',
-    port: parseInt(process.env.DATABASE_PORT || '5432', 10),
-    username: process.env.DATABASE_USER || 'postgres',
-    password: process.env.DATABASE_PASSWORD || 'postgres',
-    database: process.env.DATABASE_NAME || 'psicoespacios',
-  },
-});
+import { registerAs } from '@nestjs/config';
+
+export default registerAs('database', () => ({
+  url: process.env.DATABASE_URL,
+  host: process.env.DATABASE_HOST || 'localhost',
+  port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+  username: process.env.DATABASE_USER || 'psicoespacios_user',
+  password: process.env.DATABASE_PASSWORD || 'psicoespacios_password',
+  database: process.env.DATABASE_NAME || 'psicoespacios',
+}));
