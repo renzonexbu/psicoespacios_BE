@@ -14,7 +14,9 @@
     }
   ],
   "env": {
-    "DATABASE_URL": "@database_url",
-    "NODE_ENV": "production"
+    "DATABASE_URL": "${DATABASE_URL}",
+    "NODE_ENV": "production",
+    "JWT_SECRET": "${JWT_SECRET}",
+    "JWT_EXPIRES_IN": "1d"
   }
 }

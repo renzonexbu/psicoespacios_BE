@@ -15,7 +15,15 @@ async function bootstrap() {
     }),
   );
 
-  app.enableCors();
-  await app.listen(3000);
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
+  
+  // Usar puerto dinámico para Vercel o 3000 para desarrollo local
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();
