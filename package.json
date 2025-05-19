@@ -23,7 +23,8 @@
     "db:seed": "ts-node src/database/seeds/seed.ts",
     "deploy:vercel": "vercel --prod",
     "deploy:vercel:dev": "vercel",
-    "vercel:env": "vercel env pull .env"
+    "vercel:env": "vercel env pull .env",
+    "typeorm": "typeorm"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -48,7 +49,7 @@
     "pg": "^8.15.6",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.22"
+    "typeorm": "^0.3.24"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

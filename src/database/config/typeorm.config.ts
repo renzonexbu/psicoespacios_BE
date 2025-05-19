@@ -1,10 +1,10 @@
-import { DataSource, DataSourceOptions } from 'typeorm';
+import { DataSource, DataSourceOptions as TypeORMDataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
 // Manejo específico de la conexión a Neon DB
-const getConnectionOptions = (): DataSourceOptions => {
+const getConnectionOptions = (): TypeORMDataSourceOptions => {
   // Si DATABASE_URL existe, tiene prioridad
   if (process.env.DATABASE_URL) {
     console.log('Usando DATABASE_URL para la conexión');
@@ -65,7 +65,7 @@ const getConnectionOptions = (): DataSourceOptions => {
   };
 };
 
-const config: DataSourceOptions = getConnectionOptions();
+const config: TypeORMDataSourceOptions = getConnectionOptions();
 const dataSource = new DataSource(config);
 
 export default dataSource;

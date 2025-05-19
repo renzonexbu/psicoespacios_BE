@@ -99,6 +99,27 @@ npm run test:e2e
 npm run test:cov
 \`\`\`
 
+## 🔄 Gestión de Migraciones
+
+Para facilitar el manejo de migraciones de base de datos, se ha incluido un script \`migrate.sh\`:
+
+\`\`\`bash
+# Ejecutar migraciones
+./migrate.sh run
+
+# Mostrar estado de migraciones
+./migrate.sh show
+
+# Crear una nueva migración
+./migrate.sh create NuevaMigracion
+
+# Generar una migración basada en cambios de entidades
+./migrate.sh generate CambiosEntidad
+
+# Revertir la última migración
+./migrate.sh revert
+\`\`\`
+
 ## 📚 Documentación API
 
 La documentación de la API está disponible en:
