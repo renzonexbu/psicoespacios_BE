@@ -1,30 +1,72 @@
-import { DataSourceOptions } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const config: DataSourceOptions = {
-  type: 'postgres',
-  url: process.env.DATABASE_URL,
-  entities: ['dist/common/entities/**/*.entity.{ts,js}'],
-  migrations: ['dist/database/migrations/**/*.{ts,js}'],
-  synchronize: false, // Es más seguro mantenerlo en false y usar migraciones
-  ssl: {
-    rejectUnauthorized: false, // Necesario para Neon
-  },
-  extra: {
-    poolSize: 20, // Ajusta según tus necesidades
-    connectionTimeoutMillis: 10000,
-  },
-  logging: process.env.NODE_ENV !== 'production',
-  // Para desarrollo local, usa estas configuraciones alternativas si no hay DATABASE_URL
-  ...((!process.env.DATABASE_URL && process.env.NODE_ENV !== 'production') && {
+// Manejo específico de la conexión a Neon DB
+const getConnectionOptions = (): DataSourceOptions => {
+  // Si DATABASE_URL existe, tiene prioridad
+  if (process.env.DATABASE_URL) {
+    console.log('Usando DATABASE_URL para la conexión');
+    return {
+      type: 'postgres',
+      url: process.env.DATABASE_URL,
+      entities: ['dist/common/entities/**/*.entity.{ts,js}'],
+      migrations: ['dist/database/migrations/**/*.{ts,js}'],
+      synchronize: true,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+      extra: {
+        poolSize: 20,
+        connectionTimeoutMillis: 10000,
+      },
+      logging: process.env.NODE_ENV !== 'production',
+    };
+  }
+  
+  // Si tenemos las variables individuales de DB_
+  if (process.env.DB_HOST && process.env.DB_USERNAME && process.env.DB_PASSWORD && process.env.DB_DATABASE) {
+    console.log(`Usando variables individuales para la conexión a ${process.env.DB_HOST}`);
+    return {
+      type: 'postgres',
+      host: process.env.DB_HOST,
+      port: 5432, // Puerto por defecto de PostgreSQL
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_DATABASE,
+      entities: ['dist/common/entities/**/*.entity.{ts,js}'],
+      migrations: ['dist/database/migrations/**/*.{ts,js}'],
+      synchronize: true,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+      extra: {
+        poolSize: 20,
+        connectionTimeoutMillis: 10000,
+      },
+      logging: process.env.NODE_ENV !== 'production',
+    };
+  }
+  
+  // Configuración para desarrollo local si nada de lo anterior está definido
+  console.log('Usando configuración local para desarrollo');
+  return {
+    type: 'postgres',
     host: process.env.DATABASE_HOST || 'localhost',
     port: Number(process.env.DATABASE_PORT) || 5432,
     username: process.env.DATABASE_USER || 'psicoespacios_user',
     password: process.env.DATABASE_PASSWORD || 'psicoespacios_password',
     database: process.env.DATABASE_NAME || 'psicoespacios',
-  }),
+    entities: ['dist/common/entities/**/*.entity.{ts,js}'],
+    migrations: ['dist/database/migrations/**/*.{ts,js}'],
+    synchronize: false,
+    logging: process.env.NODE_ENV !== 'production',
+  };
 };
 
-export = config;
+const config: DataSourceOptions = getConnectionOptions();
+const dataSource = new DataSource(config);
+
+export default dataSource;
+module.exports = dataSource;
