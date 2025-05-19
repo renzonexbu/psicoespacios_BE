@@ -10,6 +10,7 @@ import { DerivacionModule } from './derivacion/derivacion.module';
 import { PagosModule } from './pagos/pagos.module';
 import { ReportesModule } from './reportes/reportes.module';
 import { AdminModule } from './admin/admin.module';
+import { ContactoModule } from './contacto/contacto.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { AdminModule } from './admin/admin.module';
     PagosModule,
     ReportesModule,
     AdminModule,
+    ContactoModule,
   ],
 })
 export class AppModule {}

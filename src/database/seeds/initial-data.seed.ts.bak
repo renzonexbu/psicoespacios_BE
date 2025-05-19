@@ -1,6 +1,16 @@
 import { Seeder } from '@jorgebodega/typeorm-seeding';
 import { DataSource } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import * as bcr    // Crear boxes para la sede
+    await dataSource
+         // Crear configuración del sistema
+    await dataSource
+      .createQueryBuilder()
+      .insert()
+      .into(ConfiguracionSistema)
+      .values([teQueryBuilder()
+      .insert()
+      .into(Box)
+      .values([om 'bcrypt';
 import { User } from '../../common/entities/user.entity';
 import { Plan, TipoPlan } from '../../common/entities/plan.entity';
 import { Sede } from '../../common/entities/sede.entity';
@@ -107,7 +117,7 @@ export default class InitialDataSeed implements Seeder {
       .execute();
 
     // Crear boxes para la sede demo
-    await dataSource
+    await connection
       .createQueryBuilder()
       .insert()
       .into(Box)
@@ -160,7 +170,7 @@ export default class InitialDataSeed implements Seeder {
       .execute();
 
     // Crear configuración inicial del sistema
-    await dataSource
+    await connection
       .createQueryBuilder()
       .insert()
       .into(ConfiguracionSistema)

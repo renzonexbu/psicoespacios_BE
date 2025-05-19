@@ -18,6 +18,15 @@ export class User {
 
   @Column()
   lastName: string;
+  
+  @Column({ nullable: true })
+  rut: string;
+  
+  @Column({ nullable: true })
+  telefono: string;
+  
+  @Column({ nullable: true, type: 'date' })
+  fechaNacimiento: Date;
 
   @Column({
     type: 'enum',

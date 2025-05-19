@@ -32,6 +32,9 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        rut: user.rut,
+        telefono: user.telefono,
+        fechaNacimiento: user.fechaNacimiento,
         role: user.role,
       },
     };
@@ -62,6 +65,9 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        rut: user.rut,
+        telefono: user.telefono,
+        fechaNacimiento: user.fechaNacimiento,
         role: user.role,
       },
     };
