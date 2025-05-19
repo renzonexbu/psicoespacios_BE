@@ -478,6 +478,180 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Contacto",
+      "item": [
+        {
+          "name": "Crear Contacto",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Juan Pérez\",\n    \"tipo\": \"CONSULTA\",\n    \"email\": \"juan@ejemplo.com\",\n    \"telefono\": \"+56912345678\",\n    \"mensaje\": \"Me gustaría obtener más información sobre terapia individual\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacto",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacto"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Contacto (Reclamo)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"María González\",\n    \"tipo\": \"RECLAMO\",\n    \"email\": \"maria@ejemplo.com\",\n    \"telefono\": \"+56987654321\",\n    \"mensaje\": \"Tuve problemas para agendar una cita en la plataforma\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacto",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacto"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Contacto (Sugerencia)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Carlos Rodríguez\",\n    \"tipo\": \"SUGERENCIA\",\n    \"email\": \"carlos@ejemplo.com\",\n    \"telefono\": \"+56955552222\",\n    \"mensaje\": \"Sería útil implementar un sistema de notificaciones por SMS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacto",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacto"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Contactos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacto",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacto"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Contacto por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacto/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacto", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Estado Contacto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"estado\": \"VISTA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacto/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacto", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Contacto",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacto/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacto", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "event": [
