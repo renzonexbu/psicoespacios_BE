@@ -1,12 +1,14 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
   "builds": [
     {
-      "src": "src/main.ts",
+      "src": "dist/main.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["dist/**"],
-        "maxDuration": 30
+        "maxLambdaSize": "50mb",
+        "includeFiles": ["dist/**/*.js", "node_modules/**/*.js"]
       }
     }
   ],
@@ -24,13 +26,13 @@
     }
   ],
   "env": {
-    "DATABASE_URL": "postgres://neondb_owner:npg_ORBSApcN7Vd5@ep-plain-sound-a48dlyhv-pooler.us-east-1.aws.neon.tech/neondb",
-    "DB_HOST": "ep-plain-sound-a48dlyhv-pooler.us-east-1.aws.neon.tech",
-    "DB_USERNAME": "neondb_owner",
-    "DB_PASSWORD": "npg_ORBSApcN7Vd5",
-    "DB_DATABASE": "neondb",
+    "DATABASE_URL": "postgresql://neondb_owner:npg_ORBSApcN7Vd5@ep-plain-sound-a48dlyhv-pooler.us-east-1.aws.neon.tech/psicoespacios?sslmode=require",
+    "DATABASE_HOST": "ep-plain-sound-a48dlyhv-pooler.us-east-1.aws.neon.tech",
+    "DATABASE_USER": "neondb_owner",
+    "DATABASE_PASSWORD": "npg_ORBSApcN7Vd5",
+    "DATABASE_NAME": "psicoespacios",
     "NODE_ENV": "production",
     "JWT_SECRET": "${JWT_SECRET}",
-    "JWT_EXPIRES_IN": "1d"
+    "JWT_EXPIRATION": "24h"
   }
 }

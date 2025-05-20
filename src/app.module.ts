@@ -17,6 +17,12 @@ import { ContactoModule } from './contacto/contacto.module';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig],
+      validate: (config: Record<string, any>) => {
+        console.log('Validando variables de entorno...');
+        console.log('NODE_ENV:', process.env.NODE_ENV);
+        console.log('DATABASE_URL configurada:', !!process.env.DATABASE_URL);
+        return config;
+      },
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -27,6 +33,8 @@ import { ContactoModule } from './contacto/contacto.module';
             type: 'postgres',
             url: process.env.DATABASE_URL,
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
+            migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
+            migrationsRun: true, // Ejecutar migraciones automáticamente
             synchronize: false, // Más seguro en producción
             ssl: {
               rejectUnauthorized: false, // Necesario para Neon

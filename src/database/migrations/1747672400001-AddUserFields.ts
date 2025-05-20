@@ -11,12 +11,11 @@ export class AddUserFields1747672400001 implements MigrationInterface {
     `);
     
     if (!roleEnumExists[0].exists) {
-      await queryRunner.query(`
-        CREATE TYPE "public"."users_role_enum" AS ENUM (
-          'ADMIN',
-          'PROFESIONAL',
-          'CLIENTE'
-        )
+      await queryRunner.query(`      CREATE TYPE "public"."users_role_enum" AS ENUM (
+        'ADMIN',
+        'PSICOLOGO',
+        'PACIENTE'
+      )
       `);
     }
 
@@ -28,12 +27,11 @@ export class AddUserFields1747672400001 implements MigrationInterface {
     `);
 
     if (!estadoEnumExists[0].exists) {
-      await queryRunner.query(`
-        CREATE TYPE "public"."users_estado_enum" AS ENUM (
-          'ACTIVO',
-          'INACTIVO',
-          'PENDIENTE'
-        )
+      await queryRunner.query(`      CREATE TYPE "public"."users_estado_enum" AS ENUM (
+        'ACTIVO',
+        'INACTIVO',
+        'SUSPENDIDO'
+      )
       `);
     }
 

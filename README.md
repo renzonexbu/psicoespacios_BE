@@ -148,3 +148,37 @@ La documentación de la API está disponible en:
 ## 📝 Licencia
 
 Este proyecto está bajo la Licencia MIT. Ver el archivo \`LICENSE\` para más detalles.
+
+## 🚀 Despliegue en Vercel
+
+Para desplegar la aplicación en Vercel:
+
+1. Preparar el proyecto para despliegue:
+
+```bash
+./scripts/prepare-deploy.sh
+```
+
+2. Configurar variables de entorno en Vercel:
+
+   - DATABASE_URL
+   - DATABASE_HOST
+   - DATABASE_USER
+   - DATABASE_PASSWORD
+   - DATABASE_NAME
+   - JWT_SECRET
+   - JWT_EXPIRATION
+
+3. Ejecutar el despliegue:
+
+```bash
+npm run deploy:vercel
+```
+
+### Solución de problemas de despliegue
+
+Si encuentras el error "Function size too large":
+
+1. Asegúrate de que el proyecto esté limpio (`./scripts/prepare-deploy.sh`)
+2. Verifica que `.vercelignore` esté configurado correctamente
+3. Usa solo las dependencias necesarias para producción
