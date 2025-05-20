@@ -27,10 +27,10 @@
   ],
   "env": {
     "DATABASE_URL": "postgresql://neondb_owner:npg_ORBSApcN7Vd5@ep-plain-sound-a48dlyhv-pooler.us-east-1.aws.neon.tech/psicoespacios?sslmode=require",
-    "DATABASE_HOST": "ep-plain-sound-a48dlyhv-pooler.us-east-1.aws.neon.tech",
+    "DATABASE_HOST": "ep-silent-night-a4hfbw4c-pooler.us-east-1.aws.neon.tech",
     "DATABASE_USER": "neondb_owner",
     "DATABASE_PASSWORD": "npg_ORBSApcN7Vd5",
-    "DATABASE_NAME": "psicoespacios",
+    "DATABASE_NAME": "neondb",
     "NODE_ENV": "production",
     "JWT_SECRET": "${JWT_SECRET}",
     "JWT_EXPIRATION": "24h"
