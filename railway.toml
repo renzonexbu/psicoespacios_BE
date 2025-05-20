@@ -1,25 +1,6 @@
-[build]
-builder = "nixpacks"
-buildCommand = """
-curl -fsSL https://fnm.vercel.app/install | bash
-export PATH=$HOME/.fnm:$PATH
-eval $(fnm env)
-fnm install 23.11.0
-fnm use 23.11.0
-rm -rf /app/node_modules/.cache
-npm ci
-npm run build:prod
-"""
-
-[deploy]
-startCommand = "npm run start:prod"
-healthcheckPath = "/api/v1/health"
-healthcheckTimeout = 30
-
 [nixpacks]
-node_version = "23.11.0"
+node-version = "23.11.0"
 
 [variables]
 NODE_VERSION = "23.11.0"
-NODE_ENV = "production"
-NPM_CONFIG_PRODUCTION = "false"
+ENGINE_STRICT = "false"
