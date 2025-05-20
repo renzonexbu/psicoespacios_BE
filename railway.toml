@@ -1,0 +1,22 @@
+[build]
+builder = "nixpacks"
+buildCommand = "npm ci --only=production && npm run build"
+
+[deploy]
+startCommand = "node dist/main.js"
+healthcheckPath = "/api/v1/health"
+restartPolicyType = "on_failure"
+healthcheckTimeout = "10s"
+
+[nixpacks]
+nodejs_version = "20.11.0"
+
+[variables]
+NODE_ENV = "production"
+NODE_VERSION = "20.11.0"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5
+
+[env]
+NODE_ENV = "production"

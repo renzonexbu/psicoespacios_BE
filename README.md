@@ -182,3 +182,38 @@ Si encuentras el error "Function size too large":
 1. Asegúrate de que el proyecto esté limpio (`./scripts/prepare-deploy.sh`)
 2. Verifica que `.vercelignore` esté configurado correctamente
 3. Usa solo las dependencias necesarias para producción
+
+## 🚂 Despliegue en Railway
+
+1. Instalar la CLI de Railway:
+
+```bash
+brew install railway
+```
+
+2. Login en Railway:
+
+```bash
+railway login
+```
+
+3. Vincular el proyecto:
+
+```bash
+railway init
+```
+
+4. Configurar variables de entorno en Railway:
+
+   - DATABASE_URL
+   - NODE_ENV
+   - JWT_SECRET
+   - JWT_EXPIRATION
+
+5. Desplegar la aplicación:
+
+```bash
+railway up
+```
+
+La aplicación se desplegará automáticamente cuando se haga push a la rama principal.

@@ -1,13 +1,18 @@
 {
-  "name": "psicoespacios_BE",
+  "name": "psicoespacios-be",
   "version": "0.0.1",
-  "description": "",
+  "description": "Backend for PsicoEspacios",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "engines": {
+    "node": "20.11.0"
+  },
   "scripts": {
-    "build": "nest build && rimraf dist/**/*.map dist/**/*.d.ts",
-    "build:prod": "npm run build && npm prune --production",
+    "prebuild": "rimraf dist",
+    "build": "nest build",
+    "postbuild": "rimraf dist/**/*.map dist/**/*.d.ts",
+    "build:prod": "NODE_ENV=production npm run build && npm prune --production",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -22,9 +27,6 @@
     "seed:config": "ts-node ./node_modules/@jorgebodega/typeorm-seeding/dist/cli.js config",
     "seed:run": "ts-node ./node_modules/@jorgebodega/typeorm-seeding/dist/cli.js seed",
     "db:seed": "ts-node src/database/seeds/seed.ts",
-    "deploy:vercel": "vercel --prod",
-    "deploy:vercel:dev": "vercel",
-    "vercel:env": "vercel env pull .env",
     "typeorm": "typeorm"
   },
   "dependencies": {

@@ -11,6 +11,7 @@ import { PagosModule } from './pagos/pagos.module';
 import { ReportesModule } from './reportes/reportes.module';
 import { AdminModule } from './admin/admin.module';
 import { ContactoModule } from './contacto/contacto.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { ContactoModule } from './contacto/contacto.module';
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
             migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
             migrationsRun: true, // Ejecutar migraciones automáticamente
+            migrationsTableName: 'migrations',
             synchronize: false, // Más seguro en producción
             ssl: {
               rejectUnauthorized: false, // Necesario para Neon
@@ -70,6 +72,7 @@ import { ContactoModule } from './contacto/contacto.module';
     ReportesModule,
     AdminModule,
     ContactoModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
