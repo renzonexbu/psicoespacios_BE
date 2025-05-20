@@ -6,13 +6,13 @@
   "private": true,
   "license": "UNLICENSED",
   "engines": {
-    "node": "20.11.0"
+    "node": "23.11.0"
   },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
     "postbuild": "rimraf dist/**/*.map dist/**/*.d.ts",
-    "build:prod": "NODE_ENV=production npm run build && npm prune --production",
+    "build:prod": "npm run prebuild && npm run build && npm run postbuild && npm prune --production",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",

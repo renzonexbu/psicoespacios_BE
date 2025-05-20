@@ -1,22 +1,17 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm ci --only=production && npm run build"
+buildCommand = "fnm install 23.11.0 && fnm use 23.11.0 && npm ci && npm run build:prod"
 
 [deploy]
-startCommand = "node dist/main.js"
+startCommand = "npm run start:prod"
 healthcheckPath = "/api/v1/health"
-restartPolicyType = "on_failure"
-healthcheckTimeout = "10s"
+healthcheckTimeout = 30
 
 [nixpacks]
-nodejs_version = "20.11.0"
+node_version = "23.11.0"
 
 [variables]
+NODE_VERSION = "23.11.0"
 NODE_ENV = "production"
-NODE_VERSION = "20.11.0"
-healthcheckTimeout = 100
-restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 5
-
-[env]
-NODE_ENV = "production"
+NPM_CONFIG_PRODUCTION = "false"
+ENGINE_STRICT = "false"

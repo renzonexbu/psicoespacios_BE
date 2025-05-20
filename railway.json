@@ -1,20 +1,29 @@
 {
-  "$schema": "https://schema.up.railway.app/railway.schema.json",
+  "    "nixpacksPlan": {
+      "phases": {
+        "setup": {
+          "nixPkgs": ["nodejs"]
+        },
+        "install": {
+          "cmds": ["npm install -g n && n 20.11.0"]
+        }
+      }
+    }": "https://schema.up.railway.app/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "npm ci --only=production && npm run build",
+    "buildCommand": "npm ci && npm run build:prod",
     "nixpacksPlan": {
       "phases": {
         "setup": {
-          "nixPkgs": ["nodejs-20_x"]
+          "nixPkgs": ["nodejs_23"]
         }
       }
     }
   },
   "deploy": {
-    "startCommand": "node dist/main.js",
+    "startCommand": "npm run start:prod",
     "restartPolicyType": "ON_FAILURE",
     "healthcheckPath": "/api/v1/health",
-    "healthcheckTimeout": 10
+    "healthcheckTimeout": 30
   }
 }
