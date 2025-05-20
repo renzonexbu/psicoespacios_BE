@@ -5,8 +5,8 @@ export class HealthController {
   @Get()
   check() {
     return {
-      status: 'ok',
-      timestamp: new Date().toISOString()
+      statusCode: 200,
+      message: 'Conexión exitosa a la base de datos',
     };
   }
 }
