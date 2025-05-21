@@ -1,6 +1,16 @@
 [nixpacks]
-node-version = "23.11.0"
+node-version = "18.20.5"
 
 [variables]
-NODE_VERSION = "23.11.0"
+NODE_VERSION = "18.20.5"
 ENGINE_STRICT = "false"
+
+[build]
+builder = "nixpacks"
+buildCommand = "npm run build"
+
+[deploy]
+startCommand = "npm run railway"
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+restartPolicyType = "never"

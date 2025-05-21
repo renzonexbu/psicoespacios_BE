@@ -10,3 +10,15 @@ export class HealthController {
     };
   }
 }
+
+@Controller('health')
+export class RootHealthController {
+  @Get()
+  check() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      message: 'API funcionando correctamente',
+    };
+  }
+}
