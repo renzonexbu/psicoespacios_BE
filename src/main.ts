@@ -1,3 +1,6 @@
+// Importar el polyfill para crypto.randomUUID en versiones anteriores de Node.js
+import './config/polyfills';
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';

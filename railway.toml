@@ -1,8 +1,8 @@
 [nixpacks]
-node-version = "18.20.5"
+node-version = "20.11.1"
 
 [variables]
-NODE_VERSION = "18.20.5"
+NODE_VERSION = "20.11.1"
 ENGINE_STRICT = "false"
 
 [build]

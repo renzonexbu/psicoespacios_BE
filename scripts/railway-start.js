@@ -33,6 +33,14 @@ try {
   // Iniciar la aplicación
   console.log('Iniciando la aplicación...');
 
+  // Verificar versión de Node.js
+  console.log('Versión de Node.js:', process.version);
+
+  // Verificar variables de entorno importantes
+  console.log('Validando variables de entorno...');
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+  console.log('DATABASE_URL configurada:', !!process.env.DATABASE_URL);
+
   // Determinar el punto de entrada
   try {
     console.log('Buscando puntos de entrada posibles...');
