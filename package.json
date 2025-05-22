@@ -32,6 +32,8 @@
     "db:populate:flyio": "./scripts/run-populate-flyio.sh",
     "db:populate:remote": "./scripts/remote-populate-flyio.sh",
     "db:check-and-populate": "./scripts/check-and-populate-flyio.sh",
+    "db:migrate": "./scripts/run-migrations.sh",
+    "db:migrate:prod": "NODE_ENV=production ./scripts/run-migrations.sh",
     "typeorm": "typeorm"
   },
   "dependencies": {

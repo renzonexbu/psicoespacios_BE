@@ -107,24 +107,31 @@ npm run test:cov
 
 ## 🔄 Gestión de Migraciones
 
-Para facilitar el manejo de migraciones de base de datos, se ha incluido un script \`migrate.sh\`:
+El sistema cuenta con un sistema de migraciones automático para crear y poblar la base de datos:
 
-\`\`\`bash
+```bash
+# Ejecutar migraciones en entorno de desarrollo
+npm run db:migrate
 
+# Ejecutar migraciones en entorno de producción
+npm run db:migrate:prod
+```
+
+Para más información sobre el sistema de migraciones, consulta la [documentación detallada](./docs/MIGRATIONS.md).
+
+Para gestionar migraciones manualmente, puedes usar el script `migrate.sh`:
+
+````bash
 # Ejecutar migraciones
-
 ./migrate.sh run
 
 # Mostrar estado de migraciones
-
 ./migrate.sh show
 
 # Crear una nueva migración
-
 ./migrate.sh create NuevaMigracion
 
 # Generar una migración basada en cambios de entidades
-
 ./migrate.sh generate CambiosEntidad
 
 # Revertir la última migración
@@ -159,7 +166,7 @@ Para desplegar la aplicación en Vercel:
 
 ```bash
 ./scripts/prepare-deploy.sh
-```
+````
 
 2. Configurar variables de entorno en Vercel:
 

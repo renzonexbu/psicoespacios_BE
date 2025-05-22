@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import databaseConfig from './config/database.config';
@@ -12,6 +12,7 @@ import { ReportesModule } from './reportes/reportes.module';
 import { AdminModule } from './admin/admin.module';
 import { ContactoModule } from './contacto/contacto.module';
 import { HealthModule } from './health/health.module';
+import { runMigrations } from './database/migration-runner';
 
 @Module({
   imports: [
@@ -35,8 +36,8 @@ import { HealthModule } from './health/health.module';
             url: process.env.DATABASE_URL,
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
             migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
-            migrationsRun: true, // Ejecutar migraciones automáticamente
-            migrationsTableName: 'migrations',
+            migrationsRun: false, // Desactivamos para usar nuestro propio runner
+            migrationsTableName: 'migrations_history',
             synchronize: false, // Más seguro en producción
             ssl: {
               rejectUnauthorized: false, // Necesario para Neon
@@ -58,7 +59,8 @@ import { HealthModule } from './health/health.module';
           password: configService.get('database.password'),
           database: configService.get('database.database'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: process.env.NODE_ENV !== 'production',
+          synchronize: false, // Desactivamos synchronize para usar migraciones
+          migrationsTableName: 'migrations_history',
           logging: process.env.NODE_ENV !== 'production',
         };
       },
@@ -75,4 +77,15 @@ import { HealthModule } from './health/health.module';
     HealthModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+  // Ejecutar migraciones al iniciar la aplicación
+  async onModuleInit() {
+    console.log('Ejecutando migraciones al iniciar la aplicación...');
+    try {
+      const result = await runMigrations();
+      console.log('Resultado de migraciones:', result.message);
+    } catch (error) {
+      console.error('Error al ejecutar migraciones:', error);
+    }
+  }
+}
