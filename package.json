@@ -28,6 +28,10 @@
     "seed:config": "ts-node ./node_modules/@jorgebodega/typeorm-seeding/dist/cli.js config",
     "seed:run": "ts-node ./node_modules/@jorgebodega/typeorm-seeding/dist/cli.js seed",
     "db:seed": "ts-node src/database/seeds/seed.ts",
+    "db:populate": "node scripts/populate-flyio-db.js",
+    "db:populate:flyio": "./scripts/run-populate-flyio.sh",
+    "db:populate:remote": "./scripts/remote-populate-flyio.sh",
+    "db:check-and-populate": "./scripts/check-and-populate-flyio.sh",
     "typeorm": "typeorm"
   },
   "dependencies": {
