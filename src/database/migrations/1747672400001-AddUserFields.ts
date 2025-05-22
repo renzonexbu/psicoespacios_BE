@@ -2,7 +2,10 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddUserFields1747672400001 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Verificar si ya existe el enum antes de crearlo
+    // Verificar que los enums existan antes de intentar usarlos
+    console.log('Verificando que los enums existan antes de crear la tabla users');
+    
+    // Verificar si los enums existen
     const roleEnumExists = await queryRunner.query(`
       SELECT EXISTS (
         SELECT 1 FROM pg_type
@@ -11,28 +14,20 @@ export class AddUserFields1747672400001 implements MigrationInterface {
     `);
     
     if (!roleEnumExists[0].exists) {
-      await queryRunner.query(`      CREATE TYPE "public"."users_role_enum" AS ENUM (
-        'ADMIN',
-        'PSICOLOGO',
-        'PACIENTE'
-      )
-      `);
+      console.log('Error: users_role_enum no existe. Debe crearse en la migración EnsureEnums.');
+      return;
     }
-
+    
     const estadoEnumExists = await queryRunner.query(`
       SELECT EXISTS (
         SELECT 1 FROM pg_type
         WHERE typname = 'users_estado_enum'
       );
     `);
-
+    
     if (!estadoEnumExists[0].exists) {
-      await queryRunner.query(`      CREATE TYPE "public"."users_estado_enum" AS ENUM (
-        'ACTIVO',
-        'INACTIVO',
-        'SUSPENDIDO'
-      )
-      `);
+      console.log('Error: users_estado_enum no existe. Debe crearse en la migración EnsureEnums.');
+      return;
     }
 
     // Verificar si la tabla users ya existe
@@ -45,6 +40,23 @@ export class AddUserFields1747672400001 implements MigrationInterface {
     `);
     
     if (!tableExists[0].exists) {
+      console.log('Creating users table with proper enum values');
+      
+      // Verificar cuáles son los valores válidos para los enums
+      const roleEnumValues = await queryRunner.query(`
+        SELECT enum_range(NULL::users_role_enum) as values;
+      `);
+      console.log('Valores disponibles para users_role_enum:', roleEnumValues[0].values);
+      
+      const estadoEnumValues = await queryRunner.query(`
+        SELECT enum_range(NULL::users_estado_enum) as values;
+      `);
+      console.log('Valores disponibles para users_estado_enum:', estadoEnumValues[0].values);
+      
+      // Asegurarse de usar valores válidos
+      const roleDefault = roleEnumValues[0].values.includes('PACIENTE') ? 'PACIENTE' : roleEnumValues[0].values[0];
+      const estadoDefault = estadoEnumValues[0].values.includes('ACTIVO') ? 'ACTIVO' : estadoEnumValues[0].values[0];
+      
       await queryRunner.query(`
         CREATE TABLE "users" (
           "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -55,8 +67,8 @@ export class AddUserFields1747672400001 implements MigrationInterface {
           "rut" character varying,
           "telefono" character varying,
           "fechaNacimiento" DATE,
-          "role" "public"."users_role_enum" NOT NULL DEFAULT 'CLIENTE',
-          "estado" "public"."users_estado_enum" NOT NULL DEFAULT 'PENDIENTE',
+          "role" "public"."users_role_enum" NOT NULL DEFAULT '${roleDefault}',
+          "estado" "public"."users_estado_enum" NOT NULL DEFAULT '${estadoDefault}',
           "verificado" boolean NOT NULL DEFAULT false,
           "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
           "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),

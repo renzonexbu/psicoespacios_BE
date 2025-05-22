@@ -35,8 +35,9 @@ async function bootstrap() {
     
     // Usar puerto dinámico para Vercel o 3000 para desarrollo local
     const port = process.env.PORT || 3000;
-    await app.listen(port);
-    console.log(`✅ Aplicación iniciada exitosamente en el puerto ${port}`);
+    // Escuchar en 0.0.0.0 para que sea accesible desde fuera del contenedor
+    await app.listen(port, '0.0.0.0');
+    console.log(`✅ Aplicación iniciada exitosamente en 0.0.0.0:${port}`);
     console.log(`URL de la aplicación: ${await app.getUrl()}`);
   } catch (error) {
     console.error('❌ Error al iniciar la aplicación:', error);

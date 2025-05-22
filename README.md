@@ -1,8 +1,10 @@
 # 🏥 PsicoEspacios - Backend
 
-<img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS Badge"/>
+<p>
+  <img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS Badge"/>
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript Badge"/>
   <img src="https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Badge"/>
+  <img src="https://img.shields.io/badge/Fly.io-8e44ad?style=for-the-badge&logo=fly&logoColor=white" alt="Fly.io Badge"/>
 </p>
 
 ## 📋 Descripción
@@ -183,37 +185,48 @@ Si encuentras el error "Function size too large":
 2. Verifica que `.vercelignore` esté configurado correctamente
 3. Usa solo las dependencias necesarias para producción
 
-## 🚂 Despliegue en Railway
+## 🚀 Despliegue en Fly.io
 
-1. Instalar la CLI de Railway:
+El proyecto está configurado para ser desplegado en Fly.io, una plataforma que permite alojar tanto la API como la base de datos PostgreSQL.
+
+### Requisitos previos
+
+1. Tener una cuenta en [Fly.io](https://fly.io)
+2. Tener instalado `flyctl` (CLI de Fly.io):
+   ```bash
+   curl -L https://fly.io/install.sh | sh
+   ```
+
+### Pasos para el despliegue
+
+1. Iniciar sesión en Fly.io:
+
+   ```bash
+   flyctl auth login
+   ```
+
+2. Ejecutar el script de despliegue:
+   ```bash
+   ./scripts/deploy-fly.sh
+   ```
+
+Este script automatiza el proceso de:
+
+- Crear una aplicación en Fly.io (si no existe)
+- Crear una base de datos PostgreSQL (si no existe)
+- Conectar la base de datos a la aplicación
+- Desplegar la aplicación con la configuración del archivo `fly.toml`
+
+### Verificar el despliegue
+
+Una vez completado el despliegue, puedes verificar el estado de tu aplicación:
 
 ```bash
-brew install railway
+flyctl status -a psicoespacios-api
 ```
 
-2. Login en Railway:
+Para ver los logs de la aplicación:
 
 ```bash
-railway login
+flyctl logs -a psicoespacios-api
 ```
-
-3. Vincular el proyecto:
-
-```bash
-railway init
-```
-
-4. Configurar variables de entorno en Railway:
-
-   - DATABASE_URL
-   - NODE_ENV
-   - JWT_SECRET
-   - JWT_EXPIRATION
-
-5. Desplegar la aplicación:
-
-```bash
-railway up
-```
-
-La aplicación se desplegará automáticamente cuando se haga push a la rama principal.

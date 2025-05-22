@@ -11,9 +11,9 @@ const getConnectionOptions = (): TypeORMDataSourceOptions => {
     return {
       type: 'postgres',
       url: process.env.DATABASE_URL,
-      entities: ['dist/common/entities/**/*.entity.{ts,js}'],
-      migrations: ['dist/database/migrations/**/*.{ts,js}'],
-      synchronize: true,
+      entities: ['dist/src/common/entities/**/*.entity.{ts,js}', 'dist/common/entities/**/*.entity.{ts,js}'],
+      migrations: ['dist/src/database/migrations/**/*.{ts,js}', 'dist/database/migrations/**/*.{ts,js}'],
+      synchronize: false,
       ssl: {
         rejectUnauthorized: false,
       },
@@ -35,9 +35,9 @@ const getConnectionOptions = (): TypeORMDataSourceOptions => {
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: ['dist/common/entities/**/*.entity.{ts,js}'],
-      migrations: ['dist/database/migrations/**/*.{ts,js}'],
-      synchronize: true,
+      entities: ['dist/src/common/entities/**/*.entity.{ts,js}', 'dist/common/entities/**/*.entity.{ts,js}'],
+      migrations: ['dist/src/database/migrations/**/*.{ts,js}', 'dist/database/migrations/**/*.{ts,js}'],
+      synchronize: false,
       ssl: {
         rejectUnauthorized: false,
       },
@@ -58,8 +58,8 @@ const getConnectionOptions = (): TypeORMDataSourceOptions => {
     username: process.env.DATABASE_USER || 'psicoespacios_user',
     password: process.env.DATABASE_PASSWORD || 'psicoespacios_password',
     database: process.env.DATABASE_NAME || 'psicoespacios',
-    entities: ['dist/common/entities/**/*.entity.{ts,js}'],
-    migrations: ['dist/database/migrations/**/*.{ts,js}'],
+    entities: ['dist/src/common/entities/**/*.entity.{ts,js}', 'dist/common/entities/**/*.entity.{ts,js}'],
+    migrations: ['dist/src/database/migrations/**/*.{ts,js}', 'dist/database/migrations/**/*.{ts,js}'],
     synchronize: false,
     logging: process.env.NODE_ENV !== 'production',
   };
