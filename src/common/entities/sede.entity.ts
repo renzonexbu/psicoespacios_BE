@@ -14,7 +14,7 @@ export class Sede {
   @Column({ length: 100 })
   ciudad: string;
 
-  @Column({ length: 100 })
+  @Column({ length: 100, nullable: true })
   comuna: string;
 
   @Column({ type: 'text', nullable: true })
@@ -22,6 +22,9 @@ export class Sede {
 
   @Column({ type: 'boolean', default: true })
   activa: boolean;
+  
+  @Column({ length: 20, default: 'ACTIVA' })
+  estado: string;
 
   @Column({ length: 20, nullable: true })
   telefono: string;
@@ -34,6 +37,12 @@ export class Sede {
     diasHabiles: string[];
     horaApertura: string;
     horaCierre: string;
+  };
+  
+  @Column({ type: 'jsonb', nullable: true })
+  coordenadas: {
+    lat: number;
+    lng: number;
   };
 
   @OneToMany('Box', 'sede', { 

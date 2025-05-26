@@ -36,27 +36,18 @@ export class InitialSchema1685394000000 implements MigrationInterface {
         CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"),
         CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id")
       )
-    `);
-
-    // Crear tabla de configuración del sistema
+    `);    // Crear tabla de configuración del sistema
     await queryRunner.query(`
       CREATE TABLE "configuracion_sistema" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-        "nombreSistema" character varying NOT NULL DEFAULT 'PsicoEspacios',
-        "logo" character varying,
-        "colorPrimario" character varying DEFAULT '#3f51b5',
-        "colorSecundario" character varying DEFAULT '#f50057',
-        "emailContacto" character varying DEFAULT 'contacto@psicoespacios.com',
-        "telefonoContacto" character varying,
-        "direccion" character varying,
-        "redesSociales" jsonb DEFAULT '{"facebook":"","instagram":"","twitter":""}',
-        "terminosCondiciones" text,
-        "politicaPrivacidad" text,
-        "metodosPago" jsonb DEFAULT '["TARJETA","TRANSFERENCIA"]',
-        "monedaDefecto" character varying DEFAULT 'CLP',
-        "zonaHoraria" character varying DEFAULT 'America/Santiago',
-        "fechaCreacion" TIMESTAMP NOT NULL DEFAULT now(),
-        "fechaActualizacion" TIMESTAMP NOT NULL DEFAULT now(),
+        "configuracionGeneral" jsonb NOT NULL DEFAULT '{"nombreSistema":"PsicoEspacios","colorPrimario":"#3f51b5","colorSecundario":"#f50057","contactoSoporte":"contacto@psicoespacios.com"}',
+        "configuracionReservas" jsonb NOT NULL DEFAULT '{"tiempoMinimoReserva":60,"tiempoMaximoReserva":240,"anticipacionMinima":24,"anticipacionMaxima":720,"intervaloHorario":[9,19]}',
+        "configuracionPagos" jsonb NOT NULL DEFAULT '{"moneda":"CLP","comisionPlataforma":5,"metodosHabilitados":["TARJETA","TRANSFERENCIA"]}',
+        "configuracionDerivacion" jsonb NOT NULL DEFAULT '{"especialidades":[],"modalidades":[],"tiempoMaximoRespuesta":48,"comisionDerivacion":10}',
+        "configuracionSuscripciones" jsonb NOT NULL DEFAULT '{"periodosRenovacion":[1,3,6,12],"descuentosRenovacion":[]}',
+        "configuracionNotificaciones" jsonb NOT NULL DEFAULT '{"emailsHabilitados":true,"plantillasEmail":{}}',
+        "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+        "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
         CONSTRAINT "PK_7a64268fe7d5d782f91277b5f8c" PRIMARY KEY ("id")
       )
     `);

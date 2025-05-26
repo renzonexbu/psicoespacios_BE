@@ -141,7 +141,6 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
 
     console.log('Tabla de usuarios poblada exitosamente.');
   }
-
   /**
    * Poblar tabla de configuración del sistema
    */
@@ -161,14 +160,16 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
     // Insertar configuración inicial
     await queryRunner.query(`
       INSERT INTO configuracion_sistema 
-      (nombreSistema, logo, colorPrimario, colorSecundario, emailContacto, telefonoContacto, direccion, 
-      redesSociales, terminosCondiciones, politicaPrivacidad, metodosPago, monedaDefecto, zonaHoraria) 
+      (configuracionGeneral, configuracionReservas, configuracionPagos, configuracionDerivacion, configuracionSuscripciones, configuracionNotificaciones) 
       VALUES 
-      ('PsicoEspacios', 'https://example.com/logo.png', '#3f51b5', '#f50057', 
-      'contacto@psicoespacios.com', '+56912345678', 'Av. Providencia 1234, Providencia, Santiago', 
-      '{"facebook":"https://facebook.com/psicoespacios","instagram":"https://instagram.com/psicoespacios","twitter":"https://twitter.com/psicoespacios"}', 
-      'Términos y condiciones del servicio...', 'Política de privacidad del servicio...', 
-      '["TARJETA","TRANSFERENCIA"]', 'CLP', 'America/Santiago')
+      (
+        '{"nombreSistema":"PsicoEspacios","logotipo":"https://example.com/logo.png","colorPrimario":"#3f51b5","colorSecundario":"#f50057","contactoSoporte":"contacto@psicoespacios.com"}',
+        '{"tiempoMinimoReserva":60,"tiempoMaximoReserva":240,"anticipacionMinima":24,"anticipacionMaxima":720,"intervaloHorario":[9,19]}',
+        '{"moneda":"CLP","comisionPlataforma":5,"metodosHabilitados":["TARJETA","TRANSFERENCIA"],"datosTransferencia":{"banco":"Banco Estado","tipoCuenta":"Corriente","numeroCuenta":"123456789","titular":"PsicoEspacios SpA","rut":"76.123.456-7","email":"pagos@psicoespacios.com"}}',
+        '{"especialidades":["Psicología Clínica","Psicología Infantil","Terapia de Pareja","Terapia Familiar"],"modalidades":["Presencial","Online"],"tiempoMaximoRespuesta":48,"comisionDerivacion":10}',
+        '{"periodosRenovacion":[1,3,6,12],"descuentosRenovacion":[{"periodo":3,"descuento":5},{"periodo":6,"descuento":10},{"periodo":12,"descuento":15}]}',
+        '{"emailsHabilitados":true,"plantillasEmail":{"bienvenida":{"asunto":"Bienvenido a PsicoEspacios","plantilla":"Bienvenido a nuestra plataforma..."}}}'
+      )
     `);
 
     console.log('Tabla de configuración poblada exitosamente.');
@@ -196,6 +197,7 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
         nombre: 'PsicoEspacios Providencia',
         direccion: 'Av. Providencia 1234, Providencia',
         ciudad: 'Santiago',
+        comuna: 'Providencia',
         telefono: '+56912345678',
         email: 'providencia@psicoespacios.com',
         coordenadas: { lat: -33.4289, lng: -70.6093 },
@@ -205,6 +207,7 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
         nombre: 'PsicoEspacios Las Condes',
         direccion: 'Av. Apoquindo 4500, Las Condes',
         ciudad: 'Santiago',
+        comuna: 'Las Condes',
         telefono: '+56923456789',
         email: 'lascondes@psicoespacios.com',
         coordenadas: { lat: -33.4103, lng: -70.5831 },
@@ -214,19 +217,19 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
         nombre: 'PsicoEspacios Ñuñoa',
         direccion: 'Av. Irarrázaval 3400, Ñuñoa',
         ciudad: 'Santiago',
+        comuna: 'Ñuñoa',
         telefono: '+56934567890',
         email: 'nunoa@psicoespacios.com',
         coordenadas: { lat: -33.4563, lng: -70.5934 },
-        estado: 'ACTIVA',
-      },
+        estado: 'ACTIVA',      },
     ];
-
+    
     for (const sede of sedes) {
       await queryRunner.query(`
         INSERT INTO sedes 
-        (nombre, direccion, ciudad, telefono, email, coordenadas, estado) 
+        (nombre, direccion, ciudad, comuna, telefono, email, coordenadas, estado) 
         VALUES 
-        ('${sede.nombre}', '${sede.direccion}', '${sede.ciudad}', '${sede.telefono}', 
+        ('${sede.nombre}', '${sede.direccion}', '${sede.ciudad}', '${sede.comuna}', '${sede.telefono}', 
         '${sede.email}', '${JSON.stringify(sede.coordenadas)}', '${sede.estado}')
       `);
     }
@@ -297,15 +300,14 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
     if (parseInt(existingPlanes[0].count) > 0) {
       console.log('La tabla de planes ya tiene datos. Omitiendo inserción.');
       return;
-    }
-
-    // Insertar planes
+    }    // Insertar planes
     const planes = [
       {
         nombre: 'Plan Básico',
         descripcion: 'Plan ideal para psicólogos que inician su práctica o atienden pocas horas a la semana.',
         precio: 50000,
         duracionMeses: 1,
+        tipo: 'BASICO',
         caracteristicas: [
           'Acceso a boxes durante 10 horas mensuales',
           'Reserva hasta con 1 semana de anticipación',
@@ -321,6 +323,7 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
         descripcion: 'Plan diseñado para psicólogos con práctica regular que necesitan más horas de atención.',
         precio: 90000,
         duracionMeses: 1,
+        tipo: 'INTERMEDIO',
         caracteristicas: [
           'Acceso a boxes durante 20 horas mensuales',
           'Reserva hasta con 2 semanas de anticipación',
@@ -337,6 +340,7 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
         descripcion: 'Plan completo para psicólogos con alta demanda de pacientes y necesidades de flexibilidad.',
         precio: 150000,
         duracionMeses: 1,
+        tipo: 'PREMIUM',
         caracteristicas: [
           'Acceso a boxes durante 40 horas mensuales',
           'Reserva hasta con 1 mes de anticipación',
@@ -352,12 +356,11 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
     ];
 
     for (const plan of planes) {
-      await queryRunner.query(`
-        INSERT INTO planes 
-        (nombre, descripcion, precio, "duracionMeses", caracteristicas, "horasIncluidas", "descuentoHoraAdicional", estado) 
+      await queryRunner.query(`        INSERT INTO planes 
+        (nombre, descripcion, precio, "duracionMeses", tipo, caracteristicas, "horasIncluidas", "descuentoHoraAdicional", estado) 
         VALUES 
         ('${plan.nombre}', '${plan.descripcion}', ${plan.precio}, ${plan.duracionMeses}, 
-        '${JSON.stringify(plan.caracteristicas)}', ${plan.horasIncluidas}, ${plan.descuentoHoraAdicional}, 
+        '${plan.tipo}', '${JSON.stringify(plan.caracteristicas)}', ${plan.horasIncluidas}, ${plan.descuentoHoraAdicional}, 
         '${plan.estado}')
       `);
     }
