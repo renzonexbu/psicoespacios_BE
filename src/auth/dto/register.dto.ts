@@ -31,6 +31,6 @@ export class RegisterDto {
   @IsOptional()
   fechaNacimiento?: Date;
 
-  @IsEnum(['PSICOLOGO', 'PACIENTE', 'ADMIN'])
+  @IsEnum(['PSICOLOGO', 'USUARIO', 'ADMIN'])
   role: string;
 }
