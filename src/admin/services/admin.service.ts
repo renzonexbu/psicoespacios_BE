@@ -59,7 +59,7 @@ export class AdminService {
         where: { role: 'PSICOLOGO', estado: 'INACTIVO' },
       }),
       this.userRepository.count({
-        where: { role: 'PSICOLOGO', verificado: true },
+        where: { role: 'PSICOLOGO', estado: 'ACTIVO' },
       }),
     ]);
 
@@ -84,7 +84,7 @@ export class AdminService {
       throw new NotFoundException('Psicólogo no encontrado');
     }
 
-    psicologo.verificado = true;
+    psicologo.estado = 'ACTIVO';
     return this.userRepository.save(psicologo);
   }
 

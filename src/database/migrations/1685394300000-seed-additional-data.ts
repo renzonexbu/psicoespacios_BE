@@ -58,35 +58,35 @@ export class SeedAdditionalData1685394300000 implements MigrationInterface {
       
       const disponibilidad = [
         [
-          { dia: 'LUNES', inicio: '09:00', fin: '18:00' },
-          { dia: 'MIERCOLES', inicio: '09:00', fin: '18:00' },
-          { dia: 'VIERNES', inicio: '09:00', fin: '14:00' }
+          { dia: 'LUNES', horaInicio: '09:00', horaFin: '18:00' },
+          { dia: 'MIERCOLES', horaInicio: '09:00', horaFin: '18:00' },
+          { dia: 'VIERNES', horaInicio: '09:00', horaFin: '14:00' }
         ],
         [
-          { dia: 'MARTES', inicio: '14:00', fin: '20:00' },
-          { dia: 'JUEVES', inicio: '14:00', fin: '20:00' },
-          { dia: 'SABADO', inicio: '09:00', fin: '13:00' }
+          { dia: 'MARTES', horaInicio: '14:00', horaFin: '20:00' },
+          { dia: 'JUEVES', horaInicio: '14:00', horaFin: '20:00' },
+          { dia: 'SABADO', horaInicio: '09:00', horaFin: '13:00' }
         ],
         [
-          { dia: 'LUNES', inicio: '15:00', fin: '20:00' },
-          { dia: 'MARTES', inicio: '15:00', fin: '20:00' },
-          { dia: 'MIERCOLES', inicio: '15:00', fin: '20:00' },
-          { dia: 'JUEVES', inicio: '15:00', fin: '20:00' }
+          { dia: 'LUNES', horaInicio: '15:00', horaFin: '20:00' },
+          { dia: 'MARTES', horaInicio: '15:00', horaFin: '20:00' },
+          { dia: 'MIERCOLES', horaInicio: '15:00', horaFin: '20:00' },
+          { dia: 'JUEVES', horaInicio: '15:00', horaFin: '20:00' }
         ]
       ];
       
       await queryRunner.query(`
         INSERT INTO perfiles_derivacion 
-        (nombre, descripcion, especialidades, publico, "psicologoId", "precioSesion", disponibilidad, estado) 
+        (descripcion, especialidades, modalidades, "horariosAtencion", "sedesAtencion", "tarifaHora", aprobado, "psicologoId") 
         VALUES 
-        ('Perfil de Atención ${i + 1}', 
-        'Perfil para atención de pacientes con diversas necesidades terapéuticas.', 
-        '${JSON.stringify(especialidades[i % especialidades.length])}', 
-        true, 
-        '${psicologoId}', 
-        ${25000 + (i * 5000)}, 
+        ('Perfil para atención de pacientes con diversas necesidades terapéuticas - Perfil ${i + 1}', 
+        '${especialidades[i % especialidades.length].join(',')}', 
+        'Presencial,Online', 
         '${JSON.stringify(disponibilidad[i % disponibilidad.length])}', 
-        'ACTIVO')
+        'Sede Principal', 
+        ${25000 + (i * 5000)}, 
+        true, 
+        '${psicologoId}')
       `);
     }
 
@@ -115,7 +115,7 @@ export class SeedAdditionalData1685394300000 implements MigrationInterface {
     );
 
     // Obtener IDs de planes
-    const planes = await queryRunner.query('SELECT id, "horasIncluidas", precio FROM planes');
+    const planes = await queryRunner.query('SELECT id, precio FROM planes');
 
     if (psicologos.length === 0 || planes.length === 0) {
       console.log('No se encontraron psicólogos o planes para crear suscripciones. Omitiendo inserción.');
@@ -140,7 +140,7 @@ export class SeedAdditionalData1685394300000 implements MigrationInterface {
         fechaFin: finMesPasado.toISOString(),
         estado: 'COMPLETADA',
         precioTotal: planes[1].precio,
-        horasConsumidas: planes[1].horasIncluidas,
+        horasConsumidas: 8,
         horasDisponibles: 0
       },
       {
@@ -150,8 +150,8 @@ export class SeedAdditionalData1685394300000 implements MigrationInterface {
         fechaFin: finMesActual.toISOString(),
         estado: 'ACTIVA',
         precioTotal: planes[1].precio,
-        horasConsumidas: Math.floor(planes[1].horasIncluidas / 2),
-        horasDisponibles: Math.ceil(planes[1].horasIncluidas / 2)
+        horasConsumidas: 3,
+        horasDisponibles: 5
       },
       {
         usuarioId: psicologos[1].id,
@@ -160,8 +160,8 @@ export class SeedAdditionalData1685394300000 implements MigrationInterface {
         fechaFin: finMesActual.toISOString(),
         estado: 'ACTIVA',
         precioTotal: planes[2].precio,
-        horasConsumidas: 10,
-        horasDisponibles: planes[2].horasIncluidas - 10
+        horasConsumidas: 2,
+        horasDisponibles: 13
       },
       {
         usuarioId: psicologos[2].id,
@@ -171,7 +171,7 @@ export class SeedAdditionalData1685394300000 implements MigrationInterface {
         estado: 'PENDIENTE',
         precioTotal: planes[0].precio,
         horasConsumidas: 0,
-        horasDisponibles: planes[0].horasIncluidas
+        horasDisponibles: 4
       }
     ];
 
@@ -348,6 +348,9 @@ export class SeedAdditionalData1685394300000 implements MigrationInterface {
     
     // Función para formatear fecha a ISO string sin milisegundos
     function formatDate(date) {
+      if (!(date instanceof Date)) {
+        date = new Date(date);
+      }
       return date.toISOString().split('.')[0];
     }
     
@@ -355,7 +358,7 @@ export class SeedAdditionalData1685394300000 implements MigrationInterface {
       // Reserva pasada completada
       {
         fechaInicio: formatDate(addDays(hoy, -10)),
-        fechaFin: formatDate(addDays(hoy, -10).setHours(addDays(hoy, -10).getHours() + 1)),
+        fechaFin: formatDate(new Date(addDays(hoy, -10).getTime() + 60 * 60 * 1000)), // +1 hora
         estado: 'COMPLETADA',
         notas: 'Sesión regular',
         psicologoId: psicologos[0].id,
@@ -365,7 +368,7 @@ export class SeedAdditionalData1685394300000 implements MigrationInterface {
       // Reserva pasada cancelada
       {
         fechaInicio: formatDate(addDays(hoy, -5)),
-        fechaFin: formatDate(addDays(hoy, -5).setHours(addDays(hoy, -5).getHours() + 1)),
+        fechaFin: formatDate(new Date(addDays(hoy, -5).getTime() + 60 * 60 * 1000)), // +1 hora
         estado: 'CANCELADA',
         notas: 'Cancelada por el paciente',
         psicologoId: psicologos[1].id,
@@ -385,7 +388,7 @@ export class SeedAdditionalData1685394300000 implements MigrationInterface {
       // Reserva futura
       {
         fechaInicio: formatDate(addDays(hoy, 3)),
-        fechaFin: formatDate(addDays(hoy, 3).setHours(addDays(hoy, 3).getHours() + 1)),
+        fechaFin: formatDate(new Date(addDays(hoy, 3).getTime() + 60 * 60 * 1000)), // +1 hora
         estado: 'PENDIENTE',
         notas: 'Primera sesión',
         psicologoId: psicologos[2].id,

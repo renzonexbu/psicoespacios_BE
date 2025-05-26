@@ -8,15 +8,12 @@ export class CreateSedeDto {
   direccion: string;
 
   @IsString()
-  ciudad: string;
-
-  @IsString()
   @IsOptional()
   telefono?: string;
 
-  @IsBoolean()
+  @IsString()
   @IsOptional()
-  activa?: boolean = true;
+  estado?: string = 'ACTIVA';
 }
 
 export class UpdateSedeDto extends CreateSedeDto {
@@ -25,7 +22,4 @@ export class UpdateSedeDto extends CreateSedeDto {
 
   @IsOptional()
   declare direccion: string;
-
-  @IsOptional()
-  declare ciudad: string;
 }

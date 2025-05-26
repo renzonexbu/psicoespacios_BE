@@ -20,23 +20,25 @@ export class AdditionalTables1685394100000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "perfiles_derivacion" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-        "nombre" character varying NOT NULL,
+        "especialidades" text NOT NULL,
+        "modalidades" text NOT NULL,
         "descripcion" text,
-        "especialidades" jsonb DEFAULT '[]',
-        "publico" boolean NOT NULL DEFAULT true,
+        "experiencia" text,
+        "horariosAtencion" jsonb NOT NULL,
+        "sedesAtencion" text NOT NULL,
+        "tarifaHora" numeric(10,2) NOT NULL,
+        "aprobado" boolean NOT NULL DEFAULT false,
+        "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+        "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
         "psicologoId" uuid,
-        "precioSesion" numeric(10,2),
-        "disponibilidad" jsonb DEFAULT '[]',
-        "estado" character varying NOT NULL DEFAULT 'ACTIVO',
-        "fechaCreacion" TIMESTAMP NOT NULL DEFAULT now(),
-        "fechaActualizacion" TIMESTAMP NOT NULL DEFAULT now(),
-        CONSTRAINT "PK_h7b3cf6a0bf49af33a4c2cb7dc7" PRIMARY KEY ("id")
+        CONSTRAINT "PK_43367115204e2e89279080d0490" PRIMARY KEY ("id"),
+        CONSTRAINT "REL_43ab843e5cbb23fa71dd278901" UNIQUE ("psicologoId")
       )
     `);
 
     // Agregar relación para perfiles de derivación
     await queryRunner.query(`
-      ALTER TABLE "perfiles_derivacion" ADD CONSTRAINT "FK_i7b3cf6a0bf49af33a4c2cb7dc7" 
+      ALTER TABLE "perfiles_derivacion" ADD CONSTRAINT "FK_43ab843e5cbb23fa71dd2789013" 
       FOREIGN KEY ("psicologoId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION
     `);
 
@@ -71,7 +73,7 @@ export class AdditionalTables1685394100000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      ALTER TABLE "solicitudes_derivacion" ADD CONSTRAINT "FK_m7b3cf6a0bf49af33a4c2cb7dc7" 
+      ALTER TABLE "solicitudes_derivacion" ADD CONSTRAINT "FK_527cf4cc7783936d28724db2b75" 
       FOREIGN KEY ("perfilDerivacionId") REFERENCES "perfiles_derivacion"("id") ON DELETE SET NULL ON UPDATE NO ACTION
     `);
 
@@ -193,7 +195,7 @@ export class AdditionalTables1685394100000 implements MigrationInterface {
     await queryRunner.query(`ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_m7b3cf6a0bf49af33a4c2cb7dc7"`);
     await queryRunner.query(`ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_l7b3cf6a0bf49af33a4c2cb7dc7"`);
     await queryRunner.query(`ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_k7b3cf6a0bf49af33a4c2cb7dc7"`);
-    await queryRunner.query(`ALTER TABLE "perfiles_derivacion" DROP CONSTRAINT IF EXISTS "FK_i7b3cf6a0bf49af33a4c2cb7dc7"`);
+    await queryRunner.query(`ALTER TABLE "perfiles_derivacion" DROP CONSTRAINT IF EXISTS "FK_43ab843e5cbb23fa71dd2789013"`);
     
     // Eliminar tablas
     await queryRunner.query(`DROP TABLE IF EXISTS "reservas"`);

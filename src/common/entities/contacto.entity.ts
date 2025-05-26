@@ -1,10 +1,15 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, UpdateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 export enum ContactoEstado {
+  PENDIENTE = 'PENDIENTE',
   NUEVA = 'NUEVA',
   VISTA = 'VISTA',
-  SOLUCIONADA = 'SOLUCIONADA'
+  SOLUCIONADA = 'SOLUCIONADA',
+  CONTACTADO = 'CONTACTADO',
+  RESUELTO = 'RESUELTO',
+  RECHAZADO = 'RECHAZADO'
 }
+
 
 export enum ContactoTipo {
   CONSULTA = 'CONSULTA',
@@ -34,16 +39,28 @@ export class Contacto {
   @Column({ nullable: true })
   telefono: string;
 
+  @Column()
+  asunto: string;
+
   @Column({ type: 'text' })
   mensaje: string;
-
-  @CreateDateColumn()
-  fecha: Date;
 
   @Column({
     type: 'enum',
     enum: ContactoEstado,
-    default: ContactoEstado.NUEVA
+    default: ContactoEstado.PENDIENTE
   })
   estado: ContactoEstado;
+
+  @Column({ type: 'text', nullable: true })
+  respuesta: string;
+
+  @Column({ nullable: true })
+  fechaRespuesta: Date;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

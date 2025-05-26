@@ -6,12 +6,6 @@ export enum TipoPlan {
   PREMIUM = 'PREMIUM'
 }
 
-interface Caracteristica {
-  nombre: string;
-  descripcion: string;
-  incluido: boolean;
-}
-
 @Entity('planes')
 export class Plan {
   @PrimaryGeneratedColumn('uuid')
@@ -30,34 +24,17 @@ export class Plan {
   @Column({ type: 'text' })
   descripcion: string;
 
-  @Column({ 
-    type: 'decimal', 
-    precision: 10, 
-    scale: 2,
-    transformer: {
-      to: (value: number) => value,
-      from: (value: string) => parseFloat(value),
-    }
-  })
+  @Column()
   precio: number;
 
   @Column()
-  duracionMeses: number;
+  duracion: number;
 
-  @Column({ type: 'jsonb' })
-  caracteristicas: Caracteristica[];
+  @Column({ default: 4 })
+  horasIncluidas: number;
 
-  @Column({ 
-    type: 'decimal',
-    precision: 5,
-    scale: 2,
-    default: 0,
-    transformer: {
-      to: (value: number) => value,
-      from: (value: string) => parseFloat(value),
-    }
-  })
-  descuento: number;
+  @Column({ type: 'text', array: true, nullable: true })
+  beneficios: string[];
 
   @Column({ default: true })
   activo: boolean;

@@ -1,0 +1,6 @@
+export enum TipoPlan {
+  BASICO = 'BASICO',
+  ESTANDAR = 'ESTANDAR',
+  PREMIUM = 'PREMIUM',
+  PERSONALIZADO = 'PERSONALIZADO'
+}

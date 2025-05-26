@@ -20,5 +20,9 @@ export class CreateContactoDto {
 
   @IsString()
   @IsNotEmpty()
+  asunto: string;
+
+  @IsString()
+  @IsNotEmpty()
   mensaje: string;
 }

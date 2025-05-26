@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, BadRequestException } from '@nestjs/common';
 import { SedesService } from './sedes.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { ParseUUIDPipe } from '@nestjs/common';
@@ -30,7 +30,47 @@ export class SedesController {
     @Query('hora_inicio') horaInicio: string,
     @Query('hora_fin') horaFin: string,
   ) {
+    // Validar que todos los parámetros requeridos estén presentes
+    if (!fecha) {
+      throw new BadRequestException('El parámetro fecha es obligatorio');
+    }
+    
+    if (!horaInicio) {
+      throw new BadRequestException('El parámetro hora_inicio es obligatorio');
+    }
+    
+    if (!horaFin) {
+      throw new BadRequestException('El parámetro hora_fin es obligatorio');
+    }
+
+    // Validar el formato de la fecha (YYYY-MM-DD)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      throw new BadRequestException('Formato de fecha inválido. Use YYYY-MM-DD');
+    }
+    
+    // Crear objeto de fecha y validar que sea una fecha válida
     const fechaObj = new Date(fecha);
+    if (isNaN(fechaObj.getTime())) {
+      throw new BadRequestException('Fecha inválida');
+    }
+    
+    // Validar que la fecha no sea pasada
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    if (fechaObj < hoy) {
+      throw new BadRequestException('La fecha debe ser igual o posterior a hoy');
+    }
+    
+    // Validar formato de hora (HH:MM o HH:MM:SS)
+    const horaRegex = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
+    if (!horaRegex.test(horaInicio)) {
+      throw new BadRequestException(`Formato de hora inicio inválido: ${horaInicio}. Use formato HH:MM o HH:MM:SS`);
+    }
+    
+    if (!horaRegex.test(horaFin)) {
+      throw new BadRequestException(`Formato de hora fin inválido: ${horaFin}. Use formato HH:MM o HH:MM:SS`);
+    }
+    
     return this.sedesService.checkBoxAvailability(
       sedeId,
       fechaObj,

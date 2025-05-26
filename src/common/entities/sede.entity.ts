@@ -8,28 +8,13 @@ export class Sede {
   @Column({ length: 100 })
   nombre: string;
 
-  @Column({ length: 255 })
+  @Column()
   direccion: string;
 
-  @Column({ length: 100 })
-  ciudad: string;
-
-  @Column({ length: 100, nullable: true })
-  comuna: string;
-
-  @Column({ type: 'text', nullable: true })
-  descripcion: string;
-
-  @Column({ type: 'boolean', default: true })
-  activa: boolean;
-  
-  @Column({ length: 20, default: 'ACTIVA' })
-  estado: string;
-
-  @Column({ length: 20, nullable: true })
+  @Column({ nullable: true })
   telefono: string;
 
-  @Column({ length: 100, nullable: true })
+  @Column({ nullable: true })
   email: string;
 
   @Column({ type: 'jsonb', nullable: true })
@@ -38,12 +23,12 @@ export class Sede {
     horaApertura: string;
     horaCierre: string;
   };
-  
-  @Column({ type: 'jsonb', nullable: true })
-  coordenadas: {
-    lat: number;
-    lng: number;
-  };
+
+  @Column({ type: 'text', array: true, nullable: true })
+  serviciosDisponibles: string[];
+
+ @Column({ default: 'ACTIVA' })
+  estado: string;
 
   @OneToMany('Box', 'sede', { 
     cascade: true,

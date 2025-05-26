@@ -45,7 +45,7 @@ export class SuscripcionesService {
 
     const fechaInicio = new Date();
     const fechaFin = new Date();
-    fechaFin.setMonth(fechaFin.getMonth() + plan.duracionMeses);
+    fechaFin.setMonth(fechaFin.getMonth() + plan.duracion);
 
     const suscripcion = this.suscripcionRepository.create({
       ...createSuscripcionDto,
@@ -143,7 +143,7 @@ export class SuscripcionesService {
     }
 
     const nuevaFechaFin = new Date(suscripcion.fechaFin);
-    nuevaFechaFin.setMonth(nuevaFechaFin.getMonth() + suscripcion.plan.duracionMeses);
+    nuevaFechaFin.setMonth(nuevaFechaFin.getMonth() + suscripcion.plan.duracion);
 
     suscripcion.fechaFin = nuevaFechaFin;
     suscripcion.estado = 'ACTIVA';

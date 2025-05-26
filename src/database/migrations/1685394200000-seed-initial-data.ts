@@ -401,8 +401,7 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
         telefono: '+56912345678',
         mensaje:
           'Me gustaría recibir más información sobre los servicios de alquiler de boxes para psicólogos. ¿Cuáles son los precios y disponibilidad en la sede de Providencia?',
-        fecha: getPastDate(10),
-        estado: 'NUEVA',
+        estado: 'PENDIENTE',
       },
       {
         nombre: 'Patricia Vásquez',
@@ -411,28 +410,26 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
         telefono: '+56923456789',
         mensaje:
           'El aire acondicionado del box 102 de la sede Las Condes no funcionaba correctamente durante mi sesión del día 15 de mayo. Solicito una compensación o descuento en mi próxima reserva.',
-        fecha: getPastDate(15),
-        estado: 'VISTA',
+        estado: 'EN_PROCESO',
       },
       {
         nombre: 'Manuel Soto',
-        tipo: 'SUGERENCIA',
+        tipo: 'COMERCIAL',
         email: 'manuel.soto@mail.com',
         telefono: '+56934567890',
         mensaje:
           'Sería excelente que implementaran un sistema de café/té para los psicólogos que alquilan los boxes. Mejoraría mucho la experiencia tanto para profesionales como para pacientes.',
-        fecha: getPastDate(20),
-        estado: 'SOLUCIONADA',
+        estado: 'RESUELTO',
       },
     ];
 
     for (const contacto of contactos) {
       await queryRunner.query(`
         INSERT INTO contactos 
-        (nombre, tipo, email, telefono, mensaje, fecha, estado) 
+        (nombre, tipo, email, telefono, asunto, mensaje, estado) 
         VALUES 
         ('${contacto.nombre}', '${contacto.tipo}', '${contacto.email}', '${contacto.telefono}', 
-        '${contacto.mensaje.replace(/'/g, "''")}', '${contacto.fecha}', '${contacto.estado}')
+        'Consulta general', '${contacto.mensaje.replace(/'/g, "''")}', '${contacto.estado}')
       `);
     }
 

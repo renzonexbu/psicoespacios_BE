@@ -83,7 +83,7 @@ export class ReservasService {
       fechaFin,
       tipo: createReservaDto.tipo,
       estado: EstadoReserva.PENDIENTE,
-      precio: createReservaDto.tipo === 'HORA' ? box.precioHora * duracionHoras : box.precioJornada,
+      precio: this.calcularPrecioReserva(createReservaDto.tipo, duracionHoras),
     });
 
     return await this.reservaRepository.save(reserva);
@@ -121,5 +121,30 @@ export class ReservasService {
     reserva.notasCancelacion = updateDto.notasCancelacion || '';
     
     return await this.reservaRepository.save(reserva);
+  }
+
+  /**
+   * Calcula el precio de una reserva según su tipo y duración
+   * @param tipo Tipo de reserva ('HORA' o 'JORNADA')
+   * @param duracionHoras Duración en horas
+   * @returns Precio calculado
+   */
+  private calcularPrecioReserva(tipo: string, duracionHoras: number): number {
+    const PRECIO_HORA = 15000;      // Precio base por hora
+    const PRECIO_JORNADA = 80000;   // Precio base por jornada
+    
+    // Redondear la duración a 2 decimales para evitar problemas con números flotantes
+    const duracionRedondeada = Math.round(duracionHoras * 100) / 100;
+    
+    if (tipo === 'HORA') {
+      // El precio por hora se calcula multiplicando el precio base por la duración
+      return Math.round(PRECIO_HORA * duracionRedondeada);
+    } else if (tipo === 'JORNADA') {
+      // Para jornada, se usa un precio fijo sin importar la duración exacta
+      return PRECIO_JORNADA;
+    } else {
+      // Si el tipo no es reconocido, usar el precio por hora como fallback
+      return Math.round(PRECIO_HORA * duracionRedondeada);
+    }
   }
 }

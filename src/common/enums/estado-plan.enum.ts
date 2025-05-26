@@ -1,0 +1,6 @@
+export enum EstadoPlan {
+  ACTIVO = 'ACTIVO',
+  INACTIVO = 'INACTIVO',
+  DESCONTINUADO = 'DESCONTINUADO',
+  PROMOCION = 'PROMOCION'
+}

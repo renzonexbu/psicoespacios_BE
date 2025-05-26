@@ -20,7 +20,7 @@ export class ContactoService {
   async findAll(): Promise<Contacto[]> {
     return this.contactoRepository.find({
       order: {
-        fecha: 'DESC', // Ordena por fecha descendente (más reciente primero)
+        createdAt: 'DESC', // Ordena por fecha de creación descendente (más reciente primero)
       },
     });
   }

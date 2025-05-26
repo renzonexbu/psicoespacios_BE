@@ -7,7 +7,6 @@ import { Plan, TipoPlan } from '../../common/entities/plan.entity';
 import { Sede } from '../../common/entities/sede.entity';
 import { Box } from '../../common/entities/box.entity';
 import { ConfiguracionSistema } from '../../common/entities/configuracion-sistema.entity';
-import { Dimension } from '../../common/entities/box.entity';
 
 async function seed() {
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -18,13 +17,11 @@ async function seed() {
     const adminPassword = await bcrypt.hash('admin123', 10);
     const userRepo = dataSource.getRepository(User);
     const admin = new User();
-    admin.email = 'admin@psicoespacios.cl';
+    admin.email = 'admin@psicoespacios.com';
     admin.password = adminPassword;
-    admin.firstName = 'Admin';
-    admin.lastName = 'Sistema';
+    admin.nombre = 'Admin';
+    admin.apellido = 'Sistema';
     admin.role = 'ADMIN';
-    admin.estado = 'ACTIVO';
-    admin.verificado = true;
     await userRepo.save(admin);
 
     // Crear planes base
@@ -35,13 +32,9 @@ async function seed() {
         nombre: 'Plan Básico',
         descripcion: 'Plan ideal para comenzar',
         precio: 29990,
-        duracionMeses: 1,
-        caracteristicas: JSON.stringify([
-          { nombre: 'Reservas de box', descripcion: 'Hasta 20 horas mensuales', incluido: true },
-          { nombre: 'Derivaciones', descripcion: 'Sistema de derivación básico', incluido: true },
-          { nombre: 'Reportes', descripcion: 'Reportes básicos', incluido: true },
-        ]),
-        descuento: 0,
+        duracion: 1,
+        horasIncluidas: 20,
+        beneficios: ['Reservas de box hasta 20 horas mensuales', 'Sistema de derivación básico', 'Reportes básicos'],
         activo: true,
       },
       {
@@ -49,14 +42,9 @@ async function seed() {
         nombre: 'Plan Profesional',
         descripcion: 'Para profesionales establecidos',
         precio: 49990,
-        duracionMeses: 1,
-        caracteristicas: JSON.stringify([
-          { nombre: 'Reservas de box', descripcion: 'Hasta 40 horas mensuales', incluido: true },
-          { nombre: 'Derivaciones', descripcion: 'Sistema de derivación avanzado', incluido: true },
-          { nombre: 'Reportes', descripcion: 'Reportes avanzados', incluido: true },
-          { nombre: 'Fichas clínicas', descripcion: 'Sistema de fichas ilimitado', incluido: true },
-        ]),
-        descuento: 0,
+        duracion: 1,
+        horasIncluidas: 40,
+        beneficios: ['Reservas de box hasta 40 horas mensuales', 'Sistema de derivación avanzado', 'Reportes avanzados', 'Sistema de fichas ilimitado'],
         activo: true,
       },
       {
@@ -64,15 +52,9 @@ async function seed() {
         nombre: 'Plan Premium',
         descripcion: 'Todas las características disponibles',
         precio: 79990,
-        duracionMeses: 1,
-        caracteristicas: JSON.stringify([
-          { nombre: 'Reservas de box', descripcion: 'Horas ilimitadas', incluido: true },
-          { nombre: 'Derivaciones', descripcion: 'Sistema de derivación premium', incluido: true },
-          { nombre: 'Reportes', descripcion: 'Reportes personalizados', incluido: true },
-          { nombre: 'Fichas clínicas', descripcion: 'Sistema de fichas avanzado', incluido: true },
-          { nombre: 'Soporte prioritario', descripcion: 'Atención 24/7', incluido: true },
-        ]),
-        descuento: 0,
+        duracion: 1,
+        horasIncluidas: 100,
+        beneficios: ['Horas ilimitadas', 'Sistema de derivación premium', 'Reportes personalizados', 'Sistema de fichas avanzado', 'Soporte prioritario 24/7'],
         activo: true,
       },
     ];
@@ -87,18 +69,16 @@ async function seed() {
     const sedeRepo = dataSource.getRepository(Sede);
     const sede = new Sede();
     sede.nombre = 'Sede Central Santiago';
-    sede.direccion = 'Av. Providencia 1234';
-    sede.ciudad = 'Santiago';
-    sede.comuna = 'Providencia';
-    sede.descripcion = 'Sede principal ubicada en el corazón de Providencia';
-    sede.activa = true;
+    sede.direccion = 'Av. Providencia 1234, Providencia';
+    sede.estado = 'ACTIVA';
     sede.telefono = '+56229876543';
-    sede.email = 'sede.central@psicoespacios.cl';
+    sede.email = 'sede.central@psicoespacios.com';
     sede.horarioAtencion = {
       diasHabiles: ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES'],
       horaApertura: '09:00',
       horaCierre: '20:00',
     };
+    sede.serviciosDisponibles = ['consulta-psicologica', 'terapia-grupal', 'terapia-familiar'];
     await sedeRepo.save(sede);
 
     // Crear boxes para la sede demo
@@ -106,46 +86,26 @@ async function seed() {
     const boxes = [
       {
         numero: '101',
-        piso: 1,
-        descripcion: 'Box amplio con vista exterior',
+        nombre: 'Box amplio para terapia grupal',
         capacidad: 3,
-        precioHora: 15000,
-        precioJornada: 80000,
-        equipamiento: JSON.stringify([
-          { nombre: 'Sillón terapéutico', cantidad: 1 },
-          { nombre: 'Sillas', cantidad: 2 },
-          { nombre: 'Escritorio', cantidad: 1 },
-        ]),
-        dimensiones: {
-          largo: 4,
-          ancho: 3,
-          alto: 2.5,
-          unidad: 'metros',
-        } as Dimension,
-        activo: true,
-        caracteristicas: ['Ventilación natural', 'Iluminación LED', 'Aislación acústica'],
+        equipamiento: [
+          'Sillón terapéutico: 1',
+          'Sillas: 2',
+          'Escritorio: 1'
+        ],
+        estado: 'DISPONIBLE',
         sede: sede,
       },
       {
         numero: '102',
-        piso: 1,
-        descripcion: 'Box ideal para terapia individual',
+        nombre: 'Box ideal para terapia individual',
         capacidad: 2,
-        precioHora: 12000,
-        precioJornada: 65000,
-        equipamiento: JSON.stringify([
-          { nombre: 'Sillón terapéutico', cantidad: 1 },
-          { nombre: 'Silla', cantidad: 1 },
-          { nombre: 'Escritorio', cantidad: 1 },
-        ]),
-        dimensiones: {
-          largo: 3,
-          ancho: 2.5,
-          alto: 2.5,
-          unidad: 'metros',
-        } as Dimension,
-        activo: true,
-        caracteristicas: ['Aislación acústica', 'Iluminación LED'],
+        equipamiento: [
+          'Sillón terapéutico: 1',
+          'Silla: 1',
+          'Escritorio: 1'
+        ],
+        estado: 'DISPONIBLE',
         sede: sede,
       },
     ];

@@ -11,7 +11,7 @@ export class CreatePlanDto {
   precio: number;
 
   @IsNumber()
-  duracionMeses: number;
+  duracion: number;
 
   @IsBoolean()
   @IsOptional()
@@ -33,5 +33,5 @@ export class UpdatePlanDto extends CreatePlanDto {
   declare precio: number;
 
   @IsOptional()
-  declare duracionMeses: number;
+  declare duracion: number;
 }

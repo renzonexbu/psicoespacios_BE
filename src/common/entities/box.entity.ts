@@ -2,17 +2,11 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, CreateDat
 import { Sede } from './sede.entity';
 import { Reserva } from './reserva.entity';
 
-export interface Equipamiento {
+// Definición para uso interno, no se mapea directamente a la BD
+export interface EquipamientoItem {
   nombre: string;
   cantidad: number;
   descripcion?: string;
-}
-
-export interface Dimension {
-  largo: number;
-  ancho: number;
-  alto: number;
-  unidad: 'metros' | 'pies';
 }
 
 @Entity('boxes')
@@ -20,53 +14,22 @@ export class Box {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ length: 50 })
+  @Column()
   numero: string;
 
-  @Column()
-  piso: number;
+  @Column({ nullable: true })
+  nombre: string;
 
-  @Column({ type: 'text', nullable: true })
-  descripcion: string;
-
-  @Column()
+  @Column({ default: 2 })
   capacidad: number;
 
-  @Column({ 
-    type: 'decimal', 
-    precision: 10, 
-    scale: 2,
-    transformer: {
-      to: (value: number) => value,
-      from: (value: string) => parseFloat(value),
-    }
-  })
-  precioHora: number;
-
-  @Column({ 
-    type: 'decimal', 
-    precision: 10, 
-    scale: 2,
-    transformer: {
-      to: (value: number) => value,
-      from: (value: string) => parseFloat(value),
-    }
-  })
-  precioJornada: number;
-
-  @Column({ type: 'jsonb', nullable: true })
-  equipamiento: Equipamiento[];
-
-  @Column({ type: 'jsonb', nullable: true })
-  dimensiones: Dimension;
-
-  @Column({ type: 'boolean', default: true })
-  activo: boolean;
-
   @Column({ type: 'text', array: true, nullable: true })
-  caracteristicas: string[];
+  equipamiento: string[];
 
-  @ManyToOne(() => Sede, sede => sede.boxes, { nullable: false })
+  @Column({ default: 'DISPONIBLE' })
+  estado: string;
+
+  @ManyToOne(() => Sede, sede => sede.boxes, { nullable: true })
   sede: Sede;
 
   @OneToMany(() => Reserva, reserva => reserva.box)

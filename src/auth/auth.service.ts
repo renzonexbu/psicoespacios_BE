@@ -30,8 +30,8 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        nombre: user.nombre,
+        apellido: user.apellido,
         rut: user.rut,
         telefono: user.telefono,
         fechaNacimiento: user.fechaNacimiento,
@@ -63,8 +63,8 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        nombre: user.nombre,
+        apellido: user.apellido,
         rut: user.rut,
         telefono: user.telefono,
         fechaNacimiento: user.fechaNacimiento,
