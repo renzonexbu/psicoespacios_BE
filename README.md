@@ -34,24 +34,48 @@ PsicoEspacios es una plataforma integral para la gestión de espacios terapéuti
 
 ### Prerrequisitos
 
-- Node.js (v16 o superior)
+- Node.js (v20.11.1 o superior)
 - Docker y Docker Compose
 - npm o yarn
 
 ### Instalación
 
 1. Clonar el repositorio:
-   \`\`\`bash
+
+   ```bash
    git clone [URL_DEL_REPOSITORIO]
    cd psicoespacios_BE
-   \`\`\`
+   ```
 
 2. Instalar dependencias:
-   \`\`\`bash
+
+   ```bash
    npm install
+   ```
+
+3. Configurar la base de datos:
+
+   **En Windows**, usa el script automatizado:
+
+   ```bash
+   # Ejecutar el script batch para configurar completamente la base de datos
+   setup-database.bat
+   ```
+
+   **En cualquier sistema operativo**:
+
+   ```bash
+   # Iniciar contenedores Docker
+   docker-compose up -d
+
+   # Configurar la base de datos completa
+   npm run db:setup-full
+   ```
+
+   Para más detalles, consulta [la documentación de configuración de la base de datos](docs/DATABASE_SETUP.md)
    \`\`\`
 
-3. Configurar variables de entorno:
+4. Configurar variables de entorno:
    \`\`\`bash
    cp .env.example .env
 

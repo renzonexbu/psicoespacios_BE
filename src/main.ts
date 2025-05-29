@@ -4,6 +4,10 @@ import './config/polyfills';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
+import { DatabaseErrorInterceptor } from './common/interceptors/database-error.interceptor';
+import { ValidationInterceptor } from './common/interceptors/validation.interceptor';
+import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 
 async function bootstrap() {
   try {
@@ -14,8 +18,16 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule, {
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
     });
+      console.log('Aplicación NestJS creada exitosamente');
     
-    console.log('Aplicación NestJS creada exitosamente');
+    // Configurar el filtro global de excepciones
+    app.useGlobalFilters(new AllExceptionsFilter());
+      // Configurar interceptores globales
+    app.useGlobalInterceptors(
+      new DatabaseErrorInterceptor(),
+      new ValidationInterceptor(),
+      new TimeoutInterceptor(60000), // 60 segundos de timeout
+    );
     
     app.useGlobalPipes(
       new ValidationPipe({
@@ -24,6 +36,15 @@ async function bootstrap() {
         transformOptions: {
           enableImplicitConversion: true,
         },
+        exceptionFactory: (errors) => {
+          const formattedErrors = errors.reduce((acc, error) => {
+            const constraints = error.constraints || { error: 'Valor inválido' };
+            acc[error.property] = Object.values(constraints);
+            return acc;
+          }, {});
+          
+          return new ValidationPipe().createExceptionFactory()(errors);
+        }
       }),
     );
 

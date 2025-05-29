@@ -1,0 +1,447 @@
+{
+  "info": {
+    "_postman_id": "fe817a1f-88bb-4fcd-88e0-57833f9c0908",
+    "name": "PsicoEspacios API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "43836950",
+    "_collection_link": "https://francsicoarenas.postman.co/workspace/FrancsicoArenas's-Workspace~e9834285-7148-407d-82c0-2abb2a4af15e/collection/43836950-fe817a1f-88bb-4fcd-88e0-57833f9c0908?action=share&source=collection_link&creator=43836950"
+  },
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"usuario@ejemplo.com\",\n    \"password\": \"contraseña123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registro",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"nuevo@ejemplo.com\",\n    \"password\": \"contraseña123\",\n    \"firstName\": \"Nombre\",\n    \"lastName\": \"Apellido\",\n    \"role\": \"PSICOLOGO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Psicólogos",
+      "item": [
+        {
+          "name": "Crear Psicólogo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Dr. Ejemplo\",\n    \"fotoUrl\": \"http://example.com/foto.jpg\",\n    \"modalidad\": [\n        { \"tipo\": \"Online\", \"precio\": 50 },\n        { \"tipo\": \"Presencial\", \"precio\": 70 }\n    ],\n    \"especialidades\": [\"Terapia Cognitivo Conductual\", \"Ansiedad\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Todos los Psicólogos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Psicólogo por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Psicólogo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Dr. Ejemplo Actualizado\",\n    \"modalidad\": [\n        { \"tipo\": \"Online\", \"precio\": 55 },\n        { \"tipo\": \"Presencial\", \"precio\": 75 }\n    ],\n    \"especialidades\": [\"Terapia Cognitivo Conductual\", \"Ansiedad\", \"Depresión\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Psicólogo",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Disponibilidad de Psicólogos",
+      "item": [
+        {
+          "name": "Consultar Días Disponibles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos/disponibilidad/dias?psicologoId=1&mes=5&año=2025&modalidad=Online",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos", "disponibilidad", "dias"],
+              "query": [
+                {
+                  "key": "psicologoId",
+                  "value": "1"
+                },
+                {
+                  "key": "mes",
+                  "value": "5"
+                },
+                {
+                  "key": "año",
+                  "value": "2025"
+                },
+                {
+                  "key": "modalidad",
+                  "value": "Online"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar Horarios Disponibles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos/disponibilidad/horarios?psicologoId=1&fecha=2025-05-15&modalidad=Online",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos", "disponibilidad", "horarios"],
+              "query": [
+                {
+                  "key": "psicologoId",
+                  "value": "1"
+                },
+                {
+                  "key": "fecha",
+                  "value": "2025-05-15"
+                },
+                {
+                  "key": "modalidad",
+                  "value": "Online"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reservas de Turnos",
+      "item": [
+        {
+          "name": "Reservar Turno",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"psicologoId\": \"1\",\n    \"fecha\": \"2025-05-15\",\n    \"horaInicio\": \"10:00\",\n    \"horaFin\": \"11:00\",\n    \"modalidad\": \"Online\",\n    \"pacienteId\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos/reservas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos", "reservas"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Historial de Turnos del Paciente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos/pacientes/:pacienteId/historial-turnos",
+              "host": ["{{base_url}}"],
+              "path": [
+                "api",
+                "v1",
+                "psicologos",
+                "pacientes",
+                ":pacienteId",
+                "historial-turnos"
+              ],
+              "variable": [
+                {
+                  "key": "pacienteId",
+                  "value": "123"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sedes",
+      "item": [
+        {
+          "name": "Listar Sedes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sedes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sedes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Sede",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sedes/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sedes", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Gestión",
+      "item": [
+        {
+          "name": "Pacientes",
+          "item": [
+            {
+              "name": "Listar Pacientes",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_admin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/gestion/pacientes",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "gestion", "pacientes"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Crear Paciente",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_admin}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Pérez\",\n    \"email\": \"paciente@ejemplo.com\",\n    \"telefono\": \"+569 12345678\",\n    \"fechaNacimiento\": \"1990-01-01T00:00:00.000Z\",\n    \"notas\": \"Primera consulta por ansiedad\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/gestion/pacientes",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "gestion", "pacientes"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token_admin",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2Y2FjMWMwZC0zMDI4LTRjMTctYmUwYS1iMTIzYzUwMDYxNGMiLCJlbWFpbCI6ImFkbWluQHBzaWNvZXNwYWNpb3MuY2wiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NDU5MzM5MjMsImV4cCI6MTc0NTk3NzEyM30.DIxhqQkhp1bQKn7HsbaYbPPh71DL6lPfqyCLQ49fChM",
+      "type": "string"
+    }
+  ]
+}

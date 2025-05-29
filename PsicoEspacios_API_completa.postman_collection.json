@@ -1,0 +1,1087 @@
+{
+  "info": {
+    "_postman_id": "fe817a1f-88bb-4fcd-88e0-57833f9c0908",
+    "name": "PsicoEspacios API Completa",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "43836950",
+    "_collection_link": "https://francsicoarenas.postman.co/workspace/FrancsicoArenas's-Workspace~e9834285-7148-407d-82c0-2abb2a4af15e/collection/43836950-fe817a1f-88bb-4fcd-88e0-57833f9c0908?action=share&source=collection_link&creator=43836950"
+  },
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"usuario@ejemplo.com\",\n    \"password\": \"contraseña123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registro",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"nuevo@ejemplo.com\",\n    \"password\": \"contraseña123\",\n    \"firstName\": \"Nombre\",\n    \"lastName\": \"Apellido\",\n    \"role\": \"PSICOLOGO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refrescar Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/refresh-token",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "refresh-token"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Psicólogos",
+      "item": [
+        {
+          "name": "Crear Psicólogo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Dr. Ejemplo\",\n    \"fotoUrl\": \"http://example.com/foto.jpg\",\n    \"modalidad\": [\n        { \"tipo\": \"Online\", \"precio\": 50 },\n        { \"tipo\": \"Presencial\", \"precio\": 70 }\n    ],\n    \"especialidades\": [\"Terapia Cognitivo Conductual\", \"Ansiedad\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Todos los Psicólogos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Psicólogo por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Psicólogo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Dr. Ejemplo Actualizado\",\n    \"modalidad\": [\n        { \"tipo\": \"Online\", \"precio\": 55 },\n        { \"tipo\": \"Presencial\", \"precio\": 75 }\n    ],\n    \"especialidades\": [\"Terapia Cognitivo Conductual\", \"Ansiedad\", \"Depresión\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Psicólogo",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Disponibilidad de Psicólogos",
+      "item": [
+        {
+          "name": "Consultar Días Disponibles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos/disponibilidad/dias?psicologoId=1&mes=5&año=2025&modalidad=Online",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos", "disponibilidad", "dias"],
+              "query": [
+                {
+                  "key": "psicologoId",
+                  "value": "1"
+                },
+                {
+                  "key": "mes",
+                  "value": "5"
+                },
+                {
+                  "key": "año",
+                  "value": "2025"
+                },
+                {
+                  "key": "modalidad",
+                  "value": "Online"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar Horarios Disponibles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos/disponibilidad/horarios?psicologoId=1&fecha=2025-05-15&modalidad=Online",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos", "disponibilidad", "horarios"],
+              "query": [
+                {
+                  "key": "psicologoId",
+                  "value": "1"
+                },
+                {
+                  "key": "fecha",
+                  "value": "2025-05-15"
+                },
+                {
+                  "key": "modalidad",
+                  "value": "Online"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reservas de Turnos",
+      "item": [
+        {
+          "name": "Reservar Turno",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"psicologoId\": \"1\",\n    \"fecha\": \"2025-05-15\",\n    \"horaInicio\": \"10:00\",\n    \"horaFin\": \"11:00\",\n    \"modalidad\": \"Online\",\n    \"pacienteId\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos/reservas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "psicologos", "reservas"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Historial de Turnos del Paciente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/psicologos/pacientes/:pacienteId/historial-turnos",
+              "host": ["{{base_url}}"],
+              "path": [
+                "api",
+                "v1",
+                "psicologos",
+                "pacientes",
+                ":pacienteId",
+                "historial-turnos"
+              ],
+              "variable": [
+                {
+                  "key": "pacienteId",
+                  "value": "123"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sedes",
+      "item": [
+        {
+          "name": "Listar Sedes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sedes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sedes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Sede",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sedes/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sedes", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Boxes por Sede",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sedes/:sede_id/boxes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sedes", ":sede_id", "boxes"],
+              "variable": [
+                {
+                  "key": "sede_id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verificar Disponibilidad",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sedes/:sede_id/disponibilidad?fecha=2025-05-26&hora_inicio=10:00&hora_fin=12:00",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sedes", ":sede_id", "disponibilidad"],
+              "query": [
+                {
+                  "key": "fecha",
+                  "value": "2025-05-26"
+                },
+                {
+                  "key": "hora_inicio",
+                  "value": "10:00"
+                },
+                {
+                  "key": "hora_fin",
+                  "value": "12:00"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "sede_id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reservas",
+      "item": [
+        {
+          "name": "Obtener Reserva",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reservas/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reservas", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancelar Reserva",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"notasCancelacion\": \"Surgió una emergencia\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reservas/:id/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reservas", ":id", "cancel"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Gestión",
+      "item": [
+        {
+          "name": "Planes",
+          "item": [
+            {
+              "name": "Listar Planes",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_admin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/gestion/planes",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "gestion", "planes"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Obtener Plan",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_admin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/gestion/planes/:id",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "gestion", "planes", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Suscripciones",
+          "item": [
+            {
+              "name": "Crear Suscripción",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_admin}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"planId\": \"id-del-plan\",\n    \"fechaInicio\": \"2025-05-01T00:00:00.000Z\",\n    \"metodoPago\": \"TARJETA\",\n    \"renovacionAutomatica\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/gestion/suscripciones",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "gestion", "suscripciones"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Mi Suscripción",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_admin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/gestion/suscripciones/mi-suscripcion",
+                  "host": ["{{base_url}}"],
+                  "path": [
+                    "api",
+                    "v1",
+                    "gestion",
+                    "suscripciones",
+                    "mi-suscripcion"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Pacientes",
+          "item": [
+            {
+              "name": "Listar Pacientes",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_admin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/gestion/pacientes",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "gestion", "pacientes"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Crear Paciente",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_admin}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Pérez\",\n    \"email\": \"paciente@ejemplo.com\",\n    \"telefono\": \"+569 12345678\",\n    \"fechaNacimiento\": \"1990-01-01T00:00:00.000Z\",\n    \"notas\": \"Primera consulta por ansiedad\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/gestion/pacientes",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "gestion", "pacientes"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Derivación",
+      "item": [
+        {
+          "name": "Perfiles",
+          "item": [
+            {
+              "name": "Mi Perfil",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_admin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/derivacion/perfiles/mi-perfil",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "derivacion", "perfiles", "mi-perfil"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Buscar Perfiles",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_admin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/derivacion/perfiles/search",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "derivacion", "perfiles", "search"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Crear/Actualizar Perfil",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_admin}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"especialidades\": [\"Psicología Clínica\", \"Terapia Familiar\"],\n    \"enfoques\": [\"Cognitivo Conductual\", \"Sistémico\"],\n    \"experiencia\": 5,\n    \"descripcion\": \"Psicólogo con experiencia en tratamiento de trastornos de ansiedad y depresión.\",\n    \"disponibilidadHoraria\": [\"LUNES_MAÑANA\", \"MIERCOLES_TARDE\", \"VIERNES_MAÑANA\"],\n    \"tarifaConsulta\": 45000,\n    \"atencionOnline\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/derivacion/perfiles",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "derivacion", "perfiles"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Solicitudes",
+          "item": [
+            {
+              "name": "Crear Solicitud",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_admin}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"perfilId\": \"id-del-perfil-destino\",\n    \"pacienteId\": \"id-del-paciente\",\n    \"motivoConsulta\": \"Trastorno de ansiedad generalizada\",\n    \"informacionRelevante\": \"El paciente ha mostrado síntomas de ansiedad desde hace 3 meses.\",\n    \"ultimoDiagnostico\": \"Episodio de ansiedad moderada\",\n    \"documentosAdjuntos\": [],\n    \"fechaPreferida\": \"2025-05-15T00:00:00.000Z\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/derivacion/solicitudes",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "derivacion", "solicitudes"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pagos",
+      "item": [
+        {
+          "name": "Crear Pago Suscripción",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"suscripcionId\": \"id-de-la-suscripcion\",\n    \"monto\": 35000,\n    \"metodoPago\": \"TARJETA\",\n    \"comprobante\": \"comprobante_base64\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/pagos/suscripcion",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "pagos", "suscripcion"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Pago Derivación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"solicitudId\": \"id-de-la-solicitud\",\n    \"monto\": 15000,\n    \"metodoPago\": \"TRANSFERENCIA\",\n    \"comprobante\": \"comprobante_base64\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/pagos/derivacion",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "pagos", "derivacion"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reportes",
+      "item": [
+        {
+          "name": "Crear Reporte",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"tipo\": \"MENSUAL\",\n    \"fechaInicio\": \"2025-04-01T00:00:00.000Z\",\n    \"fechaFin\": \"2025-04-30T23:59:59.999Z\",\n    \"filtros\": {\n        \"sedes\": [\"id-sede-1\", \"id-sede-2\"],\n        \"especialidades\": [\"Psicología Clínica\"]\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reportes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reportes"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Contacto",
+      "item": [
+        {
+          "name": "Crear Contacto",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Juan Pérez\",\n    \"tipo\": \"CONSULTA\",\n    \"email\": \"juan@ejemplo.com\",\n    \"telefono\": \"+56912345678\",\n    \"mensaje\": \"Me gustaría obtener más información sobre terapia individual\",\n    \"asunto\": \"Consulta sobre terapia\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacto",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacto"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Contacto (Reclamo)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"María González\",\n    \"tipo\": \"RECLAMO\",\n    \"email\": \"maria@ejemplo.com\",\n    \"telefono\": \"+56987654321\",\n    \"mensaje\": \"Tuve problemas para agendar una cita en la plataforma\",\n    \"asunto\": \"Problema con agendamiento\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacto",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacto"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Contacto (Sugerencia)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Carlos Rodríguez\",\n    \"tipo\": \"SUGERENCIA\",\n    \"email\": \"carlos@ejemplo.com\",\n    \"telefono\": \"+56955552222\",\n    \"mensaje\": \"Sería útil implementar un sistema de notificaciones por SMS\",\n    \"asunto\": \"Sugerencia de mejora\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacto",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacto"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Contactos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacto",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacto"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Contacto por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacto/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacto", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Estado Contacto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"estado\": \"VISTA\",\n    \"respuesta\": \"Hemos revisado su solicitud y nos pondremos en contacto con usted\",\n    \"fechaRespuesta\": \"2025-05-26T15:30:00.000Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacto/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacto", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Contacto",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacto/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacto", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token_admin",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2Y2FjMWMwZC0zMDI4LTRjMTctYmUwYS1iMTIzYzUwMDYxNGMiLCJlbWFpbCI6ImFkbWluQHBzaWNvZXNwYWNpb3MuY2wiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NDU5MzM5MjMsImV4cCI6MTc0NTk3NzEyM30.DIxhqQkhp1bQKn7HsbaYbPPh71DL6lPfqyCLQ49fChM",
+      "type": "string"
+    }
+  ]
+}

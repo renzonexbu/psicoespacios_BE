@@ -9,12 +9,6 @@ export class AdditionalTables1685394100000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Verificar si las tablas ya existen para evitar errores
-    const tablesExist = await this.checkIfTablesExist(queryRunner);
-    
-    if (tablesExist) {
-      console.log('Las tablas adicionales ya existen en la base de datos. Omitiendo creación.');
-      return;
-    }
 
     // Crear tabla de perfiles de derivación
     await queryRunner.query(`
@@ -192,7 +186,7 @@ export class AdditionalTables1685394100000 implements MigrationInterface {
     await queryRunner.query(`ALTER TABLE "fichas_sesion" DROP CONSTRAINT IF EXISTS "FK_r7b3cf6a0bf49af33a4c2cb7dc7"`);
     await queryRunner.query(`ALTER TABLE "fichas_sesion" DROP CONSTRAINT IF EXISTS "FK_q7b3cf6a0bf49af33a4c2cb7dc7"`);
     await queryRunner.query(`ALTER TABLE "pacientes" DROP CONSTRAINT IF EXISTS "FK_o7b3cf6a0bf49af33a4c2cb7dc7"`);
-    await queryRunner.query(`ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_m7b3cf6a0bf49af33a4c2cb7dc7"`);
+    await queryRunner.query(`ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_527cf4cc7783936d28724db2b75"`);
     await queryRunner.query(`ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_l7b3cf6a0bf49af33a4c2cb7dc7"`);
     await queryRunner.query(`ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_k7b3cf6a0bf49af33a4c2cb7dc7"`);
     await queryRunner.query(`ALTER TABLE "perfiles_derivacion" DROP CONSTRAINT IF EXISTS "FK_43ab843e5cbb23fa71dd2789013"`);
@@ -203,25 +197,5 @@ export class AdditionalTables1685394100000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE IF EXISTS "pacientes"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "solicitudes_derivacion"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "perfiles_derivacion"`);
-  }
-
-  private async checkIfTablesExist(queryRunner: QueryRunner): Promise<boolean> {
-    const tablas = ['perfiles_derivacion', 'solicitudes_derivacion', 'pacientes', 'fichas_sesion', 'reservas'];
-    
-    for (const tabla of tablas) {
-      const result = await queryRunner.query(`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = 'public' 
-          AND table_name = '${tabla}'
-        );
-      `);
-      
-      if (result[0].exists) {
-        return true;
-      }
-    }
-    
-    return false;
   }
 }

@@ -18,25 +18,29 @@ export class InitialSchema1685394000000 implements MigrationInterface {
 
     // Crear tabla de usuarios
     await queryRunner.query(`
-      CREATE TABLE "users" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-        "email" character varying NOT NULL,
-        "password" character varying NOT NULL,
-        "nombre" character varying NOT NULL,
-        "apellido" character varying NOT NULL,
-        "rut" character varying,
-        "telefono" character varying,
-        "role" character varying NOT NULL DEFAULT 'USUARIO',
-        "especialidad" character varying,
-        "bio" text,
-        "fotoPerfil" character varying,
-        "estado" character varying NOT NULL DEFAULT 'ACTIVO',
-        "fechaCreacion" TIMESTAMP NOT NULL DEFAULT now(),
-        "fechaActualizacion" TIMESTAMP NOT NULL DEFAULT now(),
-        CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"),
-        CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id")
-      )
-    `);    // Crear tabla de configuración del sistema
+  CREATE TABLE IF NOT EXISTS "users" ( -- Asegúrate que IF NOT EXISTS esté aquí si lo necesitas
+    "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+    "email" character varying NOT NULL,
+    "password" character varying NOT NULL,
+    "nombre" character varying,
+    "apellido" character varying,
+    "rut" character varying,
+    "telefono" character varying,
+    "fechaNacimiento" date,
+    "direccion" text,
+    "bio" text, -- <<< AGREGA ESTA LÍNEA
+    "especialidad" character varying,
+    "numeroRegistroProfesional" character varying,
+    "experiencia" text,
+    "role" character varying NOT NULL DEFAULT 'USER',
+    "estado" character varying NOT NULL DEFAULT 'PENDIENTE',
+    "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+    "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
+    CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"),
+    CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id")
+  )
+`);
+   // Crear tabla de configuración del sistema
     await queryRunner.query(`
       CREATE TABLE "configuracion_sistema" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -103,6 +107,7 @@ export class InitialSchema1685394000000 implements MigrationInterface {
         "descripcion" text,
         "precio" numeric(10,2) NOT NULL,
         "duracionMeses" integer NOT NULL DEFAULT 1,
+        "tipo" character varying, -- Agrega esta línea
         "caracteristicas" jsonb DEFAULT '[]',
         "horasIncluidas" integer NOT NULL DEFAULT 0,
         "descuentoHoraAdicional" numeric(5,2) DEFAULT 0,
@@ -149,9 +154,10 @@ export class InitialSchema1685394000000 implements MigrationInterface {
         "nombre" character varying NOT NULL,
         "email" character varying NOT NULL,
         "telefono" character varying,
+        "asunto" character varying, -- Agrega esta línea
         "mensaje" text NOT NULL,
         "tipo" character varying NOT NULL DEFAULT 'CONSULTA',
-        "estado" character varying NOT NULL DEFAULT 'NUEVA',
+        "estado" character varying NOT NULL DEFAULT 'PENDIENTE',
         "fecha" TIMESTAMP NOT NULL DEFAULT now(),
         "fechaCreacion" TIMESTAMP NOT NULL DEFAULT now(),
         "fechaActualizacion" TIMESTAMP NOT NULL DEFAULT now(),
@@ -199,6 +205,7 @@ export class InitialSchema1685394000000 implements MigrationInterface {
     await queryRunner.query(`ALTER TABLE "suscripciones" DROP CONSTRAINT IF EXISTS "FK_e2f1ae9e6f0f1aba0d1b1b1b1b1"`);
     await queryRunner.query(`ALTER TABLE "suscripciones" DROP CONSTRAINT IF EXISTS "FK_d2f1ae9e6f0f1aba0d1b1b1b1b1"`);
     await queryRunner.query(`ALTER TABLE "boxes" DROP CONSTRAINT IF EXISTS "FK_3c5e1ebfb1d5b6a42a5ae1be41b"`);
+    await queryRunner.query(`ALTER TABLE "users" DROP COLUMN IF EXISTS "bio"`);
     
     // Eliminar tablas
     await queryRunner.query(`DROP TABLE IF EXISTS "pagos"`);

@@ -1,4 +1,4 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module, OnModuleInit, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import databaseConfig from './config/database.config';
@@ -13,6 +13,8 @@ import { AdminModule } from './admin/admin.module';
 import { ContactoModule } from './contacto/contacto.module';
 import { HealthModule } from './health/health.module';
 import { runMigrations } from './database/migration-runner';
+import { PsicologosModule } from './psicologos/psicologos.module';
+import { JsonParsingErrorMiddleware } from './common/middleware/json-parsing-error.middleware';
 
 @Module({
   imports: [
@@ -28,10 +30,9 @@ import { runMigrations } from './database/migration-runner';
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        // Si existe DATABASE_URL, usar esa configuración (para producción/Neon)
+      useFactory: (configService: ConfigService) => {        // Si existe DATABASE_URL, usar esa configuración (para producción/Fly.io)
         if (process.env.DATABASE_URL) {
-          return {
+          const config: any = {
             type: 'postgres',
             url: process.env.DATABASE_URL,
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
@@ -39,15 +40,21 @@ import { runMigrations } from './database/migration-runner';
             migrationsRun: false, // Desactivamos para usar nuestro propio runner
             migrationsTableName: 'migrations_history',
             synchronize: false, // Más seguro en producción
-            ssl: {
-              rejectUnauthorized: false, // Necesario para Neon
-            },
-            extra: {
-              poolSize: 20,
-              connectionTimeoutMillis: 10000,
-            },
             logging: process.env.NODE_ENV !== 'production',
           };
+
+          // Solo usar SSL en producción (Fly.io/AWS)
+          if (process.env.NODE_ENV === 'production') {
+            config.ssl = {
+              rejectUnauthorized: false,
+            };
+            config.extra = {
+              poolSize: 20,
+              connectionTimeoutMillis: 10000,
+            };
+          }
+
+          return config;
         }
 
         // Configuración para desarrollo local
@@ -75,9 +82,12 @@ import { runMigrations } from './database/migration-runner';
     AdminModule,
     ContactoModule,
     HealthModule,
+    PsicologosModule,
   ],
 })
-export class AppModule implements OnModuleInit {
+export class AppModule implements OnModuleInit, NestModule {
+  constructor(private configService: ConfigService) {}
+
   // Ejecutar migraciones al iniciar la aplicación
   async onModuleInit() {
     console.log('Ejecutando migraciones al iniciar la aplicación...');
@@ -87,5 +97,13 @@ export class AppModule implements OnModuleInit {
     } catch (error) {
       console.error('Error al ejecutar migraciones:', error);
     }
+  }
+
+  // Configuración de middlewares
+  configure(consumer: MiddlewareConsumer) {
+    // Aplicar el middleware de manejo de errores JSON a todas las rutas
+    consumer
+      .apply(JsonParsingErrorMiddleware)
+      .forRoutes('*');
   }
 }

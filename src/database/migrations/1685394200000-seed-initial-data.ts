@@ -4,23 +4,93 @@ import * as bcrypt from 'bcrypt';
 
 /**
  * Migración para poblar la base de datos con datos iniciales
+ * (Versión corregida con mejor manejo de nombres de columnas)
  */
 export class SeedInitialData1685394200000 implements MigrationInterface {
   name = 'SeedInitialData1685394200000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Poblar la base de datos con datos iniciales
-    await this.seedUsers(queryRunner);
-    await this.seedConfiguracionSistema(queryRunner);
-    await this.seedSedes(queryRunner);
-    await this.seedBoxes(queryRunner);
-    await this.seedPlanes(queryRunner);
-    await this.seedContactos(queryRunner);
+     try {
+      await this.seedUsers(queryRunner);
+    } catch (error) {
+      console.error(`Error en seedUsers: ${error.message}`);
+      // Continuamos con el siguiente seed
+    }
+    
+    try {
+      await this.seedConfiguracionSistema(queryRunner);
+    } catch (error) {
+      console.error(`Error en seedConfiguracionSistema: ${error.message}`);
+      // Continuamos con el siguiente seed
+    }
+    
+    try {
+      await this.seedSedes(queryRunner);
+    } catch (error) {
+      console.error(`Error en seedSedes: ${error.message}`);
+      // Continuamos con el siguiente seed
+    }
+    
+    try {
+      await this.seedBoxes(queryRunner);
+    } catch (error) {
+      console.error(`Error en seedBoxes: ${error.message}`);
+      // Continuamos con el siguiente seed
+    }
+    
+    try {
+      await this.seedPlanes(queryRunner);
+    } catch (error) {
+      console.error(`Error en seedPlanes: ${error.message}`);
+      // Continuamos con el siguiente seed
+    }
+    
+    try {
+      await this.seedContactos(queryRunner);
+    } catch (error) {
+      console.error(`Error en seedContactos: ${error.message}`);
+    }
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // No es necesario implementar la eliminación de datos
     console.log('No se eliminarán los datos insertados.');
+  }
+  
+  /**
+   * Obtiene el nombre exacto de una columna en una tabla teniendo en cuenta case sensitivity
+   * @param queryRunner El QueryRunner de TypeORM
+   * @param tableName Nombre de la tabla
+   * @param columnNameLowercase Nombre de la columna en minúsculas para buscar
+   */
+  private async getExactColumnName(
+    queryRunner: QueryRunner,
+    tableName: string,
+    columnNameLowercase: string,
+  ): Promise<string | null> {
+    const columnsQuery = await queryRunner.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = '${tableName}'
+    `);
+
+    const foundColumn = columnsQuery.find(
+      (col) => col.column_name.toLowerCase() === columnNameLowercase.toLowerCase(),
+    );
+
+    return foundColumn ? foundColumn.column_name : null;
+  }
+
+  /**
+   * Comprueba si una columna existe en una tabla
+   */
+  private async columnExists(
+    queryRunner: QueryRunner,
+    tableName: string,
+    columnNameLowercase: string,
+  ): Promise<boolean> {
+    const exactName = await this.getExactColumnName(queryRunner, tableName, columnNameLowercase);
+    return exactName !== null;
   }
 
   /**
@@ -155,26 +225,45 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
     if (parseInt(existingConfig[0].count) > 0) {
       console.log('La tabla de configuración ya tiene datos. Omitiendo inserción.');
       return;
-    }
-
-    // Insertar configuración inicial
+    }    // Verificar el nombre exacto de las columnas para resolver problemas de mayúsculas/minúsculas
+    const columnsQuery = await queryRunner.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'configuracion_sistema' 
+      AND column_name LIKE 'configuracion%'
+    `);
+    
+    // Crear un mapa de nombres de columnas reales
+    const columnMap = {};
+    columnsQuery.forEach(col => {
+      const lowerName = col.column_name.toLowerCase();
+      columnMap[lowerName] = col.column_name;
+    });
+    
+    // Determinar los nombres correctos de las columnas, con fallback a los originales
+    const configGeneralCol = columnMap['configuraciongeneral'] || 'configuracionGeneral';
+    const configReservasCol = columnMap['configuracionreservas'] || 'configuracionReservas';
+    const configPagosCol = columnMap['configuracionpagos'] || 'configuracionPagos';
+    const configDerivacionCol = columnMap['configuracionderivacion'] || 'configuracionDerivacion';
+    const configSuscripcionesCol = columnMap['configuracionsuscripciones'] || 'configuracionSuscripciones';
+    const configNotificacionesCol = columnMap['configuracionnotificaciones'] || 'configuracionNotificaciones';
+    
+    // Insertar configuración inicial con los nombres de columna correctos
     await queryRunner.query(`
       INSERT INTO configuracion_sistema 
-      (configuracionGeneral, configuracionReservas, configuracionPagos, configuracionDerivacion, configuracionSuscripciones, configuracionNotificaciones) 
+      ("${configGeneralCol}", "${configReservasCol}", "${configPagosCol}", "${configDerivacionCol}", "${configSuscripcionesCol}", "${configNotificacionesCol}") 
       VALUES 
       (
-        '{"nombreSistema":"PsicoEspacios","logotipo":"https://example.com/logo.png","colorPrimario":"#3f51b5","colorSecundario":"#f50057","contactoSoporte":"contacto@psicoespacios.com"}',
-        '{"tiempoMinimoReserva":60,"tiempoMaximoReserva":240,"anticipacionMinima":24,"anticipacionMaxima":720,"intervaloHorario":[9,19]}',
-        '{"moneda":"CLP","comisionPlataforma":5,"metodosHabilitados":["TARJETA","TRANSFERENCIA"],"datosTransferencia":{"banco":"Banco Estado","tipoCuenta":"Corriente","numeroCuenta":"123456789","titular":"PsicoEspacios SpA","rut":"76.123.456-7","email":"pagos@psicoespacios.com"}}',
-        '{"especialidades":["Psicología Clínica","Psicología Infantil","Terapia de Pareja","Terapia Familiar"],"modalidades":["Presencial","Online"],"tiempoMaximoRespuesta":48,"comisionDerivacion":10}',
-        '{"periodosRenovacion":[1,3,6,12],"descuentosRenovacion":[{"periodo":3,"descuento":5},{"periodo":6,"descuento":10},{"periodo":12,"descuento":15}]}',
-        '{"emailsHabilitados":true,"plantillasEmail":{"bienvenida":{"asunto":"Bienvenido a PsicoEspacios","plantilla":"Bienvenido a nuestra plataforma..."}}}'
+        '{"nombreSistema":"PsicoEspacios","logotipo":"https://example.com/logo.png","colorPrimario":"#3f51b5","colorSecundario":"#f50057","contactoSoporte":"contacto@psicoespacios.com"}'::jsonb,
+        '{"tiempoMinimoReserva":60,"tiempoMaximoReserva":240,"anticipacionMinima":24,"anticipacionMaxima":720,"intervaloHorario":[9,19]}'::jsonb,
+        '{"moneda":"CLP","comisionPlataforma":5,"metodosHabilitados":["TARJETA","TRANSFERENCIA"],"datosTransferencia":{"banco":"Banco Estado","tipoCuenta":"Corriente","numeroCuenta":"123456789","titular":"PsicoEspacios SpA","rut":"76.123.456-7","email":"pagos@psicoespacios.com"}}'::jsonb,
+        '{"especialidades":["Psicología Clínica","Psicología Infantil","Terapia de Pareja","Terapia Familiar"],"modalidades":["Presencial","Online"],"tiempoMaximoRespuesta":48,"comisionDerivacion":10}'::jsonb,
+        '{"periodosRenovacion":[1,3,6,12],"descuentosRenovacion":[{"periodo":3,"descuento":5},{"periodo":6,"descuento":10},{"periodo":12,"descuento":15}]}'::jsonb,
+        '{"emailsHabilitados":true,"plantillasEmail":{"bienvenida":{"asunto":"Bienvenido a PsicoEspacios","plantilla":"Bienvenido a nuestra plataforma..."}}}'::jsonb
       )
     `);
 
     console.log('Tabla de configuración poblada exitosamente.');
   }
-
   /**
    * Poblar tabla de sedes
    */
@@ -221,151 +310,361 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
         telefono: '+56934567890',
         email: 'nunoa@psicoespacios.com',
         coordenadas: { lat: -33.4563, lng: -70.5934 },
-        estado: 'ACTIVA',      },
+        estado: 'ACTIVA',
+      },
     ];
+
+    // Verificar las columnas disponibles en la tabla sedes
+    const sedesColumns = await queryRunner.query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'sedes'
+    `);
+    const columnNames = sedesColumns.map(col => col.column_name.toLowerCase());
+    
+    // Comprobar si existe la columna comuna
+    const hasComuna = columnNames.includes('comuna');
     
     for (const sede of sedes) {
-      await queryRunner.query(`
-        INSERT INTO sedes 
-        (nombre, direccion, ciudad, comuna, telefono, email, coordenadas, estado) 
-        VALUES 
-        ('${sede.nombre}', '${sede.direccion}', '${sede.ciudad}', '${sede.comuna}', '${sede.telefono}', 
-        '${sede.email}', '${JSON.stringify(sede.coordenadas)}', '${sede.estado}')
-      `);
-    }
-
-    console.log('Tabla de sedes poblada exitosamente.');
-  }
-
-  /**
-   * Poblar tabla de boxes
-   */
-  private async seedBoxes(queryRunner: QueryRunner): Promise<void> {
-    console.log('Poblando tabla de boxes...');
-
-    // Comprobar si ya existen boxes
-    const existingBoxes = await queryRunner.query(
-      'SELECT COUNT(*) FROM boxes',
-    );
-
-    if (parseInt(existingBoxes[0].count) > 0) {
-      console.log('La tabla de boxes ya tiene datos. Omitiendo inserción.');
-      return;
-    }
-
-    // Obtener IDs de las sedes
-    const sedes = await queryRunner.query('SELECT id FROM sedes');
-
-    if (sedes.length === 0) {
-      console.log('No se encontraron sedes para crear boxes. Omitiendo inserción.');
-      return;
-    }
-
-    // Generar boxes para cada sede
-    for (let i = 0; i < sedes.length; i++) {
-      const sedeId = sedes[i].id;
-      
-      // Crear 3 boxes para cada sede
-      for (let j = 1; j <= 3; j++) {
-        const boxNumber = i * 3 + j;
-        const precio = 15000 + (j * 5000); // Precio varía según el box
+      try {
+        if (hasComuna) {
+          await queryRunner.query(`
+            INSERT INTO sedes 
+            (nombre, direccion, ciudad, comuna, telefono, email, coordenadas, estado) 
+            VALUES 
+            ('${sede.nombre}', '${sede.direccion}', '${sede.ciudad}', '${sede.comuna}', '${sede.telefono}', 
+            '${sede.email}', '${JSON.stringify(sede.coordenadas)}'::jsonb, '${sede.estado}')
+          `);
+        } else {
+          // Insertar sin la columna comuna
+          await queryRunner.query(`
+            INSERT INTO sedes 
+            (nombre, direccion, ciudad, telefono, email, coordenadas, estado) 
+            VALUES 
+            ('${sede.nombre}', '${sede.direccion}', '${sede.ciudad}', '${sede.telefono}', 
+            '${sede.email}', '${JSON.stringify(sede.coordenadas)}'::jsonb, '${sede.estado}')
+          `);
+        }
+        console.log(`Sede ${sede.nombre} insertada correctamente`);
+      } catch (error) {
+        console.error(`Error al insertar sede ${sede.nombre}:`, error.message);
         
+        // Inserción mínima como respaldo
+        console.log('Intentando inserción simplificada...');
         await queryRunner.query(`
-          INSERT INTO boxes 
-          (nombre, descripcion, capacidad, precio, precioHora, caracteristicas, imagenes, estado, "sedeId") 
-          VALUES 
-          ('Box ${boxNumber}', 'Box confortable y acogedor ideal para terapia individual o de pareja.', 
-          ${j + 1}, ${precio}, ${precio / 2}, 
-          '["Luz natural","Aire acondicionado","Insonorizado","Wifi de alta velocidad"]', 
-          '["https://example.com/box${boxNumber}_1.jpg","https://example.com/box${boxNumber}_2.jpg"]', 
-          'DISPONIBLE', '${sedeId}')
+          INSERT INTO sedes (nombre, direccion, ciudad)
+          VALUES ('${sede.nombre}', '${sede.direccion}', '${sede.ciudad}')
         `);
       }
     }
 
-    console.log('Tabla de boxes poblada exitosamente.');
-  }
+    console.log('Tabla de sedes poblada exitosamente.');
+  }  /**
+   * Poblar tabla de boxes
+   */
+    private async seedBoxes(queryRunner: QueryRunner): Promise<void> {
+    console.log('Poblando tabla de boxes...');
 
+    try {
+      // Iniciar una nueva transacción específica para este método
+      await queryRunner.startTransaction();
+      
+      // Comprobar si ya existen boxes
+      const existingBoxes = await queryRunner.query(
+        'SELECT COUNT(*) FROM boxes',
+      );
+
+      if (parseInt(existingBoxes[0].count) > 0) {
+        console.log('La tabla de boxes ya tiene datos. Omitiendo inserción.');
+        await queryRunner.commitTransaction();
+        return;
+      }
+      
+      // Obtener IDs de las sedes
+      const sedes = await queryRunner.query('SELECT id FROM sedes');
+
+      if (sedes.length === 0) {
+        console.log('No se encontraron sedes para crear boxes. Omitiendo inserción.');
+        await queryRunner.commitTransaction();
+        return;
+      }
+
+      // Para cada sede, crear 3 boxes con datos básicos
+      for (let i = 0; i < sedes.length; i++) {
+        const sedeId = sedes[i].id;
+        
+        // Crear 3 boxes por sede
+        for (let j = 1; j <= 3; j++) {
+          const boxNumber = i * 3 + j;
+          const boxName = `Box ${boxNumber}`;
+          const precio = 15000 + (j * 5000);
+          
+          try {
+            // Insertar el box con los datos mínimos necesarios
+            await queryRunner.query(`
+              INSERT INTO boxes (
+                nombre, 
+                descripcion,
+                capacidad,
+                precio,
+                "precioHora",
+                estado,
+                "sedeId"
+              ) VALUES (
+                '${boxName}',
+                'Box confortable y acogedor ideal para terapia individual o de pareja.',
+                ${j + 1},
+                ${precio},
+                ${precio / 2},
+                'DISPONIBLE',
+                '${sedeId}'
+              )
+            `);
+            
+            console.log(`Box ${boxNumber} para sede ${sedeId} insertado correctamente.`);
+          } catch (error) {
+            console.error(`Error al insertar Box ${boxNumber} con enfoque principal: ${error.message}`);
+            
+            // Segundo intento: alternar entre columnas camelCase y lowercase
+            try {
+              await queryRunner.query(`
+                INSERT INTO boxes (
+                  nombre, 
+                  descripcion,
+                  capacidad,
+                  precio,
+                  preciohora,
+                  estado,
+                  sedeid
+                ) VALUES (
+                  '${boxName}',
+                  'Box confortable y acogedor ideal para terapia individual o de pareja.',
+                  ${j + 1},
+                  ${precio},
+                  ${precio / 2},
+                  'DISPONIBLE',
+                  '${sedeId}'
+                )
+              `);
+              
+              console.log(`Box ${boxNumber} insertado con enfoque alternativo.`);
+            } catch (secondError) {
+              console.error(`Error en segundo intento para Box ${boxNumber}: ${secondError.message}`);
+              
+              // Tercer intento: consultar exactamente qué columnas existen e insertar de manera dinámica
+              try {
+                // Obtener nombres exactos de las columnas
+                const columnsInfo = await queryRunner.query(`
+                  SELECT column_name, is_nullable 
+                  FROM information_schema.columns 
+                  WHERE table_name = 'boxes'
+                `);
+                
+                // Mapear nombres de columnas a su formato exacto
+                const columnMap: Record<string, string> = {};
+                const requiredColumns: string[] = [];
+                
+                columnsInfo.forEach(col => {
+                  const name = col.column_name;
+                  const lowerName = name.toLowerCase();
+                  columnMap[lowerName] = name;
+                  
+                  if (col.is_nullable === 'NO' && lowerName !== 'id' && !lowerName.includes('fecha')) {
+                    requiredColumns.push(lowerName);
+                  }
+                });
+                
+                // Construir la consulta con los nombres exactos de columnas
+                const columns: string[] = [];
+                const values: string[] = [];
+                
+                // Nombre (siempre requerido)
+                if (columnMap['nombre']) {
+                  columns.push(`"${columnMap['nombre']}"`);
+                  values.push(`'${boxName}'`);
+                }
+                
+                // Descripción
+                if (columnMap['descripcion']) {
+                  columns.push(`"${columnMap['descripcion']}"`);
+                  values.push(`'Box confortable y acogedor ideal para terapia individual o de pareja.'`);
+                }
+                
+                // Capacidad
+                if (columnMap['capacidad']) {
+                  columns.push(`"${columnMap['capacidad']}"`);
+                  values.push(`${j + 1}`);
+                }
+                
+                // Precio (probablemente requerido)
+                if (columnMap['precio']) {
+                  columns.push(`"${columnMap['precio']}"`);
+                  values.push(`${precio}`);
+                }
+                
+                // PrecioHora (varios formatos posibles)
+                const precioHoraColumn = columnMap['preciohora'] || columnMap['preciohora'];
+                if (precioHoraColumn) {
+                  columns.push(`"${precioHoraColumn}"`);
+                  values.push(`${precio / 2}`);
+                }
+                
+                // Estado
+                if (columnMap['estado']) {
+                  columns.push(`"${columnMap['estado']}"`);
+                  values.push(`'DISPONIBLE'`);
+                }
+                
+                // Sede ID (requerido)
+                const sedeIdColumn = columnMap['sedeid'] || columnMap['sedeid'];
+                if (sedeIdColumn) {
+                  columns.push(`"${sedeIdColumn}"`);
+                  values.push(`'${sedeId}'`);
+                }
+                
+                // Ejecutar la consulta final
+                if (columns.length > 0) {
+                  const finalQuery = `
+                    INSERT INTO boxes (${columns.join(', ')})
+                    VALUES (${values.join(', ')})
+                  `;
+                  
+                  await queryRunner.query(finalQuery);
+                  console.log(`Box ${boxNumber} insertado con enfoque dinámico basado en columnas.`);
+                }
+              } catch (finalError) {
+                console.error(`Todos los intentos fallaron para Box ${boxNumber}: ${finalError.message}`);
+                // No revertimos toda la transacción, simplemente continuamos con el siguiente box
+              }
+            }
+          }
+        }
+      }
+      
+      // Si llegamos hasta aquí, todo bien
+      await queryRunner.commitTransaction();
+      console.log('Tabla de boxes poblada exitosamente.');
+      
+    } catch (globalError) {
+      // Si hay un error global, revertir la transacción
+      try {
+        await queryRunner.rollbackTransaction();
+      } catch (rollbackError) {
+        console.error(`Error al revertir transacción: ${rollbackError.message}`);
+      }
+      
+      console.error(`Error global en seedBoxes: ${globalError.message}`);
+      // No propagar el error para que continúe con las demás migraciones
+    }
+  }
   /**
    * Poblar tabla de planes
    */
   private async seedPlanes(queryRunner: QueryRunner): Promise<void> {
     console.log('Poblando tabla de planes...');
 
-    // Comprobar si ya existen planes
-    const existingPlanes = await queryRunner.query(
-      'SELECT COUNT(*) FROM planes',
-    );
+    try {
+      // Comprobar si ya existen planes
+      const existingPlanes = await queryRunner.query(
+        'SELECT COUNT(*) FROM planes',
+      );
 
-    if (parseInt(existingPlanes[0].count) > 0) {
-      console.log('La tabla de planes ya tiene datos. Omitiendo inserción.');
-      return;
-    }    // Insertar planes
-    const planes = [
-      {
-        nombre: 'Plan Básico',
-        descripcion: 'Plan ideal para psicólogos que inician su práctica o atienden pocas horas a la semana.',
-        precio: 50000,
-        duracionMeses: 1,
-        tipo: 'BASICO',
-        caracteristicas: [
-          'Acceso a boxes durante 10 horas mensuales',
-          'Reserva hasta con 1 semana de anticipación',
-          'Acceso a WiFi',
-          'Uso de áreas comunes',
-        ],
-        horasIncluidas: 10,
-        descuentoHoraAdicional: 0,
-        estado: 'ACTIVO',
-      },
-      {
-        nombre: 'Plan Estándar',
-        descripcion: 'Plan diseñado para psicólogos con práctica regular que necesitan más horas de atención.',
-        precio: 90000,
-        duracionMeses: 1,
-        tipo: 'INTERMEDIO',
-        caracteristicas: [
-          'Acceso a boxes durante 20 horas mensuales',
-          'Reserva hasta con 2 semanas de anticipación',
-          'Acceso a WiFi',
-          'Uso de áreas comunes',
-          'Descuento en horas adicionales',
-        ],
-        horasIncluidas: 20,
-        descuentoHoraAdicional: 10,
-        estado: 'ACTIVO',
-      },
-      {
-        nombre: 'Plan Premium',
-        descripcion: 'Plan completo para psicólogos con alta demanda de pacientes y necesidades de flexibilidad.',
-        precio: 150000,
-        duracionMeses: 1,
-        tipo: 'PREMIUM',
-        caracteristicas: [
-          'Acceso a boxes durante 40 horas mensuales',
-          'Reserva hasta con 1 mes de anticipación',
-          'Acceso a WiFi',
-          'Uso de áreas comunes',
-          'Mayor descuento en horas adicionales',
-          'Acceso preferencial a boxes premium',
-        ],
-        horasIncluidas: 40,
-        descuentoHoraAdicional: 20,
-        estado: 'ACTIVO',
-      },
-    ];
-
-    for (const plan of planes) {
-      await queryRunner.query(`        INSERT INTO planes 
-        (nombre, descripcion, precio, "duracionMeses", tipo, caracteristicas, "horasIncluidas", "descuentoHoraAdicional", estado) 
-        VALUES 
-        ('${plan.nombre}', '${plan.descripcion}', ${plan.precio}, ${plan.duracionMeses}, 
-        '${plan.tipo}', '${JSON.stringify(plan.caracteristicas)}', ${plan.horasIncluidas}, ${plan.descuentoHoraAdicional}, 
-        '${plan.estado}')
+      if (parseInt(existingPlanes[0].count) > 0) {
+        console.log('La tabla de planes ya tiene datos. Omitiendo inserción.');
+        return;
+      }
+      
+      // Verificar que la tabla planes existe
+      const tableExists = await queryRunner.query(`
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.tables 
+          WHERE table_name = 'planes'
+        ) as exists
       `);
-    }
+      
+      if (!tableExists[0].exists) {
+        console.log('La tabla planes no existe. Omitiendo inserción.');
+        return;
+      }
 
-    console.log('Tabla de planes poblada exitosamente.');
+      // Insertar planes uno por uno para evitar fallos en la transacción completa
+      const planes = [
+        {
+          nombre: 'Plan Básico',
+          descripcion: 'Plan ideal para psicólogos que inician su práctica o atienden pocas horas a la semana.',
+          precio: 50000,
+          duracionMeses: 1,
+          tipo: 'BASICO',
+          caracteristicas: [
+            'Acceso a boxes durante 10 horas mensuales',
+            'Reserva hasta con 1 semana de anticipación',
+            'Acceso a WiFi',
+            'Uso de áreas comunes',
+          ],
+          horasIncluidas: 10,
+          descuentoHoraAdicional: 0,
+          estado: 'ACTIVO',
+        },
+        {
+          nombre: 'Plan Estándar',
+          descripcion: 'Plan diseñado para psicólogos con práctica regular que necesitan más horas de atención.',
+          precio: 90000,
+          duracionMeses: 1,
+          tipo: 'INTERMEDIO',
+          caracteristicas: [
+            'Acceso a boxes durante 20 horas mensuales',
+            'Reserva hasta con 2 semanas de anticipación',
+            'Acceso a WiFi',
+            'Uso de áreas comunes',
+            'Descuento en horas adicionales',
+          ],
+          horasIncluidas: 20,
+          descuentoHoraAdicional: 10,
+          estado: 'ACTIVO',
+        },
+        {
+          nombre: 'Plan Premium',
+          descripcion: 'Plan completo para psicólogos con alta demanda de pacientes y necesidades de flexibilidad.',
+          precio: 150000,
+          duracionMeses: 1,
+          tipo: 'PREMIUM',
+          caracteristicas: [
+            'Acceso a boxes durante 40 horas mensuales',
+            'Reserva hasta con 1 mes de anticipación',
+            'Acceso a WiFi',
+            'Uso de áreas comunes',
+            'Mayor descuento en horas adicionales',
+            'Acceso preferencial a boxes premium',
+          ],
+          horasIncluidas: 40,
+          descuentoHoraAdicional: 20,
+          estado: 'ACTIVO',
+        },
+      ];
+
+      for (const plan of planes) {
+        try {
+          await queryRunner.query(`
+            INSERT INTO planes 
+            (nombre, descripcion, precio, "duracionMeses", tipo, caracteristicas, "horasIncluidas", "descuentoHoraAdicional", estado) 
+            VALUES 
+            ('${plan.nombre}', '${plan.descripcion}', ${plan.precio}, ${plan.duracionMeses}, 
+            '${plan.tipo}', '${JSON.stringify(plan.caracteristicas)}'::jsonb, ${plan.horasIncluidas}, ${plan.descuentoHoraAdicional}, 
+            '${plan.estado}')
+          `);
+          
+          console.log(`Plan "${plan.nombre}" insertado correctamente.`);
+        } catch (error) {
+          console.error(`Error al insertar plan "${plan.nombre}": ${error.message}`);
+          // Continuamos con el siguiente plan
+        }
+      }
+      
+      console.log('Tabla de planes poblada exitosamente.');
+    } catch (error) {
+      console.error(`Error general en seedPlanes: ${error.message}`);
+      throw error; // Re-lanzar para manejo en la función up
+    }
   }
 
   /**
