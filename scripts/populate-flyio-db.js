@@ -34,19 +34,19 @@ async function populateDatabase() {
   console.log('Iniciando población de la base de datos...');
 
   try {
-    // Insertar datos en las tablas
+    // Insertar datos en las tablas en el orden correcto de dependencias
     await populateUsers();
     await populateConfiguracionSistema();
     await populateSedes();
     await populateBoxes();
     await populatePlanes();
-    await populatePerfilesDerivacion();
-    await populatePacientes();
-    await populateReservas();
-    await populateFichasSesion();
-    await populateSuscripciones();
-    await populateSolicitudesDerivacion();
-    await populatePagos();
+    await populatePerfilesDerivacion(); // Depende de users
+    await populatePacientes(); // Depende de users
+    await populateSuscripciones(); // Depende de users, planes
+    await populateReservas(); // Depende de users, boxes, suscripciones
+    await populateFichasSesion(); // Depende de pacientes, users, reservas
+    await populateSolicitudesDerivacion(); // Depende de users, pacientes, perfiles_derivacion
+    await populatePagos(); // Depende de users, suscripciones, solicitudes_derivacion
     await populateContactos();
 
     console.log('Población de la base de datos completada con éxito.');
@@ -455,13 +455,14 @@ async function populateSolicitudesDerivacion() {
     );
     return;
   }
-
-  // Obtener IDs de pacientes
-  const pacientes = await executeQuery('SELECT id FROM pacientes');
+  // Obtener IDs de pacientes (usuarios con role PACIENTE)
+  const pacientes = await executeQuery('SELECT id FROM users WHERE role = $1', [
+    'PACIENTE',
+  ]);
 
   if (pacientes.rows.length === 0) {
     console.log(
-      'No se encontraron pacientes para crear solicitudes de derivación. Omitiendo inserción.',
+      'No se encontraron pacientes (usuarios con role PACIENTE) para crear solicitudes de derivación. Omitiendo inserción.',
     );
     return;
   }
@@ -520,8 +521,8 @@ async function populateSolicitudesDerivacion() {
     let estado;
     let fechaPrimeraSesion = null;
     let montoPrimeraSesion = null;
-    let datosPago = null;
-    let motivoRechazo = null;
+    // let datosPago = null; // Columna no existe en la tabla
+    let notasRechazoValor = null; // Renombrado para evitar confusión con el nombre de la columna
 
     // Asignar diferentes estados a las solicitudes
     if (i < 2) {
@@ -531,58 +532,55 @@ async function populateSolicitudesDerivacion() {
       fechaPrimeraSesion = getFutureDate();
       montoPrimeraSesion = parseFloat(perfiles.rows[perfilIndex].tarifaHora);
     } else if (i < 6) {
-      estado = 'RECHAZADA';
-      motivoRechazo =
-        'No dispongo de horarios compatibles con las necesidades del paciente.';
-    } else if (i < 8) {
-      estado = 'PAGADA';
-      fechaPrimeraSesion = getFutureDate(7);
+      estado = 'PAGADA'; // Asumiendo que PAGADA es un estado válido
+      fechaPrimeraSesion = getPastDate(10); // Fecha pasada para simular pago
       montoPrimeraSesion = parseFloat(perfiles.rows[perfilIndex].tarifaHora);
-      datosPago = {
-        metodoPago: i % 2 === 0 ? 'TARJETA' : 'TRANSFERENCIA',
-        fechaPago: getPastDate(5),
-        referenciaPago: `DER-${200000 + i}`,
-        monto: parseFloat(perfiles.rows[perfilIndex].tarifaHora),
-      };
+      // datosPago = { metodo: 'TRANSFERENCIA', referencia: `PAGO-DER-${1000 + i}` }; // Comentado
+    } else if (i < 8) {
+      estado = 'RECHAZADA';
+      notasRechazoValor =
+        'El psicólogo de destino no tiene disponibilidad en los horarios solicitados por el paciente.';
     } else {
       estado = 'CANCELADA';
-      motivoRechazo = 'El paciente decidió continuar con su psicólogo actual.';
+      notasRechazoValor =
+        'El paciente decidió continuar con su psicólogo actual.';
     }
 
     solicitudes.push({
       pacienteId: pacientes.rows[pacienteIndex].id,
-      psicologoOrigenId: psicologos.rows[psicologoOrigenIndex].id,
-      psicologoDestinoId: perfiles.rows[perfilIndex].id,
-      motivoDerivacion: motivosDerivacion[i % motivosDerivacion.length],
-      notasAdicionales:
+      psicologoId: psicologos.rows[psicologoOrigenIndex].id,
+      perfilDerivacionId: perfiles.rows[perfilIndex].id,
+      motivo: motivosDerivacion[i % motivosDerivacion.length], // Cambiado de motivoDerivacion
+      // Cambiado de notasAdicionales
+      informacionAdicional:
         'Se adjunta resumen de historia clínica con autorización del paciente.',
       estado: estado,
       fechaPrimeraSesion: fechaPrimeraSesion,
       montoPrimeraSesion: montoPrimeraSesion,
-      datosPago: datosPago,
-      motivoRechazo: motivoRechazo,
+      // datosPago: datosPago, // Eliminada esta línea
+      notasRechazo: notasRechazoValor, // Cambiado de motivoRechazo y usando la variable renombrada
     });
   }
 
   // Insertar las solicitudes de derivación
   for (const solicitud of solicitudes) {
     const query = `
-      INSERT INTO solicitudes_derivacion 
-      ("pacienteId", "psicologoOrigenId", "psicologoDestinoId", "motivoDerivacion", "notasAdicionales", estado, "fechaPrimeraSesion", "montoPrimeraSesion", "datosPago", "motivoRechazo", "createdAt", "updatedAt") 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
-    `;
+      INSERT INTO solicitudes_derivacion
+      ("pacienteId", "psicologoId", "perfilDerivacionId", motivo, "informacionAdicional", estado, "fechaPrimeraSesion", "montoPrimeraSesion", "notasRechazo")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `; // Corregidos nombres de columna, eliminados datosPago, createdAt, updatedAt (usarán DEFAULT)
 
     const values = [
       solicitud.pacienteId,
-      solicitud.psicologoOrigenId,
-      solicitud.psicologoDestinoId,
-      solicitud.motivoDerivacion,
-      solicitud.notasAdicionales,
+      solicitud.psicologoId,
+      solicitud.perfilDerivacionId,
+      solicitud.motivo, // Cambiado de solicitud.motivoDerivacion
+      solicitud.informacionAdicional, // Cambiado de solicitud.notasAdicionales
       solicitud.estado,
       solicitud.fechaPrimeraSesion,
       solicitud.montoPrimeraSesion,
-      solicitud.datosPago,
-      solicitud.motivoRechazo,
+      solicitud.notasRechazo, // Cambiado de solicitud.motivoRechazo
+      // Se eliminan los NOW() para createdAt y updatedAt, la DB los gestionará con DEFAULT
     ];
 
     await executeQuery(query, values);
@@ -755,28 +753,34 @@ async function populateFichasSesion() {
 
   if (pacientes.rows.length === 0) {
     console.log(
-      'No se encontraron pacientes activos para crear fichas. Omitiendo inserción.',
+      'No hay pacientes activos para crear fichas de sesión. Omitiendo.',
     );
     return;
   }
 
-  // Función para generar fechas aleatorias en el pasado (entre 1 y maxDays días)
+  // Obtener IDs de psicólogos
+  const psicologos = await executeQuery(
+    'SELECT id FROM users WHERE role = $1',
+    ['PSICOLOGO'],
+  );
+
+  if (psicologos.rows.length === 0) {
+    console.log('No hay psicólogos para crear fichas de sesión. Omitiendo.');
+    return;
+  }
+
+  // Obtener IDs de reservas (opcional, para vincular)
+  const reservas = await executeQuery(
+    'SELECT id, "fechaInicio" FROM reservas WHERE estado = $1 ORDER BY "fechaInicio" DESC LIMIT 20',
+    ['CONFIRMADA'],
+  );
+
   function getPastDate(maxDays = 180) {
-    const now = new Date();
-    const pastDate = new Date(now);
-    pastDate.setDate(now.getDate() - Math.floor(Math.random() * maxDays) - 1);
-    return pastDate;
+    const date = new Date();
+    date.setDate(date.getDate() - Math.floor(Math.random() * maxDays) - 1);
+    return date.toISOString().split('T')[0];
   }
 
-  // Función para generar fechas aleatorias en el futuro (entre 1 y maxDays días)
-  function getFutureDate(maxDays = 30) {
-    const now = new Date();
-    const futureDate = new Date(now);
-    futureDate.setDate(now.getDate() + Math.floor(Math.random() * maxDays) + 1);
-    return futureDate;
-  }
-
-  // Array de motivos de consulta comunes
   const motivos = [
     'Ansiedad generalizada',
     'Depresión',
@@ -790,7 +794,6 @@ async function populateFichasSesion() {
     'Trastornos del sueño',
   ];
 
-  // Array de observaciones
   const observaciones = [
     'Paciente muestra avances significativos en el manejo de la ansiedad. Se mantiene plan terapéutico.',
     'Se observa estado de ánimo deprimido. Se sugiere evaluación psiquiátrica complementaria.',
@@ -804,108 +807,78 @@ async function populateFichasSesion() {
     'Mejoría en calidad del sueño tras implementar higiene del sueño.',
   ];
 
-  // Array de tareas para el paciente
   const tareas = [
-    'Completar registro diario de pensamientos automáticos negativos',
-    'Practicar técnicas de respiración 10 minutos diarios',
-    'Lectura recomendada sobre asertividad',
-    'Implementar rutina de ejercicio físico moderado',
-    'Escribir carta de despedida como ejercicio de cierre',
-    'Exposición gradual a situaciones que generan ansiedad',
-    'Realizar actividades placenteras programadas',
-    'Practicar afirmaciones positivas frente al espejo',
-    'Establecer límites en una relación problemática',
-    'Mantener registro de sueño durante la semana',
+    'Practicar técnicas de respiración diafragmática dos veces al día.',
+    'Llevar un registro diario de pensamientos automáticos y emociones asociadas.',
+    'Realizar actividad física moderada (caminata de 30 minutos) tres veces por semana.',
+    'Establecer un horario regular de sueño, acostándose y levantándose a la misma hora.',
+    'Leer el capítulo asignado sobre comunicación asertiva y anotar reflexiones.',
+    'Practicar un ejercicio de mindfulness de 10 minutos diariamente.',
+    'Escribir una carta de despedida como parte del proceso de duelo.',
+    'Identificar tres logros personales de la semana y reflexionar sobre ellos.',
+    'Realizar una actividad placentera que haya sido postergada.',
+    'Poner en práctica una nueva habilidad social en una interacción cotidiana.',
   ];
 
-  // Array de acuerdos terapéuticos
-  const acuerdos = [
-    'Asistir a sesiones semanales durante el próximo mes',
-    'Evaluar progreso en un mes y ajustar frecuencia de sesiones',
-    'Complementar terapia con actividad física regular',
-    'Mantener comunicación por email para seguimiento entre sesiones',
-    'Revisar posibilidad de terapia familiar en próxima sesión',
-    'Programar sesión conjunta con pareja para la próxima semana',
-    'Considerar derivación a psiquiatra si síntomas persisten',
-    'Evaluar progreso de técnicas implementadas en próxima sesión',
-    'Realizar test psicológico en próxima sesión para evaluar avances',
-    'Programar sesiones quincenales a partir del próximo mes',
-  ];
-
-  // Array de etiquetas para categorizar las sesiones
-  const etiquetas = [
-    ['ansiedad', 'primera_sesion'],
-    ['depresion', 'farmacoterapia'],
-    ['pareja', 'comunicacion'],
-    ['laboral', 'estres'],
-    ['duelo', 'proceso'],
-    ['ansiedad', 'exposicion'],
-    ['familiar', 'comunicacion'],
-    ['autoestima', 'imagen_corporal'],
-    ['relaciones', 'limites'],
-    ['sueño', 'higiene_sueño'],
-  ];
-
-  // Array de fichas de sesión a insertar
   const fichas = [];
+  const numFichas = Math.min(pacientes.rows.length, psicologos.rows.length, 10);
 
-  // Crear 10 fichas de sesión para diferentes pacientes
-  for (let i = 0; i < 10; i++) {
-    const pacienteIndex = i % pacientes.rows.length;
-    const fechaSesion = getPastDate();
+  for (let i = 0; i < numFichas; i++) {
+    const paciente = pacientes.rows[i % pacientes.rows.length];
+    const psicologo = psicologos.rows[i % psicologos.rows.length];
+    const reserva = reservas.rows.length > i ? reservas.rows[i] : null;
+
+    let fechaFicha;
+    if (reserva && new Date(reserva.fechaInicio) < new Date()) {
+      fechaFicha = new Date(reserva.fechaInicio).toISOString().split('T')[0];
+    } else {
+      fechaFicha = getPastDate(Math.floor(Math.random() * 90) + 1);
+    }
 
     fichas.push({
-      pacienteId: pacientes.rows[pacienteIndex].id,
-      fechaSesion: fechaSesion,
-      motivo: motivos[i % motivos.length],
+      fecha: fechaFicha,
+      duracion: 60,
+      motivoConsulta: motivos[i % motivos.length],
+      contenidoSesion: `Contenido de la sesión para el paciente ${paciente.id.substring(0, 8)}. Se abordó ${motivos[i % motivos.length]}.`,
       observaciones: observaciones[i % observaciones.length],
-      tareas: tareas[i % tareas.length],
-      acuerdos: acuerdos[i % acuerdos.length],
-      documentosAdjuntos:
-        i % 3 === 0
-          ? [
-              {
-                nombre: `Informe_${i}.pdf`,
-                tipo: 'application/pdf',
-                url: `https://storage.psicoespacios.cl/documentos/informe_${i}.pdf`,
-                tamaño: 1024 * (i + 1),
-                fechaSubida: new Date(),
-              },
-            ]
-          : null,
-      seguimientoRequerido: i % 2 === 0,
-      proximaSesion: i % 2 === 0 ? getFutureDate() : null,
-      etiquetas: etiquetas[i % etiquetas.length],
-      duracionMinutos: 45 + (i % 4) * 15,
+      tareas:
+        tareas.length > 0
+          ? tareas[i % tareas.length]
+          : 'Revisar material entregado y practicar ejercicios de respiración.',
+      psicologoId: psicologo.id,
+      pacienteId: paciente.id,
+      reservaId: reserva ? reserva.id : null,
+      estado: 'COMPLETA',
     });
   }
 
-  // Insertar las fichas de sesión
   for (const ficha of fichas) {
-    const query = `
-      INSERT INTO fichas_sesion 
-      ("pacienteId", "fechaSesion", motivo, observaciones, tareas, acuerdos, "documentosAdjuntos", "seguimientoRequerido", "proximaSesion", etiquetas, "duracionMinutos", "createdAt", "updatedAt") 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+    const insertQuery = `
+      INSERT INTO fichas_sesion (
+        fecha, duracion, "motivoConsulta", "contenidoSesion", 
+        observaciones, tareas, "psicologoId", "pacienteId", "reservaId", 
+        estado, "fechaCreacion", "fechaActualizacion"
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()
+      ) RETURNING id;
     `;
-
-    const values = [
-      ficha.pacienteId,
-      ficha.fechaSesion,
-      ficha.motivo,
+    await executeQuery(insertQuery, [
+      ficha.fecha,
+      ficha.duracion,
+      ficha.motivoConsulta,
+      ficha.contenidoSesion,
       ficha.observaciones,
       ficha.tareas,
-      ficha.acuerdos,
-      ficha.documentosAdjuntos,
-      ficha.seguimientoRequerido,
-      ficha.proximaSesion,
-      ficha.etiquetas,
-      ficha.duracionMinutos,
-    ];
-
-    await executeQuery(query, values);
+      ficha.psicologoId,
+      ficha.pacienteId,
+      ficha.reservaId,
+      ficha.estado,
+    ]);
   }
 
-  console.log('Tabla de fichas de sesión poblada exitosamente con 10 fichas.');
+  console.log(
+    `Tabla de fichas de sesión poblada exitosamente con ${fichas.length} fichas.`,
+  );
 }
 
 // Función para poblar tabla de reservas
