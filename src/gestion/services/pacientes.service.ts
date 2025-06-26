@@ -18,54 +18,28 @@ export class PacientesService {
   ) {}
 
   async findAll(userId: string) {
-    return this.pacienteRepository.find({
-      where: { psicologo: { id: userId } },
-      order: { apellido: 'ASC', nombre: 'ASC' },
-    });
+    // Servicio temporalmente deshabilitado durante migración al sistema de matching
+    return [];
   }
 
   async findOne(id: string, userId: string) {
-    const paciente = await this.pacienteRepository.findOne({
-      where: { id, psicologo: { id: userId } },
-      relations: ['fichasSesion'],
-    });
-
-    if (!paciente) {
-      throw new NotFoundException('Paciente no encontrado');
-    }
-
-    return paciente;
+    // Servicio temporalmente deshabilitado durante migración al sistema de matching
+    throw new NotFoundException('Servicio en migración al sistema de matching');
   }
 
   async create(createPacienteDto: CreatePacienteDto, userId: string) {
-    const psicologo = await this.userRepository.findOne({
-      where: { id: userId },
-    });
-
-    if (!psicologo) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
-
-    const paciente = this.pacienteRepository.create({
-      ...createPacienteDto,
-      psicologo,
-    });
-
-    return this.pacienteRepository.save(paciente);
+    // Servicio temporalmente deshabilitado durante migración al sistema de matching
+    throw new NotFoundException('Servicio en migración al sistema de matching');
   }
 
   async update(id: string, updatePacienteDto: UpdatePacienteDto, userId: string) {
-    const paciente = await this.findOne(id, userId);
-    const updatedPaciente = Object.assign(paciente, updatePacienteDto);
-    return this.pacienteRepository.save(updatedPaciente);
+    // Servicio temporalmente deshabilitado durante migración al sistema de matching
+    throw new NotFoundException('Servicio en migración al sistema de matching');
   }
 
   async findFichas(pacienteId: string, userId: string) {
-    const paciente = await this.findOne(pacienteId, userId);
-    return this.fichaSesionRepository.find({
-      where: { paciente: { id: paciente.id } },
-      order: { fechaSesion: 'DESC' },
-    });
+    // Servicio temporalmente deshabilitado durante migración al sistema de matching
+    throw new NotFoundException('Servicio en migración al sistema de matching');
   }
 
   async createFicha(
@@ -73,13 +47,7 @@ export class PacientesService {
     createFichaSesionDto: CreateFichaSesionDto,
     userId: string,
   ) {
-    const paciente = await this.findOne(pacienteId, userId);
-    
-    const fichaSesion = this.fichaSesionRepository.create({
-      ...createFichaSesionDto,
-      paciente,
-    });
-
-    return this.fichaSesionRepository.save(fichaSesion);
+    // Servicio temporalmente deshabilitado durante migración al sistema de matching
+    throw new NotFoundException('Servicio en migración al sistema de matching');
   }
 }

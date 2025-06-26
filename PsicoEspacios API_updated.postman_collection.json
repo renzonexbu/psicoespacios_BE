@@ -39,7 +39,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"nuevo@ejemplo.com\",\n    \"password\": \"contraseña123\",\n    \"firstName\": \"Nombre\",\n    \"lastName\": \"Apellido\",\n    \"role\": \"PSICOLOGO\"\n}",
+              "raw": "{\n    \"email\": \"nuevo@ejemplo.com\",\n    \"password\": \"contraseña123\",\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Pérez\",\n    \"rut\": \"12345678-9\",\n    \"telefono\": \"+56912345678\",\n    \"fechaNacimiento\": \"1990-05-15\",\n    \"fotoUrl\": \"https://ejemplo.com/foto.jpg\",\n    \"role\": \"PSICOLOGO\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -824,7 +824,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:3000"
+      "value": "http://localhost:3001"
     },
     {
       "key": "token_admin",

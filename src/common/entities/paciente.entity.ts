@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { User } from './user.entity';
 
 export enum EstadoPaciente {
@@ -12,23 +12,27 @@ export class Paciente {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User, { nullable: false })
-  psicologo: User;
+  @OneToOne(() => User, { nullable: false })
+  @JoinColumn()
+  usuario: User;
 
-  @Column({ length: 100 })
-  nombre: string;
+  @Column({ type: 'text', array: true, default: [] })
+  diagnosticos: string[];
 
-  @Column({ length: 100 })
-  apellido: string;
+  @Column({ type: 'text', array: true, default: [] })
+  temas: string[];
 
-  @Column({ unique: true, length: 255 })
-  email: string;
+  @Column({ type: 'text', array: true, default: [] })
+  estilo_esperado: string[];
 
-  @Column({ length: 20 })
-  telefono: string;
+  @Column({ type: 'text', array: true, default: [] })
+  afinidad: string[];
 
-  @Column({ type: 'date' })
-  fechaNacimiento: Date;
+  @Column({ type: 'jsonb', nullable: true })
+  preferencias: {
+    genero_psicologo?: string;
+    modalidad?: string;
+  };
 
   @Column({
     type: 'enum',

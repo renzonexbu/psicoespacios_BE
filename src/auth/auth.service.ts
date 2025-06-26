@@ -35,6 +35,7 @@ export class AuthService {
         rut: user.rut,
         telefono: user.telefono,
         fechaNacimiento: user.fechaNacimiento,
+        fotoUrl: user.fotoUrl,
         role: user.role,
       },
     };
@@ -58,6 +59,7 @@ export class AuthService {
       rut: registerDto.rut,
       telefono: registerDto.telefono,
       fechaNacimiento: registerDto.fechaNacimiento,
+      fotoUrl: registerDto.fotoUrl,
       role: registerDto.role
     });
 
@@ -74,6 +76,7 @@ export class AuthService {
         rut: user.rut,
         telefono: user.telefono,
         fechaNacimiento: user.fechaNacimiento,
+        fotoUrl: user.fotoUrl,
         role: user.role,
       },
     };

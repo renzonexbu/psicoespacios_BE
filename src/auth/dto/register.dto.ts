@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum, IsOptional, IsDateString, Matches } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum, IsOptional, IsDateString, Matches, IsUrl } from 'class-validator';
 
 export class RegisterDto {
   @IsEmail()
@@ -17,20 +17,24 @@ export class RegisterDto {
   lastName: string;
 
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   @Matches(/^[0-9]{1,2}[.][0-9]{3}[.][0-9]{3}[-][0-9kK]{1}$/, { 
     message: 'RUT debe tener el formato XX.XXX.XXX-X' 
   })
-  rut?: string;
+  rut: string;
 
   @IsString()
-  @IsOptional()
-  telefono?: string;
+  @IsNotEmpty()
+  telefono: string;
 
   @IsDateString()
-  @IsOptional()
-  fechaNacimiento?: Date;
+  @IsNotEmpty()
+  fechaNacimiento: Date;
 
-  @IsEnum(['PSICOLOGO', 'USUARIO', 'ADMIN'])
+  @IsUrl()
+  @IsOptional()
+  fotoUrl?: string;
+
+  @IsEnum(['PSICOLOGO', 'PACIENTE', 'ADMIN'])
   role: string;
 }

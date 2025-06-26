@@ -1,0 +1,15 @@
+export { User } from './user.entity';
+export { Paciente } from './paciente.entity';
+export { Psicologo } from './psicologo.entity';
+export { Box } from './box.entity';
+export { Sede } from './sede.entity';
+export { Reserva } from './reserva.entity';
+export { Plan } from './plan.entity';
+export { Suscripcion } from './suscripcion.entity';
+export { Pago } from './pago.entity';
+export { Contacto } from './contacto.entity';
+export { FichaSesion } from './ficha-sesion.entity';
+export { PerfilDerivacion } from './perfil-derivacion.entity';
+export { SolicitudDerivacion } from './solicitud-derivacion.entity';
+export { Reporte } from './reporte.entity';
+export { ConfiguracionSistema } from './configuracion-sistema.entity';

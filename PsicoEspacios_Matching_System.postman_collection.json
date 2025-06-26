@@ -1,0 +1,529 @@
+{
+  "info": {
+    "_postman_id": "matching-system-endpoints",
+    "name": "PsicoEspacios API - Sistema de Matching",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Autenticación Actualizada",
+      "item": [
+        {
+          "name": "Registro con Campos Obligatorios",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"psicologo@ejemplo.com\",\n    \"password\": \"contraseña123\",\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Pérez\",\n    \"rut\": \"12345678-9\",\n    \"telefono\": \"+56912345678\",\n    \"fechaNacimiento\": \"1985-03-15\",\n    \"fotoUrl\": \"https://ejemplo.com/foto-juan.jpg\",\n    \"role\": \"PSICOLOGO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registro Paciente",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"paciente@ejemplo.com\",\n    \"password\": \"contraseña123\",\n    \"nombre\": \"María\",\n    \"apellido\": \"González\",\n    \"rut\": \"98765432-1\",\n    \"telefono\": \"+56987654321\",\n    \"fechaNacimiento\": \"1992-08-22\",\n    \"fotoUrl\": \"https://ejemplo.com/foto-maria.jpg\",\n    \"role\": \"PACIENTE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Psicólogos",
+      "item": [
+        {
+          "name": "Crear Perfil de Psicólogo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_psicologo}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"usuarioId\": \"{{usuario_psicologo_id}}\",\n    \"diagnosticos_experiencia\": [\n        \"Trastornos de ansiedad\",\n        \"Depresión mayor\",\n        \"Trastorno bipolar\",\n        \"Trastornos de la alimentación\"\n    ],\n    \"temas_experiencia\": [\n        \"Relaciones de pareja\",\n        \"Problemas familiares\",\n        \"Estrés laboral\",\n        \"Autoestima\",\n        \"Duelo y pérdida\"\n    ],\n    \"estilo_terapeutico\": [\n        \"Cognitivo-conductual\",\n        \"Humanístico\",\n        \"Terapia sistémica\"\n    ],\n    \"afinidad_paciente_preferida\": [\n        \"Adultos jóvenes (25-35)\",\n        \"Profesionales\",\n        \"Estudiantes universitarios\"\n    ],\n    \"genero\": \"M\",\n    \"numeroRegistroProfesional\": \"PSI-12345\",\n    \"experiencia\": 5,\n    \"descripcion\": \"Psicólogo clínico especializado en trastornos de ansiedad y depresión. Enfoque cognitivo-conductual con 5 años de experiencia en consulta privada y clínicas.\",\n    \"modalidades\": [\"Presencial\", \"Online\"],\n    \"disponibilidad\": {\n        \"lunes\": [\"09:00-12:00\", \"14:00-18:00\"],\n        \"martes\": [\"09:00-12:00\"],\n        \"miercoles\": [\"14:00-18:00\"],\n        \"jueves\": [\"09:00-12:00\", \"14:00-18:00\"],\n        \"viernes\": [\"09:00-12:00\"]\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/psicologos",
+              "host": ["{{base_url}}"],
+              "path": ["psicologos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Todos los Psicólogos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/psicologos",
+              "host": ["{{base_url}}"],
+              "path": ["psicologos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Psicólogo por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/psicologos/{{psicologo_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["psicologos", "{{psicologo_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Mi Perfil de Psicólogo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_psicologo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/psicologos/usuario/{{usuario_psicologo_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["psicologos", "usuario", "{{usuario_psicologo_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Perfil de Psicólogo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_psicologo}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"experiencia\": 7,\n    \"descripcion\": \"Psicólogo clínico con amplia experiencia en terapia familiar y de pareja. Especializado en enfoques cognitivo-conductuales y sistémicos.\",\n    \"disponibilidad\": {\n        \"lunes\": [\"09:00-13:00\"],\n        \"martes\": [\"14:00-18:00\"],\n        \"miercoles\": [\"09:00-13:00\"],\n        \"jueves\": [\"14:00-18:00\"],\n        \"viernes\": [\"09:00-13:00\"]\n    },\n    \"temas_experiencia\": [\n        \"Relaciones de pareja\",\n        \"Problemas familiares\",\n        \"Estrés laboral\",\n        \"Autoestima\",\n        \"Duelo y pérdida\",\n        \"Terapia de pareja\"\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/psicologos/{{psicologo_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["psicologos", "{{psicologo_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pacientes Matching",
+      "item": [
+        {
+          "name": "Crear Perfil de Paciente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_paciente}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"usuarioId\": \"{{usuario_paciente_id}}\",\n    \"diagnosticos\": [\n        \"Trastorno de ansiedad generalizada\",\n        \"Episodios depresivos leves\"\n    ],\n    \"temas\": [\n        \"Problemas de relación\",\n        \"Estrés laboral\",\n        \"Autoestima\",\n        \"Ansiedad social\"\n    ],\n    \"estilo_esperado\": [\n        \"Cognitivo-conductual\",\n        \"Humanístico\",\n        \"Enfoque práctico\"\n    ],\n    \"afinidad\": [\n        \"Psicólogo joven\",\n        \"Comunicación directa\",\n        \"Enfoque práctico\",\n        \"Empático\"\n    ],\n    \"preferencias\": {\n        \"genero_psicologo\": \"F\",\n        \"modalidad\": \"Online\"\n    },\n    \"notas\": \"Primera vez en terapia. Un poco nervioso pero con muchas ganas de mejorar mi bienestar emocional.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/pacientes-matching",
+              "host": ["{{base_url}}"],
+              "path": ["pacientes-matching"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Pacientes (Admin/Psicólogo)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/pacientes-matching",
+              "host": ["{{base_url}}"],
+              "path": ["pacientes-matching"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Paciente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/pacientes-matching/{{paciente_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["pacientes-matching", "{{paciente_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Mi Perfil de Paciente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_paciente}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/pacientes-matching/usuario/{{usuario_paciente_id}}",
+              "host": ["{{base_url}}"],
+              "path": [
+                "pacientes-matching",
+                "usuario",
+                "{{usuario_paciente_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Matches para Paciente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_paciente}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/pacientes-matching/{{paciente_id}}/matches",
+              "host": ["{{base_url}}"],
+              "path": ["pacientes-matching", "{{paciente_id}}", "matches"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Perfil de Paciente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_paciente}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"temas\": [\n        \"Problemas de relación\",\n        \"Estrés laboral\",\n        \"Autoestima\",\n        \"Ansiedad social\",\n        \"Gestión del tiempo\"\n    ],\n    \"preferencias\": {\n        \"genero_psicologo\": \"M\",\n        \"modalidad\": \"Presencial\"\n    },\n    \"notas\": \"Ya más cómodo con la idea de terapia. Busco ayuda específica para manejar la ansiedad social y mejorar mis relaciones interpersonales.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/pacientes-matching/{{paciente_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["pacientes-matching", "{{paciente_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Casos de Uso Ejemplo",
+      "item": [
+        {
+          "name": "Flujo Completo: Registro Psicólogo",
+          "item": [
+            {
+              "name": "1. Registro Usuario Psicólogo",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"email\": \"dr.martinez@psicoespacios.com\",\n    \"password\": \"SecurePass123!\",\n    \"nombre\": \"Carlos\",\n    \"apellido\": \"Martínez\",\n    \"rut\": \"15234567-8\",\n    \"telefono\": \"+56955123456\",\n    \"fechaNacimiento\": \"1980-12-10\",\n    \"fotoUrl\": \"https://cdn.psicoespacios.com/profiles/carlos-martinez.jpg\",\n    \"role\": \"PSICOLOGO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/register",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "register"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "2. Login Psicólogo",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"email\": \"dr.martinez@psicoespacios.com\",\n    \"password\": \"SecurePass123!\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "login"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "3. Crear Perfil Profesional",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_from_login}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"usuarioId\": \"{{user_id_from_login}}\",\n    \"diagnosticos_experiencia\": [\n        \"Trastornos de ansiedad\",\n        \"Depresión mayor\",\n        \"Trastorno obsesivo-compulsivo\",\n        \"Trastornos de la personalidad\"\n    ],\n    \"temas_experiencia\": [\n        \"Terapia individual\",\n        \"Terapia de pareja\",\n        \"Terapia familiar\",\n        \"Manejo del estrés\",\n        \"Desarrollo personal\"\n    ],\n    \"estilo_terapeutico\": [\n        \"Cognitivo-conductual\",\n        \"Terapia psicodinámica\",\n        \"Mindfulness\"\n    ],\n    \"afinidad_paciente_preferida\": [\n        \"Adultos (25-45 años)\",\n        \"Profesionales ejecutivos\",\n        \"Parejas en crisis\"\n    ],\n    \"genero\": \"M\",\n    \"numeroRegistroProfesional\": \"PSI-CL-2018-456\",\n    \"experiencia\": 8,\n    \"descripcion\": \"Psicólogo clínico con 8 años de experiencia en terapia individual y de pareja. Especializado en trastornos de ansiedad y técnicas cognitivo-conductuales. Magíster en Psicología Clínica de la Universidad Católica.\",\n    \"modalidades\": [\"Presencial\", \"Online\"],\n    \"disponibilidad\": {\n        \"lunes\": [\"08:30-12:30\", \"14:00-18:30\"],\n        \"martes\": [\"08:30-12:30\", \"14:00-18:30\"],\n        \"miercoles\": [\"08:30-12:30\"],\n        \"jueves\": [\"14:00-18:30\"],\n        \"viernes\": [\"08:30-12:30\", \"14:00-17:00\"]\n    }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/psicologos",
+                  "host": ["{{base_url}}"],
+                  "path": ["psicologos"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Flujo Completo: Registro Paciente",
+          "item": [
+            {
+              "name": "1. Registro Usuario Paciente",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"email\": \"ana.lopez@gmail.com\",\n    \"password\": \"MiPassword456!\",\n    \"nombre\": \"Ana\",\n    \"apellido\": \"López\",\n    \"rut\": \"18567234-9\",\n    \"telefono\": \"+56987654321\",\n    \"fechaNacimiento\": \"1995-06-25\",\n    \"fotoUrl\": \"https://cdn.psicoespacios.com/profiles/ana-lopez.jpg\",\n    \"role\": \"PACIENTE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/register",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "register"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "2. Login Paciente",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"email\": \"ana.lopez@gmail.com\",\n    \"password\": \"MiPassword456!\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "login"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "3. Crear Perfil de Matching",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_from_login}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"usuarioId\": \"{{user_id_from_login}}\",\n    \"diagnosticos\": [\n        \"Trastorno de ansiedad generalizada\",\n        \"Síntomas depresivos\"\n    ],\n    \"temas\": [\n        \"Ansiedad en el trabajo\",\n        \"Problemas de autoestima\",\n        \"Dificultades en relaciones\",\n        \"Estrés académico\"\n    ],\n    \"estilo_esperado\": [\n        \"Cognitivo-conductual\",\n        \"Enfoque práctico\",\n        \"Orientado a soluciones\"\n    ],\n    \"afinidad\": [\n        \"Psicóloga mujer\",\n        \"Comunicación empática\",\n        \"Experiencia con jóvenes adultos\",\n        \"Enfoque moderno\"\n    ],\n    \"preferencias\": {\n        \"genero_psicologo\": \"F\",\n        \"modalidad\": \"Online\"\n    },\n    \"notas\": \"Soy estudiante de posgrado y trabajo medio tiempo. Busco ayuda para manejar la ansiedad que me genera el equilibrio trabajo-estudio. Primera vez que busco ayuda psicológica.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/pacientes-matching",
+                  "host": ["{{base_url}}"],
+                  "path": ["pacientes-matching"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "4. Buscar Matches",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_from_login}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/pacientes-matching/{{paciente_id}}/matches",
+                  "host": ["{{base_url}}"],
+                  "path": ["pacientes-matching", "{{paciente_id}}", "matches"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3001"
+    },
+    {
+      "key": "token_admin",
+      "value": ""
+    },
+    {
+      "key": "token_psicologo",
+      "value": ""
+    },
+    {
+      "key": "token_paciente",
+      "value": ""
+    },
+    {
+      "key": "usuario_psicologo_id",
+      "value": ""
+    },
+    {
+      "key": "usuario_paciente_id",
+      "value": ""
+    },
+    {
+      "key": "psicologo_id",
+      "value": ""
+    },
+    {
+      "key": "paciente_id",
+      "value": ""
+    }
+  ]
+}

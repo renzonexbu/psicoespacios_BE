@@ -19,14 +19,17 @@ export class User {
   @Column()
   apellido: string;
   
-  @Column({ nullable: true })
+  @Column()
   rut: string;
   
-  @Column({ nullable: true })
+  @Column()
   telefono: string;
   
-  @Column({ nullable: true, type: 'timestamp' })
+  @Column({ type: 'date' })
   fechaNacimiento: Date;
+
+  @Column({ nullable: true })
+  fotoUrl: string;
 
   @Column({ nullable: true })
   direccion: string;
@@ -42,8 +45,8 @@ export class User {
 
   @Column({
     type: 'enum',
-    enum: ['PSICOLOGO', 'USUARIO', 'ADMIN'],
-    default: 'USUARIO'
+    enum: ['PSICOLOGO', 'PACIENTE', 'ADMIN'],
+    default: 'PACIENTE'
   })
   role: string;
 
