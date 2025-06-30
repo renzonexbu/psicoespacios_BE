@@ -10,11 +10,32 @@ export class RegisterDto {
 
   @IsString()
   @IsNotEmpty()
-  firstName: string;
+  nombre: string;
 
   @IsString()
   @IsNotEmpty()
-  lastName: string;
+  apellido: string;
+
+  // Alias compatibility for firstName/lastName
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  get firstName(): string {
+    return this.nombre;
+  }
+  set firstName(value: string) {
+    this.nombre = value;
+  }
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  get lastName(): string {
+    return this.apellido;
+  }
+  set lastName(value: string) {
+    this.apellido = value;
+  }
 
   @IsString()
   @IsNotEmpty()
@@ -27,9 +48,12 @@ export class RegisterDto {
   @IsNotEmpty()
   telefono: string;
 
-  @IsDateString()
   @IsNotEmpty()
-  fechaNacimiento: Date;
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?$/, {
+    message: 'fechaNacimiento debe ser una fecha válida en formato YYYY-MM-DD o ISO 8601 completo'
+  })
+  fechaNacimiento: string;
 
   @IsUrl()
   @IsOptional()

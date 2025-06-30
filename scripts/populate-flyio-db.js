@@ -2231,8 +2231,8 @@ async function populateUsers() {
     {
       email: 'admin@psicoespacios.com',
       password: '$2b$10$lCBk31heOGIR4UZEh5TEIOxYySFLh.ulVBB2Lz.rX6A13TmwSCl7i', // "admin123"
-      firstName: 'Administrador',
-      lastName: 'Principal',
+      nombre: 'Administrador',
+      apellido: 'Principal',
       rut: '12345678-9',
       telefono: '+56912345678',
       fechaNacimiento: '1985-05-10',
@@ -2243,8 +2243,8 @@ async function populateUsers() {
     {
       email: 'psicologo1@psicoespacios.com',
       password: '$2b$10$lCBk31heOGIR4UZEh5TEIOxYySFLh.ulVBB2Lz.rX6A13TmwSCl7i', // "admin123"
-      firstName: 'Juan',
-      lastName: 'Pérez',
+      nombre: 'Juan',
+      apellido: 'Pérez',
       rut: '15678234-5',
       telefono: '+56987654321',
       fechaNacimiento: '1980-03-15',
@@ -2255,8 +2255,8 @@ async function populateUsers() {
     {
       email: 'psicologo2@psicoespacios.com',
       password: '$2b$10$lCBk31heOGIR4UZEh5TEIOxYySFLh.ulVBB2Lz.rX6A13TmwSCl7i', // "admin123"
-      firstName: 'María',
-      lastName: 'González',
+      nombre: 'María',
+      apellido: 'González',
       rut: '17890123-6',
       telefono: '+56923456789',
       fechaNacimiento: '1982-07-22',
@@ -2267,8 +2267,8 @@ async function populateUsers() {
     {
       email: 'psicologo3@psicoespacios.com',
       password: '$2b$10$lCBk31heOGIR4UZEh5TEIOxYySFLh.ulVBB2Lz.rX6A13TmwSCl7i', // "admin123"
-      firstName: 'Carlos',
-      lastName: 'Rodríguez',
+      nombre: 'Carlos',
+      apellido: 'Rodríguez',
       rut: '18901234-7',
       telefono: '+56934567890',
       fechaNacimiento: '1979-11-05',
@@ -2279,8 +2279,8 @@ async function populateUsers() {
     {
       email: 'psicologo4@psicoespacios.com',
       password: '$2b$10$lCBk31heOGIR4UZEh5TEIOxYySFLh.ulVBB2Lz.rX6A13TmwSCl7i', // "admin123"
-      firstName: 'Laura',
-      lastName: 'Martínez',
+      nombre: 'Laura',
+      apellido: 'Martínez',
       rut: '16789012-3',
       telefono: '+56945678901',
       fechaNacimiento: '1983-12-18',
@@ -2291,8 +2291,8 @@ async function populateUsers() {
     {
       email: 'psicologo5@psicoespacios.com',
       password: '$2b$10$lCBk31heOGIR4UZEh5TEIOxYySFLh.ulVBB2Lz.rX6A13TmwSCl7i', // "admin123"
-      firstName: 'Andrés',
-      lastName: 'Sánchez',
+      nombre: 'Andrés',
+      apellido: 'Sánchez',
       rut: '19012345-8',
       telefono: '+56956789012',
       fechaNacimiento: '1984-04-29',
@@ -2303,8 +2303,8 @@ async function populateUsers() {
     {
       email: 'paciente1@mail.com',
       password: '$2b$10$lCBk31heOGIR4UZEh5TEIOxYySFLh.ulVBB2Lz.rX6A13TmwSCl7i', // "admin123"
-      firstName: 'Ana',
-      lastName: 'López',
+      nombre: 'Ana',
+      apellido: 'López',
       rut: '20123456-9',
       telefono: '+56967890123',
       fechaNacimiento: '1990-08-12',
@@ -2315,8 +2315,8 @@ async function populateUsers() {
     {
       email: 'paciente2@mail.com',
       password: '$2b$10$lCBk31heOGIR4UZEh5TEIOxYySFLh.ulVBB2Lz.rX6A13TmwSCl7i', // "admin123"
-      firstName: 'Pedro',
-      lastName: 'Díaz',
+      nombre: 'Pedro',
+      apellido: 'Díaz',
       rut: '21234567-0',
       telefono: '+56978901234',
       fechaNacimiento: '1988-02-25',
@@ -2327,8 +2327,8 @@ async function populateUsers() {
     {
       email: 'paciente3@mail.com',
       password: '$2b$10$lCBk31heOGIR4UZEh5TEIOxYySFLh.ulVBB2Lz.rX6A13TmwSCl7i', // "admin123"
-      firstName: 'Sofía',
-      lastName: 'Torres',
+      nombre: 'Sofía',
+      apellido: 'Torres',
       rut: '22345678-1',
       telefono: '+56989012345',
       fechaNacimiento: '1992-06-14',
@@ -2339,8 +2339,8 @@ async function populateUsers() {
     {
       email: 'paciente4@mail.com',
       password: '$2b$10$lCBk31heOGIR4UZEh5TEIOxYySFLh.ulVBB2Lz.rX6A13TmwSCl7i', // "admin123"
-      firstName: 'Miguel',
-      lastName: 'Ramírez',
+      nombre: 'Miguel',
+      apellido: 'Ramírez',
       rut: '23456789-2',
       telefono: '+56990123456',
       fechaNacimiento: '1986-10-30',
@@ -2354,7 +2354,7 @@ async function populateUsers() {
   for (const user of users) {
     const query = `
       INSERT INTO users 
-      (email, password, "firstName", "lastName", rut, telefono, "fechaNacimiento", role, estado, verificado, "createdAt", "updatedAt", "isActive") 
+      (email, password, "nombre", "apellido", rut, telefono, "fechaNacimiento", role, estado, verificado, "createdAt", "updatedAt", "isActive") 
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW(), true)
       RETURNING id
     `;
@@ -2362,8 +2362,8 @@ async function populateUsers() {
     const values = [
       user.email,
       user.password,
-      user.firstName,
-      user.lastName,
+      user.nombre,
+      user.apellido,
       user.rut,
       user.telefono,
       user.fechaNacimiento,

@@ -54,8 +54,8 @@ export class AuthService {
     const user = this.userRepository.create({
       email: registerDto.email,
       password: hashedPassword,
-      nombre: registerDto.firstName,
-      apellido: registerDto.lastName,
+      nombre: registerDto.nombre,
+      apellido: registerDto.apellido,
       rut: registerDto.rut,
       telefono: registerDto.telefono,
       fechaNacimiento: registerDto.fechaNacimiento,

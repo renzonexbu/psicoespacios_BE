@@ -36,8 +36,11 @@
               "raw": {
                 "email": "nuevo@psicoespacios.cl",
                 "password": "contraseña123",
-                "firstName": "Juan",
-                "lastName": "Pérez",
+                "nombre": "Juan",
+                "apellido": "Pérez",
+                "rut": "12.345.678-9",
+                "telefono": "+56912345678",
+                "fechaNacimiento": "1985-03-15T00:00:00.000Z",
                 "role": "PSICOLOGO"
               },
               "options": {
@@ -459,7 +462,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:3000"
+      "value": "http://localhost:3001"
     }
   ]
 }
