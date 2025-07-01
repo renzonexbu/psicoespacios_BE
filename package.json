@@ -12,7 +12,7 @@
     "prebuild": "rimraf dist",
     "build": "nest build",
     "postbuild": "echo \"Skipping map and d.ts removal for production\"",
-    "build:prod": "npm run prebuild && npm run build && npm run postbuild && npm prune --production",
+    "build:prod": "npm install && npm run prebuild && npm run build && npm run postbuild",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
