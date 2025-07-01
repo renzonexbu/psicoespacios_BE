@@ -62,19 +62,8 @@ export class AddMatchingSystem1703609400000 implements MigrationInterface {
             )
         `);
 
-        // 6. Backup y recrear tabla pacientes
-        const pacientesExists = await queryRunner.query(`
-            SELECT EXISTS (
-                SELECT 1 FROM information_schema.columns 
-                WHERE table_name = 'pacientes' AND column_name = 'psicologo'
-            )
-        `);
-
-        if (pacientesExists[0].exists) {
-            // Crear backup de pacientes existentes
-            await queryRunner.query(`CREATE TABLE IF NOT EXISTS pacientes_backup AS SELECT * FROM pacientes`);
-            await queryRunner.query(`DROP TABLE pacientes CASCADE`);
-        }
+        // 6. Eliminar y crear tabla pacientes de forma limpia
+        await queryRunner.query(`DROP TABLE IF EXISTS pacientes CASCADE`);
 
         // Crear nueva tabla pacientes
         await queryRunner.query(`
@@ -110,16 +99,6 @@ export class AddMatchingSystem1703609400000 implements MigrationInterface {
         
         await queryRunner.query(`DROP TABLE IF EXISTS pacientes CASCADE`);
         await queryRunner.query(`DROP TABLE IF EXISTS psicologo CASCADE`);
-        
-        // Restaurar backup de pacientes si existe
-        const backupExists = await queryRunner.query(`
-            SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'pacientes_backup')
-        `);
-        
-        if (backupExists[0].exists) {
-            await queryRunner.query(`CREATE TABLE pacientes AS SELECT * FROM pacientes_backup`);
-            await queryRunner.query(`DROP TABLE pacientes_backup`);
-        }
         
         await queryRunner.query(`ALTER TABLE users DROP COLUMN IF EXISTS "fotoUrl"`);
         
