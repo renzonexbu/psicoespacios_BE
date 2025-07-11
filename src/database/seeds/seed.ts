@@ -74,9 +74,15 @@ async function seed() {
     sede.telefono = '+56229876543';
     sede.email = 'sede.central@psicoespacios.com';
     sede.horarioAtencion = {
-      diasHabiles: ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES'],
-      horaApertura: '09:00',
-      horaCierre: '20:00',
+      diasHabiles: [
+        { dia: 'LUNES', inicio: '09:00', fin: '18:00', cerrado: false },
+        { dia: 'MARTES', inicio: '09:00', fin: '18:00', cerrado: false },
+        { dia: 'MIERCOLES', inicio: '09:00', fin: '18:00', cerrado: false },
+        { dia: 'JUEVES', inicio: '09:00', fin: '18:00', cerrado: false },
+        { dia: 'VIERNES', inicio: '09:00', fin: '18:00', cerrado: false },
+        { dia: 'SABADO', inicio: '09:00', fin: '13:00', cerrado: false },
+        { dia: 'DOMINGO', inicio: '00:00', fin: '00:00', cerrado: true },
+      ],
     };
     sede.serviciosDisponibles = ['consulta-psicologica', 'terapia-grupal', 'terapia-familiar'];
     await sedeRepo.save(sede);
@@ -94,7 +100,6 @@ async function seed() {
           'Escritorio: 1'
         ],
         estado: 'DISPONIBLE',
-        sede: sede,
       },
       {
         numero: '102',
@@ -106,13 +111,24 @@ async function seed() {
           'Escritorio: 1'
         ],
         estado: 'DISPONIBLE',
-        sede: sede,
+      },
+      {
+        numero: '103',
+        nombre: 'Box para terapia familiar',
+        capacidad: 4,
+        equipamiento: [
+          'Sillón terapéutico: 2',
+          'Sillas: 2',
+          'Mesa: 1'
+        ],
+        estado: 'DISPONIBLE',
       },
     ];
 
     for (const boxData of boxes) {
       const box = new Box();
       Object.assign(box, boxData);
+      box.sede = sede;
       await boxRepo.save(box);
     }
 

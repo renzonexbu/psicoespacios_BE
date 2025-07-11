@@ -51,6 +51,12 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
     } catch (error) {
       console.error(`Error en seedContactos: ${error.message}`);
     }
+    // Seeder para blogs
+    try {
+      await this.seedBlogs(queryRunner);
+    } catch (error) {
+      console.error(`Error en seedBlogs: ${error.message}`);
+    }
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -283,32 +289,44 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
     // Insertar sedes
     const sedes = [
       {
-        nombre: 'PsicoEspacios Providencia',
-        direccion: 'Av. Providencia 1234, Providencia',
+        nombre: 'Sede Pedro de Valdivia',
+        description: 'Disponemos de 3 cajas únicas con precios según su tamaño, equipadas con A/C, agua purificada y una estación de té y café. Además, una sala de espera acogedora y un ingreso autogestionado para mayor libertad en tu práctica',
+        direccion: 'Av. Pedro de Valdivia 1234, Providencia',
         ciudad: 'Santiago',
         comuna: 'Providencia',
         telefono: '+56912345678',
-        email: 'providencia@psicoespacios.com',
+        email: 'pedrovaldivia@psicoespacios.com',
+        imageUrl: 'assets/images/location-pedro-valdivia.png',
+        thumbnailUrl: 'assets/images/thumbnail-location-pedro-valdivia.png',
+        features: ['A/C', 'Agua purificada', 'Estación de té y café', 'Sala de espera acogedora', 'Ingreso autogestionado'],
         coordenadas: { lat: -33.4289, lng: -70.6093 },
         estado: 'ACTIVA',
       },
       {
-        nombre: 'PsicoEspacios Las Condes',
+        nombre: 'Sede Las Condes',
+        description: 'Nuestras instalaciones cuentan con 3 cajas modernas, climatización central, agua purificada, estación de bebidas y una sala de espera confortable. Acceso independiente para mayor privacidad en tu práctica profesional',
         direccion: 'Av. Apoquindo 4500, Las Condes',
         ciudad: 'Santiago',
         comuna: 'Las Condes',
         telefono: '+56923456789',
         email: 'lascondes@psicoespacios.com',
+        imageUrl: 'assets/images/location-las-condes.png',
+        thumbnailUrl: 'assets/images/thumbnail-location-las-condes.png',
+        features: ['Climatización central', 'Agua purificada', 'Estación de bebidas', 'Sala de espera confortable', 'Acceso independiente'],
         coordenadas: { lat: -33.4103, lng: -70.5831 },
         estado: 'ACTIVA',
       },
       {
-        nombre: 'PsicoEspacios Ñuñoa',
+        nombre: 'Sede Ñuñoa',
+        description: 'Espacios profesionales con 3 cajas equipadas, aire acondicionado, agua purificada, estación de café y té, sala de espera tranquila y entrada autónoma para tu comodidad y la de tus pacientes',
         direccion: 'Av. Irarrázaval 3400, Ñuñoa',
         ciudad: 'Santiago',
         comuna: 'Ñuñoa',
         telefono: '+56934567890',
         email: 'nunoa@psicoespacios.com',
+        imageUrl: 'assets/images/location-nunoa.png',
+        thumbnailUrl: 'assets/images/thumbnail-location-nunoa.png',
+        features: ['Aire acondicionado', 'Agua purificada', 'Estación de café y té', 'Sala de espera tranquila', 'Entrada autónoma'],
         coordenadas: { lat: -33.4563, lng: -70.5934 },
         estado: 'ACTIVA',
       },
@@ -327,7 +345,31 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
     
     for (const sede of sedes) {
       try {
-        if (hasComuna) {
+        // Verificar si existen las nuevas columnas
+        const hasDescription = columnNames.includes('description');
+        const hasImageUrl = columnNames.includes('imageurl');
+        const hasThumbnailUrl = columnNames.includes('thumbnailurl');
+        const hasFeatures = columnNames.includes('features');
+        
+        if (hasComuna && hasDescription && hasImageUrl && hasThumbnailUrl && hasFeatures) {
+          await queryRunner.query(`
+            INSERT INTO sedes 
+            (nombre, description, direccion, ciudad, comuna, telefono, email, "imageUrl", "thumbnailUrl", features, coordenadas, estado) 
+            VALUES 
+            ('${sede.nombre}', '${sede.description}', '${sede.direccion}', '${sede.ciudad}', '${sede.comuna}', '${sede.telefono}', 
+            '${sede.email}', '${sede.imageUrl}', '${sede.thumbnailUrl}', '${JSON.stringify(sede.features)}'::jsonb, '${JSON.stringify(sede.coordenadas)}'::jsonb, '${sede.estado}')
+          `);
+        } else if (hasDescription && hasImageUrl && hasThumbnailUrl && hasFeatures) {
+          // Insertar sin la columna comuna pero con nuevos campos
+          await queryRunner.query(`
+            INSERT INTO sedes 
+            (nombre, description, direccion, ciudad, telefono, email, "imageUrl", "thumbnailUrl", features, coordenadas, estado) 
+            VALUES 
+            ('${sede.nombre}', '${sede.description}', '${sede.direccion}', '${sede.ciudad}', '${sede.telefono}', 
+            '${sede.email}', '${sede.imageUrl}', '${sede.thumbnailUrl}', '${JSON.stringify(sede.features)}'::jsonb, '${JSON.stringify(sede.coordenadas)}'::jsonb, '${sede.estado}')
+          `);
+        } else if (hasComuna) {
+          // Fallback: insertar solo con campos básicos + comuna
           await queryRunner.query(`
             INSERT INTO sedes 
             (nombre, direccion, ciudad, comuna, telefono, email, coordenadas, estado) 
@@ -336,7 +378,7 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
             '${sede.email}', '${JSON.stringify(sede.coordenadas)}'::jsonb, '${sede.estado}')
           `);
         } else {
-          // Insertar sin la columna comuna
+          // Fallback: insertar solo con campos básicos
           await queryRunner.query(`
             INSERT INTO sedes 
             (nombre, direccion, ciudad, telefono, email, coordenadas, estado) 
@@ -593,7 +635,7 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
           nombre: 'Plan Básico',
           descripcion: 'Plan ideal para psicólogos que inician su práctica o atienden pocas horas a la semana.',
           precio: 50000,
-          duracionMeses: 1,
+          duracion: 1,
           tipo: 'BASICO',
           caracteristicas: [
             'Acceso a boxes durante 10 horas mensuales',
@@ -603,13 +645,13 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
           ],
           horasIncluidas: 10,
           descuentoHoraAdicional: 0,
-          estado: 'ACTIVO',
+          activo: 1,
         },
         {
           nombre: 'Plan Estándar',
           descripcion: 'Plan diseñado para psicólogos con práctica regular que necesitan más horas de atención.',
           precio: 90000,
-          duracionMeses: 1,
+          duracion: 1,
           tipo: 'INTERMEDIO',
           caracteristicas: [
             'Acceso a boxes durante 20 horas mensuales',
@@ -620,13 +662,13 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
           ],
           horasIncluidas: 20,
           descuentoHoraAdicional: 10,
-          estado: 'ACTIVO',
+          activo: 1,
         },
         {
           nombre: 'Plan Premium',
           descripcion: 'Plan completo para psicólogos con alta demanda de pacientes y necesidades de flexibilidad.',
           precio: 150000,
-          duracionMeses: 1,
+          duracion: 1,
           tipo: 'PREMIUM',
           caracteristicas: [
             'Acceso a boxes durante 40 horas mensuales',
@@ -638,7 +680,7 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
           ],
           horasIncluidas: 40,
           descuentoHoraAdicional: 20,
-          estado: 'ACTIVO',
+          activo: 1,
         },
       ];
 
@@ -646,11 +688,11 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
         try {
           await queryRunner.query(`
             INSERT INTO planes 
-            (nombre, descripcion, precio, "duracionMeses", tipo, caracteristicas, "horasIncluidas", "descuentoHoraAdicional", estado) 
+            (nombre, descripcion, precio, "duracion", tipo, caracteristicas, "horasIncluidas", "descuentoHoraAdicional", activo) 
             VALUES 
-            ('${plan.nombre}', '${plan.descripcion}', ${plan.precio}, ${plan.duracionMeses}, 
+            ('${plan.nombre}', '${plan.descripcion}', ${plan.precio}, ${plan.duracion}, 
             '${plan.tipo}', '${JSON.stringify(plan.caracteristicas)}'::jsonb, ${plan.horasIncluidas}, ${plan.descuentoHoraAdicional}, 
-            '${plan.estado}')
+            '${plan.activo}')
           `);
           
           console.log(`Plan "${plan.nombre}" insertado correctamente.`);
@@ -733,5 +775,52 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
     }
 
     console.log('Tabla de contactos poblada exitosamente.');
+  }
+
+  /**
+   * Poblar tabla de blogs
+   */
+  private async seedBlogs(queryRunner: QueryRunner): Promise<void> {
+    console.log('Poblando tabla de blogs...');
+    // Comprobar si ya existen blogs
+    const existingBlogs = await queryRunner.query('SELECT COUNT(*) FROM blogs');
+    if (parseInt(existingBlogs[0].count) > 0) {
+      console.log('La tabla de blogs ya tiene datos. Omitiendo inserción.');
+      return;
+    }
+    // Datos de ejemplo
+    const blogs = [
+      {
+        titulo: '¿Por qué la terapia psicológica es importante?',
+        descripcion: 'Descubre los beneficios de la terapia psicológica y cómo puede ayudarte a mejorar tu bienestar emocional.',
+        imagen: 'assets/images/blog-1.jpg',
+        fecha: '2024-06-01',
+        categoria: 'Bienestar',
+        contenido: 'La terapia psicológica es una herramienta fundamental para el desarrollo personal y la salud mental...'
+      },
+      {
+        titulo: 'Cómo elegir un psicólogo adecuado',
+        descripcion: 'Consejos prácticos para encontrar el profesional que mejor se adapte a tus necesidades.',
+        imagen: 'assets/images/blog-2.jpg',
+        fecha: '2024-06-05',
+        categoria: 'Consejos',
+        contenido: 'Elegir un psicólogo es una decisión importante. Considera su experiencia, especialidad y tu comodidad personal...'
+      },
+      {
+        titulo: 'Mitos sobre la salud mental',
+        descripcion: 'Desmentimos las creencias erróneas más comunes sobre la salud mental.',
+        imagen: 'assets/images/blog-3.jpg',
+        fecha: '2024-06-10',
+        categoria: 'Educación',
+        contenido: 'Existen muchos mitos sobre la salud mental que pueden dificultar el acceso a la ayuda profesional...'
+      }
+    ];
+    for (const blog of blogs) {
+      await queryRunner.query(`
+        INSERT INTO blogs (titulo, descripcion, imagen, fecha, categoria, contenido)
+        VALUES ('${blog.titulo.replace(/'/g, "''")}', '${blog.descripcion.replace(/'/g, "''")}', '${blog.imagen}', '${blog.fecha}', '${blog.categoria}', '${blog.contenido.replace(/'/g, "''")}')
+      `);
+    }
+    console.log('Tabla de blogs poblada exitosamente.');
   }
 }

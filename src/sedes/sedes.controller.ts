@@ -1,7 +1,10 @@
-import { Controller, Get, Param, Query, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Query, Body, UseGuards, BadRequestException, ParseUUIDPipe } from '@nestjs/common';
 import { SedesService } from './sedes.service';
+import { CreateSedeDto, UpdateSedeDto } from './dto/sede.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { ParseUUIDPipe } from '@nestjs/common';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/enums/role.enum';
 
 @Controller('api/v1/sedes')
 @UseGuards(JwtAuthGuard)
@@ -16,6 +19,31 @@ export class SedesController {
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.sedesService.findOne(id);
+  }
+
+  @Post()
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  async create(@Body() createSedeDto: CreateSedeDto) {
+    return this.sedesService.create(createSedeDto);
+  }
+
+  @Put(':id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateSedeDto: UpdateSedeDto,
+  ) {
+    return this.sedesService.update(id, updateSedeDto);
+  }
+
+  @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    await this.sedesService.remove(id);
+    return { message: 'Sede eliminada correctamente' };
   }
 
   @Get(':sede_id/boxes')

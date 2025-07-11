@@ -67,9 +67,14 @@ export class InitialSchema1685394000000 implements MigrationInterface {
         "email" character varying,
         "coordenadas" jsonb,
         "horarioAtencion" jsonb DEFAULT '[{"dia":"LUNES","inicio":"09:00","fin":"18:00","cerrado":false},{"dia":"MARTES","inicio":"09:00","fin":"18:00","cerrado":false},{"dia":"MIERCOLES","inicio":"09:00","fin":"18:00","cerrado":false},{"dia":"JUEVES","inicio":"09:00","fin":"18:00","cerrado":false},{"dia":"VIERNES","inicio":"09:00","fin":"18:00","cerrado":false},{"dia":"SABADO","inicio":"09:00","fin":"13:00","cerrado":false},{"dia":"DOMINGO","inicio":"00:00","fin":"00:00","cerrado":true}]',
+        "serviciosDisponibles" text[] DEFAULT '{A/C,"Agua purificada","Estación de té y café","Sala de espera","Ingreso autogestionado"}',
+        "imageUrl" character varying DEFAULT 'assets/images/location-default.png',
+        "thumbnailUrl" character varying DEFAULT 'assets/images/thumbnail-location-default.png',
+        "description" character varying DEFAULT 'Sede de PsicoEspacios con instalaciones modernas y profesionales',
+        "features" jsonb DEFAULT '["A/C", "Agua purificada", "Estación de té y café", "Sala de espera", "Ingreso autogestionado"]',
         "estado" character varying NOT NULL DEFAULT 'ACTIVA',
-        "fechaCreacion" TIMESTAMP NOT NULL DEFAULT now(),
-        "fechaActualizacion" TIMESTAMP NOT NULL DEFAULT now(),
+        "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+        "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
         CONSTRAINT "PK_eef454a9fc26b3c3dc74a4c9e9a" PRIMARY KEY ("id")
       )
     `);
@@ -78,21 +83,33 @@ export class InitialSchema1685394000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE "boxes" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-        "nombre" character varying NOT NULL,
+        "numero" character varying NOT NULL,
+        "nombre" character varying,
         "descripcion" text,
-        "capacidad" integer NOT NULL DEFAULT 2,
         "precio" numeric(10,2) NOT NULL,
-        "precioHora" numeric(10,2) NOT NULL,
-        "caracteristicas" jsonb DEFAULT '[]',
-        "imagenes" jsonb DEFAULT '[]',
-        "estado" character varying NOT NULL DEFAULT 'DISPONIBLE',
+        "capacidad" integer DEFAULT 2,
+        "equipamiento" text[] DEFAULT '{}',
+        "estado" character varying DEFAULT 'DISPONIBLE',
         "sedeId" uuid,
-        "fechaCreacion" TIMESTAMP NOT NULL DEFAULT now(),
-        "fechaActualizacion" TIMESTAMP NOT NULL DEFAULT now(),
+        "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+        "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
         CONSTRAINT "PK_46b1769cd5fdae40e51b24c0993" PRIMARY KEY ("id")
       )
     `);
 
+   
+      await queryRunner.query(`
+        CREATE TABLE "blogs" (
+          "id" SERIAL PRIMARY KEY,
+          "titulo" character varying(255) NOT NULL,
+          "descripcion" text NOT NULL,
+          "imagen" character varying(255) NOT NULL,
+          "fecha" date NOT NULL,
+          "categoria" character varying(100) NOT NULL,
+          "contenido" text NOT NULL
+        )
+      `);
+    
     // Agregar relación entre boxes y sedes
     await queryRunner.query(`
       ALTER TABLE "boxes" ADD CONSTRAINT "FK_3c5e1ebfb1d5b6a42a5ae1be41b" 
@@ -106,14 +123,15 @@ export class InitialSchema1685394000000 implements MigrationInterface {
         "nombre" character varying NOT NULL,
         "descripcion" text,
         "precio" numeric(10,2) NOT NULL,
-        "duracionMeses" integer NOT NULL DEFAULT 1,
-        "tipo" character varying, -- Agrega esta línea
-        "caracteristicas" jsonb DEFAULT '[]',
+        "duracion" integer,
+        "caracteristicas" jsonb,
+        "tipo" character varying,
+        "beneficios" jsonb DEFAULT '[]',
         "horasIncluidas" integer NOT NULL DEFAULT 0,
         "descuentoHoraAdicional" numeric(5,2) DEFAULT 0,
-        "estado" character varying NOT NULL DEFAULT 'ACTIVO',
-        "fechaCreacion" TIMESTAMP NOT NULL DEFAULT now(),
-        "fechaActualizacion" TIMESTAMP NOT NULL DEFAULT now(),
+        "activo" boolean NOT NULL DEFAULT true,
+        "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+        "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
         CONSTRAINT "PK_7b47e30cc7c4ecc52458b973673" PRIMARY KEY ("id")
       )
     `);
@@ -154,13 +172,14 @@ export class InitialSchema1685394000000 implements MigrationInterface {
         "nombre" character varying NOT NULL,
         "email" character varying NOT NULL,
         "telefono" character varying,
-        "asunto" character varying, -- Agrega esta línea
+        "asunto" character varying,
         "mensaje" text NOT NULL,
         "tipo" character varying NOT NULL DEFAULT 'CONSULTA',
         "estado" character varying NOT NULL DEFAULT 'PENDIENTE',
-        "fecha" TIMESTAMP NOT NULL DEFAULT now(),
-        "fechaCreacion" TIMESTAMP NOT NULL DEFAULT now(),
-        "fechaActualizacion" TIMESTAMP NOT NULL DEFAULT now(),
+        "respuesta" text,
+        "fechaRespuesta" TIMESTAMP,
+        "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+        "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
         CONSTRAINT "PK_b3a3b8b7a3a8b5c3d5e2f1a2b3c" PRIMARY KEY ("id")
       )
     `);

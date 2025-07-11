@@ -18,6 +18,7 @@ export class SedesService {
     return this.sedesRepository.find({
       where: { estado: 'ACTIVA' },
       relations: ['boxes'],
+      order: { nombre: 'ASC' },
     });
   }
 
@@ -32,6 +33,24 @@ export class SedesService {
     }
 
     return sede;
+  }
+
+  async create(createSedeDto: CreateSedeDto): Promise<Sede> {
+    const sede = this.sedesRepository.create(createSedeDto);
+    return await this.sedesRepository.save(sede);
+  }
+
+  async update(id: string, updateSedeDto: UpdateSedeDto): Promise<Sede> {
+    const sede = await this.findOne(id);
+    
+    Object.assign(sede, updateSedeDto);
+    return await this.sedesRepository.save(sede);
+  }
+
+  async remove(id: string): Promise<void> {
+    const sede = await this.findOne(id);
+    sede.estado = 'INACTIVA';
+    await this.sedesRepository.save(sede);
   }
 
   async findBoxesBySede(sedeId: string): Promise<Box[]> {

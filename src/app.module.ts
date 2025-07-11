@@ -15,6 +15,7 @@ import { HealthModule } from './health/health.module';
 import { runMigrations } from './database/migration-runner';
 import { PsicologosModule } from './psicologos/psicologos.module';
 import { JsonParsingErrorMiddleware } from './common/middleware/json-parsing-error.middleware';
+import { BlogsModule } from './blogs/blogs.module';
 
 @Module({
   imports: [
@@ -66,7 +67,7 @@ import { JsonParsingErrorMiddleware } from './common/middleware/json-parsing-err
           password: configService.get('database.password'),
           database: configService.get('database.database'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: false, // Desactivamos synchronize para usar migraciones
+          synchronize: true, // Desactivamos synchronize para usar migraciones
           migrationsTableName: 'migrations_history',
           logging: process.env.NODE_ENV !== 'production',
         };
@@ -83,6 +84,7 @@ import { JsonParsingErrorMiddleware } from './common/middleware/json-parsing-err
     ContactoModule,
     HealthModule,
     PsicologosModule,
+    BlogsModule,
   ],
 })
 export class AppModule implements OnModuleInit, NestModule {
