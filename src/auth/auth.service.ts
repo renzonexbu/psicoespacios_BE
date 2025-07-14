@@ -96,4 +96,32 @@ export class AuthService {
       access_token: await this.jwtService.signAsync(payload),
     };
   }
+
+  async getFullProfile(id: string) {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) throw new UnauthorizedException('Usuario no encontrado');
+    const { password, ...userData } = user;
+    return userData;
+  }
+
+  async updateProfile(id: string, updateDto: any) {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) throw new UnauthorizedException('Usuario no encontrado');
+    // No permitir cambiar email ni password por este endpoint
+    delete updateDto.email;
+    delete updateDto.password;
+    Object.assign(user, updateDto);
+    await this.userRepository.save(user);
+    const { password, ...userData } = user;
+    return userData;
+  }
+
+  async changePassword(id: string, currentPassword: string, newPassword: string) {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) throw new UnauthorizedException('Usuario no encontrado');
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) throw new UnauthorizedException('La contraseña actual es incorrecta');
+    user.password = await bcrypt.hash(newPassword, 10);
+    await this.userRepository.save(user);
+  }
 }

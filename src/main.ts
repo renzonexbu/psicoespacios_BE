@@ -8,6 +8,8 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { DatabaseErrorInterceptor } from './common/interceptors/database-error.interceptor';
 import { ValidationInterceptor } from './common/interceptors/validation.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
+import * as express from 'express';
+import { join } from 'path';
 
 async function bootstrap() {
   try {
@@ -20,6 +22,9 @@ async function bootstrap() {
     });
       console.log('Aplicación NestJS creada exitosamente');
     
+    // Servir archivos estáticos de /uploads
+    app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
+
     // Configurar el filtro global de excepciones
     app.useGlobalFilters(new AllExceptionsFilter());
       // Configurar interceptores globales

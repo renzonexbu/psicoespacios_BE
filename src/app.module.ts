@@ -16,6 +16,7 @@ import { runMigrations } from './database/migration-runner';
 import { PsicologosModule } from './psicologos/psicologos.module';
 import { JsonParsingErrorMiddleware } from './common/middleware/json-parsing-error.middleware';
 import { BlogsModule } from './blogs/blogs.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -85,6 +86,7 @@ import { BlogsModule } from './blogs/blogs.module';
     HealthModule,
     PsicologosModule,
     BlogsModule,
+    UploadsModule,
   ],
 })
 export class AppModule implements OnModuleInit, NestModule {
