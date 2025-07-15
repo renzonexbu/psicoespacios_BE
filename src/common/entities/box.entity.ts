@@ -32,8 +32,8 @@ export class Box {
   @ManyToOne(() => Sede, sede => sede.boxes, { nullable: true })
   sede: Sede;
 
-  @OneToMany(() => Reserva, reserva => reserva.box)
-  reservas: Reserva[];
+  // @OneToMany(() => Reserva, reserva => reserva.box)
+  // reservas: Reserva[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

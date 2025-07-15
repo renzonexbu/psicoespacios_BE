@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Psicologo } from '../../common/entities/psicologo.entity';
 import { User } from '../../common/entities/user.entity';
 import { CreatePsicologoDto, UpdatePsicologoDto } from '../../common/dto/psicologo.dto';
+import { Reserva } from '../../common/entities/reserva.entity';
 
 @Injectable()
 export class PsicologosService {
@@ -12,6 +13,8 @@ export class PsicologosService {
     private psicologoRepository: Repository<Psicologo>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Reserva)
+    private reservaRepository: Repository<Reserva>,
   ) {}
 
   async create(createPsicologoDto: CreatePsicologoDto): Promise<Psicologo> {
@@ -84,5 +87,76 @@ export class PsicologosService {
   async remove(id: string): Promise<void> {
     const psicologo = await this.findOne(id);
     await this.psicologoRepository.remove(psicologo);
+  }
+
+  async disponibilidadDias(id: string, mes: number, anio: number): Promise<{ fecha: string, disponible: boolean }[]> {
+    const psicologo = await this.findOne(id);
+    if (!psicologo || !psicologo.disponibilidad) {
+      throw new NotFoundException('Disponibilidad no encontrada para este psicólogo');
+    }
+    // Obtener cantidad de días del mes
+    const diasEnMes = new Date(anio, mes, 0).getDate();
+    const resultado: { fecha: string, disponible: boolean }[] = [];
+    for (let dia = 1; dia <= diasEnMes; dia++) {
+      const fecha = `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      // Verificar si hay disponibilidad para ese día
+      let disponible = false;
+      // Suponemos que la disponibilidad es un objeto tipo { lunes: [...], miercoles: [...] }
+      const dateObj = new Date(anio, mes - 1, dia);
+      const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+      const diaSemana = diasSemana[dateObj.getDay()];
+      if (psicologo.disponibilidad[diaSemana] && psicologo.disponibilidad[diaSemana].length > 0) {
+        disponible = true;
+      }
+      resultado.push({ fecha, disponible });
+    }
+    return resultado;
+  }
+
+  async disponibilidadHorarios(id: string, fecha: string): Promise<string[]> {
+    const psicologo = await this.findOne(id);
+    if (!psicologo || !psicologo.disponibilidad) {
+      throw new NotFoundException('Disponibilidad no encontrada para este psicólogo');
+    }
+    // fecha: YYYY-MM-DD
+    // Corregir: parsear como local para evitar desfase de día
+    const [year, month, day] = fecha.split('-').map(Number);
+    const dateObj = new Date(year, month - 1, day);
+    if (isNaN(dateObj.getTime())) {
+      throw new BadRequestException('Fecha inválida');
+    }
+    const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    const diaSemana = diasSemana[dateObj.getDay()];
+    console.log('Día consultado:', diaSemana);
+    console.log('Claves de disponibilidad:', Object.keys(psicologo.disponibilidad));
+    // Horarios base disponibles para ese día
+    const franjas: string[] = psicologo.disponibilidad[diaSemana] || [];
+    // Generar bloques de 1 hora por franja
+    const bloques: string[] = [];
+    for (const franja of franjas) {
+      const [inicio, fin] = franja.split('-');
+      let [hIni, mIni] = inicio.split(':').map(Number);
+      let [hFin, mFin] = fin.split(':').map(Number);
+      let current = new Date(dateObj);
+      current.setHours(hIni, mIni, 0, 0);
+      const end = new Date(dateObj);
+      end.setHours(hFin, mFin, 0, 0);
+      while (current < end) {
+        const next = new Date(current);
+        next.setHours(current.getHours() + 1);
+        if (next > end) break;
+        const bloque = `${current.toTimeString().slice(0,5)}-${next.toTimeString().slice(0,5)}`;
+        bloques.push(bloque);
+        current = next;
+      }
+    }
+    // Buscar reservas existentes para ese psicólogo y fecha
+    const reservas = await this.reservaRepository.find({
+      where: { psicologoId: psicologo.usuario.id, fecha },
+    });
+    // Filtrar bloques ocupados
+    const bloquesOcupados = reservas.map(r => r.horario);
+    const bloquesLibres = bloques.filter(b => !bloquesOcupados.includes(b));
+    return bloquesLibres;
   }
 }

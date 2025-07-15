@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { PsicologosService } from '../services/psicologos.service';
 import { CreatePsicologoDto, UpdatePsicologoDto } from '../../common/dto/psicologo.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -32,6 +32,25 @@ export class PsicologosController {
   @Roles('ADMIN', 'PSICOLOGO')
   findByUserId(@Param('usuarioId') usuarioId: string) {
     return this.psicologosService.findByUserId(usuarioId);
+  }
+
+  @Get(':id/disponibilidad/dias')
+  @Roles('ADMIN', 'PSICOLOGO')
+  async disponibilidadDias(
+    @Param('id') id: string,
+    @Query('mes') mes: number,
+    @Query('anio') anio: number
+  ) {
+    return this.psicologosService.disponibilidadDias(id, mes, anio);
+  }
+
+  @Get(':id/disponibilidad/horarios')
+  @Roles('ADMIN', 'PSICOLOGO')
+  async disponibilidadHorarios(
+    @Param('id') id: string,
+    @Query('fecha') fecha: string
+  ) {
+    return this.psicologosService.disponibilidadHorarios(id, fecha);
   }
 
   @Patch(':id')

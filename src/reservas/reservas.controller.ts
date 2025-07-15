@@ -15,6 +15,11 @@ export class ReservasController {
     return this.reservasService.findOne(id);
   }
 
+  @Post()
+  async create(@Body() createReservaDto: CreateReservaDto) {
+    return this.reservasService.create(createReservaDto);
+  }
+
   @Post(':id/cancel')
   @UseGuards(RolesGuard)
   @Roles('PSICOLOGO')

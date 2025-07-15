@@ -13,10 +13,10 @@ import { AdminModule } from './admin/admin.module';
 import { ContactoModule } from './contacto/contacto.module';
 import { HealthModule } from './health/health.module';
 import { runMigrations } from './database/migration-runner';
-import { PsicologosModule } from './psicologos/psicologos.module';
+// import { PsicologosModule } from './psicologos/psicologos.module';
 import { JsonParsingErrorMiddleware } from './common/middleware/json-parsing-error.middleware';
 import { BlogsModule } from './blogs/blogs.module';
-import { UploadsModule } from './uploads/uploads.module';
+import { VouchersModule } from './vouchers/vouchers.module';
 
 @Module({
   imports: [
@@ -84,9 +84,9 @@ import { UploadsModule } from './uploads/uploads.module';
     AdminModule,
     ContactoModule,
     HealthModule,
-    PsicologosModule,
+    // PsicologosModule, // <-- Comentar para dejar de usar el módulo viejo
     BlogsModule,
-    UploadsModule,
+    VouchersModule,
   ],
 })
 export class AppModule implements OnModuleInit, NestModule {

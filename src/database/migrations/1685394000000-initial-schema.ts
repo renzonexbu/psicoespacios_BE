@@ -215,6 +215,50 @@ export class InitialSchema1685394000000 implements MigrationInterface {
       ALTER TABLE "pagos" ADD CONSTRAINT "FK_g7b3cf6a0bf49af33a4c2cb7dc7" 
       FOREIGN KEY ("usuarioId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION
     `);
+
+    // Crear tabla de psicólogos
+    await queryRunner.query(`
+      CREATE TABLE "psicologo" (
+        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        "usuarioId" uuid NOT NULL,
+        "diagnosticos_experiencia" text[] DEFAULT '{}',
+        "temas_experiencia" text[] DEFAULT '{}',
+        "estilo_terapeutico" text[] DEFAULT '{}',
+        "afinidad_paciente_preferida" text[] DEFAULT '{}',
+        "genero" character varying(1) NOT NULL,
+        "numeroRegistroProfesional" character varying,
+        "experiencia" integer,
+        "descripcion" text,
+        "precioPresencial" numeric(10,2),
+        "precioOnline" numeric(10,2),
+        "disponibilidad" jsonb,
+        "createdAt" timestamp DEFAULT now() NOT NULL,
+        "updatedAt" timestamp DEFAULT now() NOT NULL,
+        CONSTRAINT "PK_psicologo" PRIMARY KEY ("id"),
+        CONSTRAINT "UQ_psicologo_usuario" UNIQUE ("usuarioId"),
+        CONSTRAINT "FK_psicologo_usuario" FOREIGN KEY ("usuarioId") REFERENCES "users"("id") ON DELETE CASCADE
+      )
+    `);
+
+    // Crear tabla de reservas
+    await queryRunner.query(`
+      CREATE TABLE "reservas" (
+        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        "boxId" uuid NOT NULL,
+        "pacienteId" uuid NOT NULL,
+        "psicologoId" uuid NOT NULL,
+        "fecha" date NOT NULL,
+        "horario" character varying NOT NULL,
+        "precio" numeric(10,2) NOT NULL,
+        "estado" character varying NOT NULL DEFAULT 'PENDIENTE',
+        "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+        "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
+        CONSTRAINT "PK_reservas" PRIMARY KEY ("id"),
+        CONSTRAINT "FK_reservas_box" FOREIGN KEY ("boxId") REFERENCES "boxes"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_reservas_paciente" FOREIGN KEY ("pacienteId") REFERENCES "users"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_reservas_psicologo" FOREIGN KEY ("psicologoId") REFERENCES "users"("id") ON DELETE CASCADE
+      )
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -235,10 +279,12 @@ export class InitialSchema1685394000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE IF EXISTS "sedes"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "configuracion_sistema"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "users"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "psicologo"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "reservas"`);
   }
 
   private async checkIfTablesExist(queryRunner: QueryRunner): Promise<boolean> {
-    const tablas = ['users', 'configuracion_sistema', 'sedes', 'boxes', 'planes', 'suscripciones', 'contactos', 'pagos'];
+    const tablas = ['users', 'configuracion_sistema', 'sedes', 'boxes', 'planes', 'suscripciones', 'contactos', 'pagos', 'psicologo', 'reservas'];
     
     for (const tabla of tablas) {
       const result = await queryRunner.query(`

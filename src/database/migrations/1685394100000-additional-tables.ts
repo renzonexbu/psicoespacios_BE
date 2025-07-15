@@ -158,10 +158,10 @@ export class AdditionalTables1685394100000 implements MigrationInterface {
       FOREIGN KEY ("boxId") REFERENCES "boxes"("id") ON DELETE SET NULL ON UPDATE NO ACTION
     `);
 
-    await queryRunner.query(`
-      ALTER TABLE "reservas" ADD CONSTRAINT "FK_v7b3cf6a0bf49af33a4c2cb7dc7" 
-      FOREIGN KEY ("suscripcionId") REFERENCES "suscripciones"("id") ON DELETE SET NULL ON UPDATE NO ACTION
-    `);
+    // await queryRunner.query(`
+    //   ALTER TABLE "reservas" ADD CONSTRAINT "FK_v7b3cf6a0bf49af33a4c2cb7dc7" 
+    //   FOREIGN KEY ("suscripcionId") REFERENCES "suscripciones"("id") ON DELETE SET NULL ON UPDATE NO ACTION
+    // `);
 
     // Completar relación faltante para fichas de sesión
     await queryRunner.query(`

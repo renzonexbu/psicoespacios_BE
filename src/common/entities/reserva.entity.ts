@@ -1,54 +1,30 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { Box } from './box.entity';
-import { User } from './user.entity';
-
-export enum TipoReserva {
-  HORA = 'HORA',
-  JORNADA = 'JORNADA'
-}
-
-export enum EstadoReserva {
-  PENDIENTE = 'PENDIENTE',
-  CONFIRMADA = 'CONFIRMADA',
-  CANCELADA = 'CANCELADA'
-}
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('reservas')
 export class Reserva {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Box, box => box.reservas)
-  box: Box;
+  @Column({ type: 'uuid' })
+  boxId: string;
 
-  @ManyToOne(() => User)
-  psicologo: User;
+  @Column({ type: 'uuid' })
+  pacienteId: string;
 
-  @Column({ type: 'timestamp' })
-  fechaInicio: Date;
+  @Column({ type: 'uuid' })
+  psicologoId: string;
 
-  @Column({ type: 'timestamp' })
-  fechaFin: Date;
+  @Column({ type: 'date' })
+  fecha: string;
 
-  @Column({
-    type: 'enum',
-    enum: TipoReserva,
-    default: TipoReserva.HORA
-  })
-  tipo: TipoReserva;
+  @Column({ type: 'varchar' })
+  horario: string;
 
-  @Column({
-    type: 'enum',
-    enum: EstadoReserva,
-    default: EstadoReserva.PENDIENTE
-  })
-  estado: EstadoReserva;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ type: 'numeric', precision: 10, scale: 2 })
   precio: number;
 
-  @Column({ type: 'text', nullable: true })
-  notasCancelacion: string;
+  @Column({ type: 'varchar', default: 'PENDIENTE' })
+  estado: string;
 
   @CreateDateColumn()
   createdAt: Date;

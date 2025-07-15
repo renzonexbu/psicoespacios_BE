@@ -34,8 +34,12 @@ export class Psicologo {
   @Column({ type: 'text', nullable: true })
   descripcion: string;
 
-  @Column({ type: 'text', array: true, default: [] })
-  modalidades: string[]; // "Presencial", "Online", "Domicilio"
+  // Eliminar modalidades y agregar precios
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  precioPresencial: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  precioOnline: number;
 
   @Column({ type: 'jsonb', nullable: true })
   disponibilidad: any; // horarios disponibles

@@ -1,4 +1,4 @@
-import { IsUUID, IsArray, IsString, IsOptional, IsNumber, IsIn } from 'class-validator';
+import { IsUUID, IsArray, IsString, IsOptional, IsNumber, IsIn, Min, Max } from 'class-validator';
 
 export class CreatePsicologoDto {
   @IsUUID()
@@ -37,15 +37,24 @@ export class CreatePsicologoDto {
   descripcion?: string;
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  modalidades?: string[];
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  precioPresencial?: number;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  precioOnline?: number;
 
   @IsOptional()
   disponibilidad?: any;
 }
 
 export class UpdatePsicologoDto {
+  @IsOptional()
+  @IsUUID()
+  usuarioId?: string;
+
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -84,9 +93,14 @@ export class UpdatePsicologoDto {
   descripcion?: string;
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  modalidades?: string[];
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  precioPresencial?: number;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  precioOnline?: number;
 
   @IsOptional()
   disponibilidad?: any;

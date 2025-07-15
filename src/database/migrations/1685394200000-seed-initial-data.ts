@@ -196,7 +196,7 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
       {
         email: 'cliente2@example.com',
         password: await hashPassword('cliente123'),
-        nombre: 'Pedro',
+        nomoxre: 'Pedro',
         apellido: 'Díaz',
         rut: '24681357-9',
         telefono: '+56956789012',
@@ -449,7 +449,6 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
                 descripcion,
                 capacidad,
                 precio,
-                "precioHora",
                 estado,
                 "sedeId"
               ) VALUES (
@@ -475,7 +474,6 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
                   descripcion,
                   capacidad,
                   precio,
-                  preciohora,
                   estado,
                   sedeid
                 ) VALUES (
@@ -542,13 +540,6 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
                 if (columnMap['precio']) {
                   columns.push(`"${columnMap['precio']}"`);
                   values.push(`${precio}`);
-                }
-                
-                // PrecioHora (varios formatos posibles)
-                const precioHoraColumn = columnMap['preciohora'] || columnMap['preciohora'];
-                if (precioHoraColumn) {
-                  columns.push(`"${precioHoraColumn}"`);
-                  values.push(`${precio / 2}`);
                 }
                 
                 // Estado

@@ -1,44 +1,31 @@
-import { IsNotEmpty, IsUUID, IsDateString, IsEnum, IsOptional, IsString, IsNumber } from 'class-validator';
-
-enum TipoReserva {
-  HORA = 'HORA',
-  JORNADA = 'JORNADA'
-}
-
-enum EstadoReserva {
-  PENDIENTE = 'PENDIENTE',
-  CONFIRMADA = 'CONFIRMADA',
-  CANCELADA = 'CANCELADA'
-}
+import { IsUUID, IsDateString, IsString, IsNumber, IsOptional } from 'class-validator';
 
 export class CreateReservaDto {
   @IsUUID()
-  @IsNotEmpty()
   boxId: string;
 
-  @IsDateString()
-  @IsNotEmpty()
-  fechaInicio: string;
+  @IsUUID()
+  pacienteId: string;
+
+  @IsUUID()
+  psicologoId: string;
 
   @IsDateString()
-  @IsNotEmpty()
-  fechaFin: string;
+  fecha: string;
 
-  @IsEnum(TipoReserva)
-  @IsNotEmpty()
-  tipo: TipoReserva;
+  @IsString()
+  horario: string;
 
   @IsNumber()
-  @IsNotEmpty()
   precio: number;
+
+  @IsOptional()
+  @IsString()
+  estado?: string;
 }
 
 export class UpdateReservaDto {
-  @IsEnum(EstadoReserva)
   @IsOptional()
-  estado?: EstadoReserva;
-
   @IsString()
-  @IsOptional()
-  notasCancelacion?: string;
+  estado?: string;
 }

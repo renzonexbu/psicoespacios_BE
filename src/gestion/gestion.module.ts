@@ -19,6 +19,7 @@ import { Paciente } from '../common/entities/paciente.entity';
 import { Psicologo } from '../common/entities/psicologo.entity';
 import { FichaSesion } from '../common/entities/ficha-sesion.entity';
 import { User } from '../common/entities/user.entity';
+import { Reserva } from '../common/entities/reserva.entity';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { User } from '../common/entities/user.entity';
       Psicologo,
       FichaSesion,
       User,
+      Reserva,
     ]),
   ],
   controllers: [
