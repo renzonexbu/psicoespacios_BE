@@ -37,6 +37,7 @@ export class AuthService {
         fechaNacimiento: user.fechaNacimiento,
         fotoUrl: user.fotoUrl,
         role: user.role,
+        estado: user.estado,
       },
     };
   }

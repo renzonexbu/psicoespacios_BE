@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, Get, Patch } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get, Patch, Param } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -44,5 +44,20 @@ export class AuthController {
   async changePassword(@Request() req, @Body() body: { currentPassword: string, newPassword: string }) {
     await this.authService.changePassword(req.user.id, body.currentPassword, body.newPassword);
     return { message: 'Contraseña actualizada correctamente' };
+  }
+}
+
+// Nuevo controlador para exponer información de usuario por id
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { AuthService } from './auth.service';
+
+@Controller('api/v1/users')
+export class UsersController {
+  constructor(private readonly authService: AuthService) {}
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async getUserById(@Param('id') id: string) {
+    return this.authService.getFullProfile(id);
   }
 }

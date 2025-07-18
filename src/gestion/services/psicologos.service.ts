@@ -54,15 +54,15 @@ export class PsicologosService {
   }
 
   async findOne(id: string): Promise<Psicologo> {
+    console.log('[PsicologosService] findOne - id:', id);
     const psicologo = await this.psicologoRepository.findOne({
       where: { id },
       relations: ['usuario']
     });
-
+    console.log('[PsicologosService] findOne - resultado:', psicologo);
     if (!psicologo) {
       throw new NotFoundException('Psicólogo no encontrado');
     }
-
     return psicologo;
   }
 
@@ -80,6 +80,7 @@ export class PsicologosService {
   }
 
   async update(id: string, updatePsicologoDto: UpdatePsicologoDto): Promise<Psicologo> {
+    console.log('[PsicologosService] update - id:', id, 'body:', updatePsicologoDto);
     const psicologo = await this.findOne(id);
     
     Object.assign(psicologo, updatePsicologoDto);

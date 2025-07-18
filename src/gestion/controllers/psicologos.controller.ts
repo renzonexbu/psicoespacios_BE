@@ -34,6 +34,13 @@ export class PsicologosController {
     return this.psicologosService.findByUserId(usuarioId);
   }
 
+  @Get('usuario/:usuarioId/descripcion')
+  @Roles('ADMIN', 'PSICOLOGO')
+  async getDescripcionByUserId(@Param('usuarioId') usuarioId: string) {
+    const psicologo = await this.psicologosService.findByUserId(usuarioId);
+    return { descripcion: psicologo.descripcion };
+  }
+
   @Get(':id/disponibilidad/dias')
   @Roles('ADMIN', 'PSICOLOGO')
   async disponibilidadDias(
@@ -62,7 +69,15 @@ export class PsicologosController {
   @Patch(':id')
   @Roles('ADMIN', 'PSICOLOGO')
   update(@Param('id') id: string, @Body() updatePsicologoDto: UpdatePsicologoDto) {
+    console.log('[PsicologosController] PATCH recibido - id:', id, 'body:', updatePsicologoDto);
     return this.psicologosService.update(id, updatePsicologoDto);
+  }
+
+  @Patch('usuario/:usuarioId')
+  @Roles('ADMIN', 'PSICOLOGO')
+  async updateByUserId(@Param('usuarioId') usuarioId: string, @Body() updatePsicologoDto: UpdatePsicologoDto) {
+    const psicologo = await this.psicologosService.findByUserId(usuarioId);
+    return this.psicologosService.update(psicologo.id, updatePsicologoDto);
   }
 
   @Delete(':id')

@@ -36,4 +36,34 @@ export class UploadsController {
       size: file.size,
     };
   }
+
+  @Post('pdf')
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: './uploads',
+      filename: (req, file, cb) => {
+        const uniqueName = uuidv4() + extname(file.originalname);
+        cb(null, uniqueName);
+      },
+    }),
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype !== 'application/pdf') {
+        return cb(new BadRequestException('Solo se permiten archivos PDF'), false);
+      }
+      cb(null, true);
+    },
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  }))
+  uploadPdf(@UploadedFile() file: MulterFile) {
+    if (!file) {
+      throw new BadRequestException('No se subió ningún archivo');
+    }
+    return {
+      url: `/uploads/${file.filename}`,
+      filename: file.filename,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+    };
+  }
 } 
