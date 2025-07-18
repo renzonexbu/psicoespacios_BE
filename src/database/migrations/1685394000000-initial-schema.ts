@@ -244,7 +244,7 @@ export class InitialSchema1685394000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE "reservas" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-        "boxId" uuid NOT NULL,
+        "boxId" uuid,
         "pacienteId" uuid NOT NULL,
         "psicologoId" uuid NOT NULL,
         "fecha" date NOT NULL,
@@ -257,6 +257,19 @@ export class InitialSchema1685394000000 implements MigrationInterface {
         CONSTRAINT "FK_reservas_box" FOREIGN KEY ("boxId") REFERENCES "boxes"("id") ON DELETE CASCADE,
         CONSTRAINT "FK_reservas_paciente" FOREIGN KEY ("pacienteId") REFERENCES "users"("id") ON DELETE CASCADE,
         CONSTRAINT "FK_reservas_psicologo" FOREIGN KEY ("psicologoId") REFERENCES "users"("id") ON DELETE CASCADE
+      )
+    `);
+
+    // Crear tabla de pacientes
+    await queryRunner.query(`
+      CREATE TABLE "pacientes" (
+        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        "idUsuarioPaciente" uuid NOT NULL,
+        "idUsuarioPsicologo" uuid NOT NULL,
+        "primeraSesionRegistrada" timestamp NOT NULL,
+        "proximaSesion" timestamp,
+        "estado" character varying,
+        CONSTRAINT "PK_pacientes" PRIMARY KEY ("id")
       )
     `);
   }
@@ -281,10 +294,11 @@ export class InitialSchema1685394000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE IF EXISTS "users"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "psicologo"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "reservas"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "pacientes"`);
   }
 
   private async checkIfTablesExist(queryRunner: QueryRunner): Promise<boolean> {
-    const tablas = ['users', 'configuracion_sistema', 'sedes', 'boxes', 'planes', 'suscripciones', 'contactos', 'pagos', 'psicologo', 'reservas'];
+    const tablas = ['users', 'configuracion_sistema', 'sedes', 'boxes', 'planes', 'suscripciones', 'contactos', 'pagos', 'psicologo', 'reservas', 'pacientes'];
     
     for (const tabla of tablas) {
       const result = await queryRunner.query(`

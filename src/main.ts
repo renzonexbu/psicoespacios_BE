@@ -10,6 +10,7 @@ import { ValidationInterceptor } from './common/interceptors/validation.intercep
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import * as express from 'express';
 import { join } from 'path';
+import { BadRequestException } from '@nestjs/common';
 
 async function bootstrap() {
   try {
@@ -42,13 +43,14 @@ async function bootstrap() {
           enableImplicitConversion: true,
         },
         exceptionFactory: (errors) => {
-          const formattedErrors = errors.reduce((acc, error) => {
-            const constraints = error.constraints || { error: 'Valor inválido' };
-            acc[error.property] = Object.values(constraints);
-            return acc;
-          }, {});
-          
-          return new ValidationPipe().createExceptionFactory()(errors);
+          const result = {};
+          errors.forEach(error => {
+            result[error.property] = Object.values(error.constraints || { error: 'Valor inválido' });
+          });
+          return new BadRequestException({
+            message: 'Error de validación en los datos proporcionados',
+            errors: result,
+          });
         }
       }),
     );

@@ -17,7 +17,7 @@ export class PacientesMatchingService {
   async create(createPacienteDto: CreatePacienteMatchingDto): Promise<Paciente> {
     // Verificar que el usuario existe y tiene rol PACIENTE
     const usuario = await this.userRepository.findOne({
-      where: { id: createPacienteDto.usuarioId, role: 'PACIENTE' }
+      where: { id: createPacienteDto.idUsuarioPaciente, role: 'PACIENTE' }
     });
 
     if (!usuario) {
@@ -26,7 +26,7 @@ export class PacientesMatchingService {
 
     // Verificar que no existe ya un perfil de paciente para este usuario
     const existingPaciente = await this.pacienteRepository.findOne({
-      where: { usuario: { id: createPacienteDto.usuarioId } }
+      where: { idUsuarioPaciente: createPacienteDto.idUsuarioPaciente }
     });
 
     if (existingPaciente) {
@@ -34,23 +34,19 @@ export class PacientesMatchingService {
     }
 
     const paciente = this.pacienteRepository.create({
-      ...createPacienteDto,
-      usuario
+      ...createPacienteDto
     });
 
     return await this.pacienteRepository.save(paciente);
   }
 
   async findAll(): Promise<Paciente[]> {
-    return await this.pacienteRepository.find({
-      relations: ['usuario']
-    });
+    return await this.pacienteRepository.find();
   }
 
   async findOne(id: string): Promise<Paciente> {
     const paciente = await this.pacienteRepository.findOne({
-      where: { id },
-      relations: ['usuario']
+      where: { id }
     });
 
     if (!paciente) {
@@ -60,10 +56,9 @@ export class PacientesMatchingService {
     return paciente;
   }
 
-  async findByUserId(usuarioId: string): Promise<Paciente> {
+  async findByUserId(idUsuarioPaciente: string): Promise<Paciente> {
     const paciente = await this.pacienteRepository.findOne({
-      where: { usuario: { id: usuarioId } },
-      relations: ['usuario']
+      where: { idUsuarioPaciente }
     });
 
     if (!paciente) {
@@ -75,9 +70,7 @@ export class PacientesMatchingService {
 
   async update(id: string, updatePacienteDto: UpdatePacienteMatchingDto): Promise<Paciente> {
     const paciente = await this.findOne(id);
-    
     Object.assign(paciente, updatePacienteDto);
-    
     return await this.pacienteRepository.save(paciente);
   }
 
@@ -89,16 +82,7 @@ export class PacientesMatchingService {
   // Método para buscar matches entre pacientes y psicólogos
   async findMatches(pacienteId: string): Promise<any[]> {
     const paciente = await this.findOne(pacienteId);
-    
-    // Aquí implementarías la lógica de matching basada en:
-    // - diagnosticos vs diagnosticos_experiencia
-    // - temas vs temas_experiencia
-    // - estilo_esperado vs estilo_terapeutico
-    // - afinidad vs afinidad_paciente_preferida
-    // - preferencias.genero_psicologo vs genero
-    // - preferencias.modalidad vs modalidades
-    
-    // Por ahora retorno un array vacío - esto se implementaría después
+    // Aquí implementarías la lógica de matching basada en los nuevos campos
     return [];
   }
 }

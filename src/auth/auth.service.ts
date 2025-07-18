@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -47,7 +47,27 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new UnauthorizedException('El email ya está registrado');
+      throw new BadRequestException('El email ya está registrado. Por favor, usa otro correo electrónico.');
+    }
+
+    // Validaciones adicionales personalizadas
+    if (!registerDto.password || registerDto.password.length < 6) {
+      throw new BadRequestException('La contraseña debe tener al menos 6 caracteres.');
+    }
+    if (!registerDto.nombre || !registerDto.apellido) {
+      throw new BadRequestException('El nombre y apellido son obligatorios.');
+    }
+    if (!registerDto.rut) {
+      throw new BadRequestException('El RUT es obligatorio y debe tener el formato XX.XXX.XXX-X.');
+    }
+    if (!registerDto.telefono) {
+      throw new BadRequestException('El teléfono es obligatorio.');
+    }
+    if (!registerDto.fechaNacimiento) {
+      throw new BadRequestException('La fecha de nacimiento es obligatoria y debe tener el formato YYYY-MM-DD.');
+    }
+    if (!registerDto.role) {
+      throw new BadRequestException('El rol es obligatorio y debe ser PSICOLOGO, PACIENTE o ADMIN.');
     }
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);

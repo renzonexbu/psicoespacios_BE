@@ -15,6 +15,17 @@ export class ReservasController {
     return this.reservasService.findOne(id);
   }
 
+  @Get()
+  async findByPsicologoAndFecha(
+    @Query('psicologoId') psicologoId: string,
+    @Query('fecha') fecha: string,
+  ) {
+    if (!psicologoId || !fecha) {
+      return { error: 'psicologoId y fecha son requeridos' };
+    }
+    return this.reservasService.findByPsicologoAndFecha(psicologoId, fecha);
+  }
+
   @Post()
   async create(@Body() createReservaDto: CreateReservaDto) {
     return this.reservasService.create(createReservaDto);

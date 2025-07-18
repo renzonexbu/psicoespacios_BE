@@ -21,9 +21,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const exceptionResponse = exception.getResponse();
       
       if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-        message = (exceptionResponse as any).message || message;
-        error = (exceptionResponse as any).error || exception.name;
-        details = (exceptionResponse as any).details || null;
+        // Si el mensaje es un array (errores de validación de DTO), ponerlo en details
+        if (Array.isArray((exceptionResponse as any).message)) {
+          const validationErrors = (exceptionResponse as any).message;
+          message = validationErrors.join(' | ');
+          details = { validationErrors };
+        } else {
+          message = (exceptionResponse as any).message || message;
+          error = (exceptionResponse as any).error || exception.name;
+          details = (exceptionResponse as any).details || null;
+        }
       } else if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
       }

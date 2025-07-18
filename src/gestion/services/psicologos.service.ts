@@ -5,6 +5,7 @@ import { Psicologo } from '../../common/entities/psicologo.entity';
 import { User } from '../../common/entities/user.entity';
 import { CreatePsicologoDto, UpdatePsicologoDto } from '../../common/dto/psicologo.dto';
 import { Reserva } from '../../common/entities/reserva.entity';
+import { Paciente } from '../../common/entities/paciente.entity';
 
 @Injectable()
 export class PsicologosService {
@@ -15,6 +16,8 @@ export class PsicologosService {
     private userRepository: Repository<User>,
     @InjectRepository(Reserva)
     private reservaRepository: Repository<Reserva>,
+    @InjectRepository(Paciente)
+    private pacienteRepository: Repository<Paciente>,
   ) {}
 
   async create(createPsicologoDto: CreatePsicologoDto): Promise<Psicologo> {
@@ -158,5 +161,29 @@ export class PsicologosService {
     const bloquesOcupados = reservas.map(r => r.horario);
     const bloquesLibres = bloques.filter(b => !bloquesOcupados.includes(b));
     return bloquesLibres;
+  }
+
+  async getPacientesAsignados(psicologoUserId: string): Promise<any[]> {
+    // Buscar todos los pacientes cuyo idUsuarioPsicologo coincida
+    const pacientes = await this.pacienteRepository.find({ where: { idUsuarioPsicologo: psicologoUserId } });
+    if (!pacientes.length) return [];
+    // Obtener los ids de usuario de los pacientes
+    const userIds = pacientes.map(p => p.idUsuarioPaciente);
+    // Buscar los usuarios
+    const usuarios = await this.userRepository.findByIds(userIds);
+    // Mapear pacientes con info de usuario
+    return pacientes.map(paciente => {
+      const usuario = usuarios.find(u => u.id === paciente.idUsuarioPaciente);
+      return {
+        ...paciente,
+        usuario: usuario ? {
+          nombre: usuario.nombre,
+          apellido: usuario.apellido,
+          fotoUrl: usuario.fotoUrl,
+          email: usuario.email,
+          telefono: usuario.telefono,
+        } : null,
+      };
+    });
   }
 }

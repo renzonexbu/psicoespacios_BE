@@ -71,34 +71,6 @@ export class AdditionalTables1685394100000 implements MigrationInterface {
       FOREIGN KEY ("perfilDerivacionId") REFERENCES "perfiles_derivacion"("id") ON DELETE SET NULL ON UPDATE NO ACTION
     `);
 
-    // Crear tabla de pacientes
-    await queryRunner.query(`
-      CREATE TABLE IF NOT EXISTS "pacientes" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-        "nombre" character varying NOT NULL,
-        "apellido" character varying NOT NULL,
-        "rut" character varying,
-        "fechaNacimiento" TIMESTAMP,
-        "genero" character varying,
-        "direccion" character varying,
-        "telefono" character varying,
-        "email" character varying,
-        "contactoEmergencia" jsonb,
-        "psicologoId" uuid,
-        "datosAdicionales" jsonb,
-        "estado" character varying NOT NULL DEFAULT 'ACTIVO',
-        "fechaCreacion" TIMESTAMP NOT NULL DEFAULT now(),
-        "fechaActualizacion" TIMESTAMP NOT NULL DEFAULT now(),
-        CONSTRAINT "PK_n7b3cf6a0bf49af33a4c2cb7dc7" PRIMARY KEY ("id")
-      )
-    `);
-
-    // Agregar relación para pacientes
-    await queryRunner.query(`
-      ALTER TABLE "pacientes" ADD CONSTRAINT "FK_o7b3cf6a0bf49af33a4c2cb7dc7" 
-      FOREIGN KEY ("psicologoId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION
-    `);
-
     // Crear tabla de fichas de sesión
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "fichas_sesion" (
@@ -185,7 +157,6 @@ export class AdditionalTables1685394100000 implements MigrationInterface {
     await queryRunner.query(`ALTER TABLE "reservas" DROP CONSTRAINT IF EXISTS "FK_t7b3cf6a0bf49af33a4c2cb7dc7"`);
     await queryRunner.query(`ALTER TABLE "fichas_sesion" DROP CONSTRAINT IF EXISTS "FK_r7b3cf6a0bf49af33a4c2cb7dc7"`);
     await queryRunner.query(`ALTER TABLE "fichas_sesion" DROP CONSTRAINT IF EXISTS "FK_q7b3cf6a0bf49af33a4c2cb7dc7"`);
-    await queryRunner.query(`ALTER TABLE "pacientes" DROP CONSTRAINT IF EXISTS "FK_o7b3cf6a0bf49af33a4c2cb7dc7"`);
     await queryRunner.query(`ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_527cf4cc7783936d28724db2b75"`);
     await queryRunner.query(`ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_l7b3cf6a0bf49af33a4c2cb7dc7"`);
     await queryRunner.query(`ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_k7b3cf6a0bf49af33a4c2cb7dc7"`);
@@ -194,7 +165,6 @@ export class AdditionalTables1685394100000 implements MigrationInterface {
     // Eliminar tablas
     await queryRunner.query(`DROP TABLE IF EXISTS "reservas"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "fichas_sesion"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "pacientes"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "solicitudes_derivacion"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "perfiles_derivacion"`);
   }

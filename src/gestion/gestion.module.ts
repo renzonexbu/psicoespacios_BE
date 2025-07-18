@@ -6,12 +6,14 @@ import { SuscripcionesController } from './controllers/suscripciones.controller'
 import { PacientesController } from './controllers/pacientes.controller';
 import { PsicologosController } from './controllers/psicologos.controller';
 import { PacientesMatchingController } from './controllers/pacientes-matching.controller';
+import { HistorialPacienteController } from './controllers/historial-paciente.controller';
 
 import { PlanesService } from './services/planes.service';
 import { SuscripcionesService } from './services/suscripciones.service';
 import { PacientesService } from './services/pacientes.service';
 import { PsicologosService } from './services/psicologos.service';
 import { PacientesMatchingService } from './services/pacientes-matching.service';
+import { HistorialPacienteService } from './services/historial-paciente.service';
 
 import { Plan } from '../common/entities/plan.entity';
 import { Suscripcion } from '../common/entities/suscripcion.entity';
@@ -20,6 +22,7 @@ import { Psicologo } from '../common/entities/psicologo.entity';
 import { FichaSesion } from '../common/entities/ficha-sesion.entity';
 import { User } from '../common/entities/user.entity';
 import { Reserva } from '../common/entities/reserva.entity';
+import { HistorialPaciente } from '../common/entities/historial-paciente.entity';
 
 @Module({
   imports: [
@@ -31,6 +34,7 @@ import { Reserva } from '../common/entities/reserva.entity';
       FichaSesion,
       User,
       Reserva,
+      HistorialPaciente,
     ]),
   ],
   controllers: [
@@ -39,6 +43,7 @@ import { Reserva } from '../common/entities/reserva.entity';
     PacientesController,
     PsicologosController,
     PacientesMatchingController,
+    HistorialPacienteController,
   ],
   providers: [
     PlanesService,
@@ -46,6 +51,7 @@ import { Reserva } from '../common/entities/reserva.entity';
     PacientesService,
     PsicologosService,
     PacientesMatchingService,
+    HistorialPacienteService,
   ],
   exports: [
     PlanesService,

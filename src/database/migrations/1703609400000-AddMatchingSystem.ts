@@ -63,43 +63,40 @@ export class AddMatchingSystem1703609400000 implements MigrationInterface {
         `);
 
         // 6. Eliminar y crear tabla pacientes de forma limpia
-        await queryRunner.query(`DROP TABLE IF EXISTS pacientes CASCADE`);
+        // await queryRunner.query(`DROP TABLE IF EXISTS pacientes CASCADE`);
 
         // Crear nueva tabla pacientes
-        await queryRunner.query(`
-            CREATE TABLE IF NOT EXISTS "pacientes" (
-                "id" uuid DEFAULT uuid_generate_v4() NOT NULL,
-                "usuarioId" uuid NOT NULL,
-                "diagnosticos" text[] DEFAULT '{}',
-                "temas" text[] DEFAULT '{}',
-                "estilo_esperado" text[] DEFAULT '{}',
-                "afinidad" text[] DEFAULT '{}',
-                "preferencias" jsonb,
-                "estado" character varying DEFAULT 'ACTIVO' NOT NULL,
-                "notas" text,
-                "createdAt" timestamp DEFAULT now() NOT NULL,
-                "updatedAt" timestamp DEFAULT now() NOT NULL,
-                CONSTRAINT "PK_pacientes" PRIMARY KEY ("id"),
-                CONSTRAINT "UQ_pacientes_usuario" UNIQUE ("usuarioId"),
-                CONSTRAINT "FK_pacientes_usuario" FOREIGN KEY ("usuarioId") REFERENCES "users"("id") ON DELETE CASCADE
-            )
-        `);
+        // await queryRunner.query(`
+        //     CREATE TABLE IF NOT EXISTS "pacientes" (
+        //         "id" uuid DEFAULT uuid_generate_v4() NOT NULL,
+        //         "usuarioId" uuid NOT NULL,
+        //         "diagnosticos" text[] DEFAULT '{}',
+        //         "temas" text[] DEFAULT '{}',
+        //         "estilo_esperado" text[] DEFAULT '{}',
+        //         "afinidad" text[] DEFAULT '{}',
+        //         "preferencias" jsonb,
+        //         "estado" character varying DEFAULT 'ACTIVO' NOT NULL,
+        //         "notas" text,
+        //         "createdAt" timestamp DEFAULT now() NOT NULL,
+        //         "updatedAt" timestamp DEFAULT now() NOT NULL,
+        //         CONSTRAINT "PK_pacientes" PRIMARY KEY ("id"),
+        //         CONSTRAINT "UQ_pacientes_usuario" UNIQUE ("usuarioId"),
+        //         CONSTRAINT "FK_pacientes_usuario" FOREIGN KEY ("usuarioId") REFERENCES "users"("id") ON DELETE CASCADE
+        //     )
+        // `);
 
         // 7. Crear índices para performance
         await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_psicologo_usuario ON psicologo("usuarioId")`);
-        await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_pacientes_usuario ON pacientes("usuarioId")`);
         await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         // Reversar cambios
         await queryRunner.query(`DROP INDEX IF EXISTS idx_users_role`);
-        await queryRunner.query(`DROP INDEX IF EXISTS idx_pacientes_usuario`);
         await queryRunner.query(`DROP INDEX IF EXISTS idx_psicologo_usuario`);
-        
-        await queryRunner.query(`DROP TABLE IF EXISTS pacientes CASCADE`);
+        // await queryRunner.query(`DROP INDEX IF EXISTS idx_pacientes_usuario`);
+        // await queryRunner.query(`DROP TABLE IF EXISTS pacientes CASCADE`);
         await queryRunner.query(`DROP TABLE IF EXISTS psicologo CASCADE`);
-        
         await queryRunner.query(`ALTER TABLE users DROP COLUMN IF EXISTS "fotoUrl"`);
         
         // Revertir campos obligatorios (opcional, puede causar problemas con datos existentes)

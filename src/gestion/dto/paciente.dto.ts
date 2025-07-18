@@ -1,33 +1,45 @@
-import { IsNotEmpty, IsString, IsEmail, IsDateString, IsEnum, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsDateString } from 'class-validator';
 
 export class CreatePacienteDto {
   @IsString()
   @IsNotEmpty()
-  nombre: string;
+  idUsuarioPaciente: string;
 
   @IsString()
   @IsNotEmpty()
-  apellido: string;
-
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
-
-  @IsString()
-  @IsNotEmpty()
-  telefono: string;
+  idUsuarioPsicologo: string;
 
   @IsDateString()
   @IsNotEmpty()
-  fechaNacimiento: string;
+  primeraSesionRegistrada: string;
+
+  @IsDateString()
+  @IsOptional()
+  proximaSesion?: string;
 
   @IsString()
   @IsOptional()
-  notas?: string;
+  estado?: string;
 }
 
-export class UpdatePacienteDto extends CreatePacienteDto {
-  @IsEnum(['ACTIVO', 'INACTIVO', 'DERIVADO'])
+export class UpdatePacienteDto {
+  @IsString()
+  @IsOptional()
+  idUsuarioPaciente?: string;
+
+  @IsString()
+  @IsOptional()
+  idUsuarioPsicologo?: string;
+
+  @IsDateString()
+  @IsOptional()
+  primeraSesionRegistrada?: string;
+
+  @IsDateString()
+  @IsOptional()
+  proximaSesion?: string;
+
+  @IsString()
   @IsOptional()
   estado?: string;
 }

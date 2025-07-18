@@ -53,6 +53,12 @@ export class PsicologosController {
     return this.psicologosService.disponibilidadHorarios(id, fecha);
   }
 
+  @Get(':usuarioId/pacientes')
+  @Roles('ADMIN', 'PSICOLOGO')
+  async getPacientesAsignados(@Param('usuarioId') usuarioId: string) {
+    return this.psicologosService.getPacientesAsignados(usuarioId);
+  }
+
   @Patch(':id')
   @Roles('ADMIN', 'PSICOLOGO')
   update(@Param('id') id: string, @Body() updatePsicologoDto: UpdatePsicologoDto) {

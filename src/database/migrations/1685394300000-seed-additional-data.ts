@@ -217,85 +217,42 @@ export class SeedAdditionalData1685394300000 implements MigrationInterface {
     }
 
     // Crear pacientes
+    const usuarios = await queryRunner.query('SELECT id FROM users WHERE role = \'PACIENTE\'' );
+    if (usuarios.length === 0) {
+      console.log('No se encontraron usuarios PACIENTE para crear pacientes. Omitiendo inserción.');
+      return;
+    }
     const pacientes = [
       {
-        nombre: 'Laura',
-        apellido: 'Martínez',
-        rut: '15678234-5',
-        fechaNacimiento: '1985-03-15',
-        genero: 'FEMENINO',
-        direccion: 'Calle Los Olivos 123, Providencia',
-        telefono: '+56912345678',
-        email: 'laura.martinez@example.com',
-        contactoEmergencia: {
-          nombre: 'Carlos Martínez',
-          relacion: 'Esposo',
-          telefono: '+56923456789'
-        },
-        psicologoId: psicologos[0].id,
-        datosAdicionales: {
-          ocupacion: 'Ingeniera',
-          estadoCivil: 'Casada',
-          derivadoPor: 'Referencia personal'
-        },
+        idUsuarioPaciente: usuarios[0]?.id,
+        idUsuarioPsicologo: psicologos[0]?.id,
+        primeraSesionRegistrada: '2023-01-10T10:00:00.000Z',
+        proximaSesion: '2023-01-17T10:00:00.000Z',
         estado: 'ACTIVO'
       },
       {
-        nombre: 'Miguel',
-        apellido: 'Torres',
-        rut: '17456789-0',
-        fechaNacimiento: '1992-07-22',
-        genero: 'MASCULINO',
-        direccion: 'Av. Apoquindo 5400, Las Condes',
-        telefono: '+56934567890',
-        email: 'miguel.torres@example.com',
-        contactoEmergencia: {
-          nombre: 'Ana Torres',
-          relacion: 'Madre',
-          telefono: '+56945678901'
-        },
-        psicologoId: psicologos[1].id,
-        datosAdicionales: {
-          ocupacion: 'Estudiante',
-          estadoCivil: 'Soltero',
-          derivadoPor: 'Universidad'
-        },
-        estado: 'ACTIVO'
+        idUsuarioPaciente: usuarios[1]?.id,
+        idUsuarioPsicologo: psicologos[1]?.id,
+        primeraSesionRegistrada: '2023-02-15T11:00:00.000Z',
+        proximaSesion: null,
+        estado: 'INACTIVO'
       },
       {
-        nombre: 'Carmen',
-        apellido: 'Silva',
-        rut: '12345678-9',
-        fechaNacimiento: '1978-11-30',
-        genero: 'FEMENINO',
-        direccion: 'Calle Dublé Almeyda 1234, Ñuñoa',
-        telefono: '+56956789012',
-        email: 'carmen.silva@example.com',
-        contactoEmergencia: {
-          nombre: 'Juan Silva',
-          relacion: 'Hermano',
-          telefono: '+56967890123'
-        },
-        psicologoId: psicologos[2].id,
-        datosAdicionales: {
-          ocupacion: 'Profesora',
-          estadoCivil: 'Divorciada',
-          derivadoPor: 'Médico tratante'
-        },
-        estado: 'ACTIVO'
+        idUsuarioPaciente: usuarios[2]?.id,
+        idUsuarioPsicologo: psicologos[2]?.id,
+        primeraSesionRegistrada: '2023-03-20T09:30:00.000Z',
+        proximaSesion: '2023-03-27T09:30:00.000Z',
+        estado: null
       }
     ];
 
     for (const paciente of pacientes) {
+      if (!paciente.idUsuarioPaciente || !paciente.idUsuarioPsicologo) continue;
       await queryRunner.query(`
         INSERT INTO pacientes 
-        (nombre, apellido, rut, "fechaNacimiento", genero, direccion, telefono, email, 
-        "contactoEmergencia", "psicologoId", "datosAdicionales", estado) 
+        ("idUsuarioPaciente", "idUsuarioPsicologo", "primeraSesionRegistrada", "proximaSesion", "estado") 
         VALUES 
-        ('${paciente.nombre}', '${paciente.apellido}', '${paciente.rut}', '${paciente.fechaNacimiento}', 
-        '${paciente.genero}', '${paciente.direccion}', '${paciente.telefono}', '${paciente.email}', 
-        '${JSON.stringify(paciente.contactoEmergencia)}', '${paciente.psicologoId}', 
-        '${JSON.stringify(paciente.datosAdicionales)}', '${paciente.estado}')
+        ('${paciente.idUsuarioPaciente}', '${paciente.idUsuarioPsicologo}', '${paciente.primeraSesionRegistrada}', ${paciente.proximaSesion ? `'${paciente.proximaSesion}'` : 'NULL'}, ${paciente.estado ? `'${paciente.estado}'` : 'NULL'})
       `);
     }
 

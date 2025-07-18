@@ -14,7 +14,7 @@ export class FichaSesion {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Paciente, paciente => paciente.fichasSesion, { nullable: false })
+  @ManyToOne(() => Paciente, { nullable: false })
   paciente: Paciente;
 
   @Column({ type: 'timestamp' })

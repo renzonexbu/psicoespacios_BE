@@ -10,6 +10,7 @@ export class ConfigValidationService implements OnModuleInit {
     const requiredEnvVars = [
       'DATABASE_URL',
       'JWT_SECRET',
+      'FRONT_URL',
     ];
 
     const missingVars = requiredEnvVars.filter(

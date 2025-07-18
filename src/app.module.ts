@@ -17,6 +17,7 @@ import { runMigrations } from './database/migration-runner';
 import { JsonParsingErrorMiddleware } from './common/middleware/json-parsing-error.middleware';
 import { BlogsModule } from './blogs/blogs.module';
 import { VouchersModule } from './vouchers/vouchers.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import { VouchersModule } from './vouchers/vouchers.module';
     // PsicologosModule, // <-- Comentar para dejar de usar el módulo viejo
     BlogsModule,
     VouchersModule,
+    UploadsModule,
   ],
 })
 export class AppModule implements OnModuleInit, NestModule {

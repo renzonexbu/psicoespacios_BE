@@ -43,4 +43,25 @@ export class ReservasService {
     reserva.estado = updateDto.estado || 'CANCELADA';
     return await this.reservaRepository.save(reserva);
   }
+
+  async findByPsicologoAndFecha(psicologoId: string, fecha: string): Promise<any[]> {
+    const reservas = await this.reservaRepository.find({
+      where: { psicologoId, fecha },
+    });
+    // Obtener los datos de usuario de cada paciente
+    const pacienteIds = reservas.map(r => r.pacienteId);
+    const pacientes = await this.userRepository.findByIds(pacienteIds);
+    // Mapear reservas con info del paciente
+    return reservas.map(reserva => {
+      const paciente = pacientes.find(p => p.id === reserva.pacienteId);
+      return {
+        ...reserva,
+        paciente: paciente ? {
+          nombre: paciente.nombre,
+          apellido: paciente.apellido,
+          fotoUrl: paciente.fotoUrl,
+        } : null,
+      };
+    });
+  }
 }

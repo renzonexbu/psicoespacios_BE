@@ -1,66 +1,42 @@
-import { IsUUID, IsArray, IsString, IsOptional, IsObject } from 'class-validator';
+import { IsUUID, IsString, IsOptional, IsDateString } from 'class-validator';
 
 export class CreatePacienteMatchingDto {
   @IsUUID()
-  usuarioId: string;
+  idUsuarioPaciente: string;
 
-  @IsArray()
-  @IsString({ each: true })
-  diagnosticos: string[];
+  @IsUUID()
+  idUsuarioPsicologo: string;
 
-  @IsArray()
-  @IsString({ each: true })
-  temas: string[];
+  @IsDateString()
+  primeraSesionRegistrada: string;
 
-  @IsArray()
-  @IsString({ each: true })
-  estilo_esperado: string[];
-
-  @IsArray()
-  @IsString({ each: true })
-  afinidad: string[];
-
+  @IsDateString()
   @IsOptional()
-  @IsObject()
-  preferencias?: {
-    genero_psicologo?: string;
-    modalidad?: string;
-  };
+  proximaSesion?: string;
 
-  @IsOptional()
   @IsString()
-  notas?: string;
+  @IsOptional()
+  estado?: string;
 }
 
 export class UpdatePacienteMatchingDto {
+  @IsUUID()
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  diagnosticos?: string[];
+  idUsuarioPaciente?: string;
 
+  @IsUUID()
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  temas?: string[];
+  idUsuarioPsicologo?: string;
 
+  @IsDateString()
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  estilo_esperado?: string[];
+  primeraSesionRegistrada?: string;
 
+  @IsDateString()
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  afinidad?: string[];
+  proximaSesion?: string;
 
-  @IsOptional()
-  @IsObject()
-  preferencias?: {
-    genero_psicologo?: string;
-    modalidad?: string;
-  };
-
-  @IsOptional()
   @IsString()
-  notas?: string;
+  @IsOptional()
+  estado?: string;
 }
