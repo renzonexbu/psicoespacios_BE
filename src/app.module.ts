@@ -18,6 +18,8 @@ import { JsonParsingErrorMiddleware } from './common/middleware/json-parsing-err
 import { BlogsModule } from './blogs/blogs.module';
 import { VouchersModule } from './vouchers/vouchers.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { BoxesModule } from './boxes/boxes.module';
+import { ArriendosModule } from './arriendos/arriendos.module';
 
 @Module({
   imports: [
@@ -89,6 +91,8 @@ import { UploadsModule } from './uploads/uploads.module';
     BlogsModule,
     VouchersModule,
     UploadsModule,
+    BoxesModule,
+    ArriendosModule,
   ],
 })
 export class AppModule implements OnModuleInit, NestModule {

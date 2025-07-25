@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Sede } from '../common/entities/sede.entity';
 import { Box } from '../common/entities/box.entity';
-import { CreateSedeDto, UpdateSedeDto } from './dto/sede.dto';
+import { CreateSedeDto, UpdateSedeDto, SedePublicDto } from './dto/sede.dto';
 
 @Injectable()
 export class SedesService {
@@ -20,6 +20,54 @@ export class SedesService {
       relations: ['boxes'],
       order: { nombre: 'ASC' },
     });
+  }
+
+  async findAllPublic(): Promise<SedePublicDto[]> {
+    const sedes = await this.sedesRepository.find({
+      where: { estado: 'ACTIVA' },
+      order: { nombre: 'ASC' },
+    });
+
+    // Retornar solo información pública sin datos sensibles
+    return sedes.map(sede => ({
+      id: sede.id,
+      nombre: sede.nombre,
+      description: sede.description,
+      direccion: sede.direccion,
+      telefono: sede.telefono,
+      email: sede.email,
+      imageUrl: sede.imageUrl,
+      thumbnailUrl: sede.thumbnailUrl,
+      features: sede.features,
+      horarioAtencion: sede.horarioAtencion,
+      serviciosDisponibles: sede.serviciosDisponibles,
+      estado: sede.estado,
+    }));
+  }
+
+  async findOnePublic(id: string): Promise<SedePublicDto> {
+    const sede = await this.sedesRepository.findOne({
+      where: { id, estado: 'ACTIVA' },
+    });
+
+    if (!sede) {
+      throw new NotFoundException('Sede no encontrada');
+    }
+
+    return {
+      id: sede.id,
+      nombre: sede.nombre,
+      description: sede.description,
+      direccion: sede.direccion,
+      telefono: sede.telefono,
+      email: sede.email,
+      imageUrl: sede.imageUrl,
+      thumbnailUrl: sede.thumbnailUrl,
+      features: sede.features,
+      horarioAtencion: sede.horarioAtencion,
+      serviciosDisponibles: sede.serviciosDisponibles,
+      estado: sede.estado,
+    };
   }
 
   async findOne(id: string): Promise<Sede> {

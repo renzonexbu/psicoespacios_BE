@@ -1,5 +1,7 @@
 import { Controller, Post, Body, UseGuards, Request, Get, Patch, Param } from '@nestjs/common';
+// import { AuthService } from './auth.service';
 import { AuthService } from './auth.service';
+
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -20,8 +22,14 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('refresh-token')
-  async refreshToken(@Request() req) {
-    return this.authService.refreshToken(req.user.sub);
+  async refreshToken(@Body('refresh_token') refreshToken: string) {
+    return this.authService.refreshToken(refreshToken);
+  }
+
+  @Post('logout')
+  async logout(@Body('refresh_token') refreshToken: string) {
+    await this.authService.revokeRefreshToken(refreshToken);
+    return { message: 'Refresh token revocado' };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -48,8 +56,7 @@ export class AuthController {
 }
 
 // Nuevo controlador para exponer información de usuario por id
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
-import { AuthService } from './auth.service';
+// import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 
 @Controller('api/v1/users')
 export class UsersController {

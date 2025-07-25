@@ -1,49 +1,51 @@
-import { IsUUID, IsArray, IsString, IsOptional, IsNumber, IsIn, Min, Max } from 'class-validator';
+import { IsString, IsArray, IsOptional, IsNumber, IsEnum } from 'class-validator';
 
 export class CreatePsicologoDto {
-  @IsUUID()
+  @IsString()
   usuarioId: string;
 
   @IsArray()
   @IsString({ each: true })
-  diagnosticos_experiencia: string[];
-
-  @IsArray()
-  @IsString({ each: true })
-  temas_experiencia: string[];
-
-  @IsArray()
-  @IsString({ each: true })
-  estilo_terapeutico: string[];
-
-  @IsArray()
-  @IsString({ each: true })
-  afinidad_paciente_preferida: string[];
-
-  @IsString()
-  @IsIn(['M', 'F'])
-  genero: string;
-
   @IsOptional()
+  diagnosticos_experiencia?: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  temas_experiencia?: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  estilo_terapeutico?: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  afinidad_paciente_preferida?: string[];
+
   @IsString()
+  @IsOptional()
+  genero?: string;
+
+  @IsString()
+  @IsOptional()
   numeroRegistroProfesional?: string;
 
-  @IsOptional()
   @IsNumber()
+  @IsOptional()
   experiencia?: number;
 
-  @IsOptional()
   @IsString()
+  @IsOptional()
   descripcion?: string;
 
+  @IsNumber()
   @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
   precioPresencial?: number;
 
+  @IsNumber()
   @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
   precioOnline?: number;
 
   @IsOptional()
@@ -51,57 +53,75 @@ export class CreatePsicologoDto {
 }
 
 export class UpdatePsicologoDto {
-  @IsOptional()
-  @IsUUID()
-  usuarioId?: string;
-
-  @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @IsOptional()
   diagnosticos_experiencia?: string[];
 
-  @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @IsOptional()
   temas_experiencia?: string[];
 
-  @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @IsOptional()
   estilo_terapeutico?: string[];
 
-  @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @IsOptional()
   afinidad_paciente_preferida?: string[];
 
-  @IsOptional()
   @IsString()
-  @IsIn(['M', 'F'])
+  @IsOptional()
   genero?: string;
 
-  @IsOptional()
   @IsString()
+  @IsOptional()
   numeroRegistroProfesional?: string;
 
-  @IsOptional()
   @IsNumber()
+  @IsOptional()
   experiencia?: number;
 
-  @IsOptional()
   @IsString()
+  @IsOptional()
   descripcion?: string;
 
+  @IsNumber()
   @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
   precioPresencial?: number;
 
+  @IsNumber()
   @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
   precioOnline?: number;
 
   @IsOptional()
   disponibilidad?: any;
+}
+
+export class PsicologoPublicDto {
+  id: string;
+  diagnosticos_experiencia: string[];
+  temas_experiencia: string[];
+  estilo_terapeutico: string[];
+  afinidad_paciente_preferida: string[];
+  genero: string;
+  numeroRegistroProfesional?: string;
+  experiencia?: number;
+  descripcion?: string;
+  precioPresencial?: number;
+  precioOnline?: number;
+  disponibilidad?: any;
+  // Información básica del usuario (sin datos sensibles)
+  usuario: {
+    id: string;
+    nombre: string;
+    apellido: string;
+    fotoUrl?: string;
+    especialidad?: string;
+    estado: string;
+  };
+  // NO incluir: password, rut, telefono, fechaNacimiento, direccion, timestamps
 }

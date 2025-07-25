@@ -1,26 +1,4 @@
-import { IsString, IsBoolean, IsOptional, IsArray, ValidateNested, IsUrl } from 'class-validator';
-import { Type } from 'class-transformer';
-
-class HorarioAtencionDto {
-  @IsString()
-  dia: string;
-
-  @IsString()
-  inicio: string;
-
-  @IsString()
-  fin: string;
-
-  @IsBoolean()
-  cerrado: boolean;
-}
-
-class HorarioAtencionWrapperDto {
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => HorarioAtencionDto)
-  diasHabiles: HorarioAtencionDto[];
-}
+import { IsString, IsOptional, IsArray, IsObject } from 'class-validator';
 
 export class CreateSedeDto {
   @IsString()
@@ -32,49 +10,109 @@ export class CreateSedeDto {
   @IsString()
   direccion: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   telefono?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   email?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   imageUrl?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   thumbnailUrl?: string;
 
-  @IsArray()
-  @IsString({ each: true })
   @IsOptional()
+  @IsArray()
   features?: string[];
 
-  @ValidateNested()
-  @Type(() => HorarioAtencionWrapperDto)
   @IsOptional()
-  horarioAtencion?: HorarioAtencionWrapperDto;
+  @IsObject()
+  horarioAtencion?: {
+    diasHabiles: {
+      dia: string;
+      inicio: string;
+      fin: string;
+      cerrado: boolean;
+    }[];
+  };
 
+  @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
   serviciosDisponibles?: string[];
-
-  @IsString()
-  @IsOptional()
-  estado?: string = 'ACTIVA';
 }
 
-export class UpdateSedeDto extends CreateSedeDto {
+export class UpdateSedeDto {
   @IsOptional()
-  declare nombre: string;
+  @IsString()
+  nombre?: string;
 
   @IsOptional()
-  declare description: string;
+  @IsString()
+  description?: string;
 
   @IsOptional()
-  declare direccion: string;
+  @IsString()
+  direccion?: string;
+
+  @IsOptional()
+  @IsString()
+  telefono?: string;
+
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  thumbnailUrl?: string;
+
+  @IsOptional()
+  @IsArray()
+  features?: string[];
+
+  @IsOptional()
+  @IsObject()
+  horarioAtencion?: {
+    diasHabiles: {
+      dia: string;
+      inicio: string;
+      fin: string;
+      cerrado: boolean;
+    }[];
+  };
+
+  @IsOptional()
+  @IsArray()
+  serviciosDisponibles?: string[];
+}
+
+export class SedePublicDto {
+  id: string;
+  nombre: string;
+  description: string;
+  direccion: string;
+  telefono?: string;
+  email?: string;
+  imageUrl?: string;
+  thumbnailUrl?: string;
+  features?: string[];
+  horarioAtencion?: {
+    diasHabiles: {
+      dia: string;
+      inicio: string;
+      fin: string;
+      cerrado: boolean;
+    }[];
+  };
+  serviciosDisponibles?: string[];
+  estado: string;
 }

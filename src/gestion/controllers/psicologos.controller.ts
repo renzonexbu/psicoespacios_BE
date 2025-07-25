@@ -6,35 +6,49 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 
 @Controller('psicologos')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class PsicologosController {
   constructor(private readonly psicologosService: PsicologosService) {}
 
+  @Get('public')
+  async findAllPublic() {
+    return this.psicologosService.findAllPublic();
+  }
+
+  @Get('public/:id')
+  async findOnePublic(@Param('id') id: string) {
+    return this.psicologosService.findOnePublic(id);
+  }
+
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   create(@Body() createPsicologoDto: CreatePsicologoDto) {
     return this.psicologosService.create(createPsicologoDto);
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'PSICOLOGO')
   findAll() {
     return this.psicologosService.findAll();
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'PSICOLOGO')
   findOne(@Param('id') id: string) {
     return this.psicologosService.findOne(id);
   }
 
   @Get('usuario/:usuarioId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'PSICOLOGO')
   findByUserId(@Param('usuarioId') usuarioId: string) {
     return this.psicologosService.findByUserId(usuarioId);
   }
 
   @Get('usuario/:usuarioId/descripcion')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'PSICOLOGO')
   async getDescripcionByUserId(@Param('usuarioId') usuarioId: string) {
     const psicologo = await this.psicologosService.findByUserId(usuarioId);
@@ -42,6 +56,7 @@ export class PsicologosController {
   }
 
   @Get(':id/disponibilidad/dias')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'PSICOLOGO')
   async disponibilidadDias(
     @Param('id') id: string,
@@ -52,6 +67,7 @@ export class PsicologosController {
   }
 
   @Get(':id/disponibilidad/horarios')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'PSICOLOGO')
   async disponibilidadHorarios(
     @Param('id') id: string,
@@ -61,12 +77,14 @@ export class PsicologosController {
   }
 
   @Get(':usuarioId/pacientes')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'PSICOLOGO')
   async getPacientesAsignados(@Param('usuarioId') usuarioId: string) {
     return this.psicologosService.getPacientesAsignados(usuarioId);
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'PSICOLOGO')
   update(@Param('id') id: string, @Body() updatePsicologoDto: UpdatePsicologoDto) {
     console.log('[PsicologosController] PATCH recibido - id:', id, 'body:', updatePsicologoDto);
@@ -74,6 +92,7 @@ export class PsicologosController {
   }
 
   @Patch('usuario/:usuarioId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'PSICOLOGO')
   async updateByUserId(@Param('usuarioId') usuarioId: string, @Body() updatePsicologoDto: UpdatePsicologoDto) {
     const psicologo = await this.psicologosService.findByUserId(usuarioId);
@@ -81,6 +100,7 @@ export class PsicologosController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   remove(@Param('id') id: string) {
     return this.psicologosService.remove(id);

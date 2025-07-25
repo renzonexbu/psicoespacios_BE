@@ -7,29 +7,40 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
 
 @Controller('api/v1/sedes')
-@UseGuards(JwtAuthGuard)
 export class SedesController {
   constructor(private readonly sedesService: SedesService) {}
 
+  @Get('public')
+  async findAllPublic() {
+    return this.sedesService.findAllPublic();
+  }
+
+  @Get('public/:id')
+  async findOnePublic(@Param('id', ParseUUIDPipe) id: string) {
+    return this.sedesService.findOnePublic(id);
+  }
+
   @Get()
+  @UseGuards(JwtAuthGuard)
   async findAll() {
     return this.sedesService.findAll();
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.sedesService.findOne(id);
   }
 
   @Post()
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   async create(@Body() createSedeDto: CreateSedeDto) {
     return this.sedesService.create(createSedeDto);
   }
 
   @Put(':id')
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   async update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -39,7 +50,7 @@ export class SedesController {
   }
 
   @Delete(':id')
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     await this.sedesService.remove(id);
@@ -47,11 +58,13 @@ export class SedesController {
   }
 
   @Get(':sede_id/boxes')
+  @UseGuards(JwtAuthGuard)
   async findBoxesBySede(@Param('sede_id', ParseUUIDPipe) sedeId: string) {
     return this.sedesService.findBoxesBySede(sedeId);
   }
 
   @Get(':sede_id/disponibilidad')
+  @UseGuards(JwtAuthGuard)
   async checkBoxAvailability(
     @Param('sede_id', ParseUUIDPipe) sedeId: string,
     @Query('fecha') fecha: string,

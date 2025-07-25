@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Psicologo } from '../../common/entities/psicologo.entity';
 import { User } from '../../common/entities/user.entity';
-import { CreatePsicologoDto, UpdatePsicologoDto } from '../../common/dto/psicologo.dto';
+import { CreatePsicologoDto, UpdatePsicologoDto, PsicologoPublicDto } from '../../common/dto/psicologo.dto';
 import { Reserva } from '../../common/entities/reserva.entity';
 import { Paciente } from '../../common/entities/paciente.entity';
 
@@ -53,6 +53,36 @@ export class PsicologosService {
     });
   }
 
+  async findAllPublic(): Promise<PsicologoPublicDto[]> {
+    const psicologos = await this.psicologoRepository.find({
+      relations: ['usuario'],
+      where: { usuario: { estado: 'ACTIVO' } },
+    });
+
+    return psicologos.map(psicologo => ({
+      id: psicologo.id,
+      diagnosticos_experiencia: psicologo.diagnosticos_experiencia,
+      temas_experiencia: psicologo.temas_experiencia,
+      estilo_terapeutico: psicologo.estilo_terapeutico,
+      afinidad_paciente_preferida: psicologo.afinidad_paciente_preferida,
+      genero: psicologo.genero,
+      numeroRegistroProfesional: psicologo.numeroRegistroProfesional,
+      experiencia: psicologo.experiencia,
+      descripcion: psicologo.descripcion,
+      precioPresencial: psicologo.precioPresencial,
+      precioOnline: psicologo.precioOnline,
+      disponibilidad: psicologo.disponibilidad,
+      usuario: {
+        id: psicologo.usuario.id,
+        nombre: psicologo.usuario.nombre,
+        apellido: psicologo.usuario.apellido,
+        fotoUrl: psicologo.usuario.fotoUrl,
+        especialidad: psicologo.usuario.especialidad,
+        estado: psicologo.usuario.estado,
+      },
+    }));
+  }
+
   async findOne(id: string): Promise<Psicologo> {
     console.log('[PsicologosService] findOne - id:', id);
     const psicologo = await this.psicologoRepository.findOne({
@@ -64,6 +94,40 @@ export class PsicologosService {
       throw new NotFoundException('Psicólogo no encontrado');
     }
     return psicologo;
+  }
+
+  async findOnePublic(id: string): Promise<PsicologoPublicDto> {
+    const psicologo = await this.psicologoRepository.findOne({
+      where: { id, usuario: { estado: 'ACTIVO' } },
+      relations: ['usuario'],
+    });
+
+    if (!psicologo) {
+      throw new NotFoundException('Psicólogo no encontrado');
+    }
+
+    return {
+      id: psicologo.id,
+      diagnosticos_experiencia: psicologo.diagnosticos_experiencia,
+      temas_experiencia: psicologo.temas_experiencia,
+      estilo_terapeutico: psicologo.estilo_terapeutico,
+      afinidad_paciente_preferida: psicologo.afinidad_paciente_preferida,
+      genero: psicologo.genero,
+      numeroRegistroProfesional: psicologo.numeroRegistroProfesional,
+      experiencia: psicologo.experiencia,
+      descripcion: psicologo.descripcion,
+      precioPresencial: psicologo.precioPresencial,
+      precioOnline: psicologo.precioOnline,
+      disponibilidad: psicologo.disponibilidad,
+      usuario: {
+        id: psicologo.usuario.id,
+        nombre: psicologo.usuario.nombre,
+        apellido: psicologo.usuario.apellido,
+        fotoUrl: psicologo.usuario.fotoUrl,
+        especialidad: psicologo.usuario.especialidad,
+        estado: psicologo.usuario.estado,
+      },
+    };
   }
 
   async findByUserId(usuarioId: string): Promise<Psicologo> {

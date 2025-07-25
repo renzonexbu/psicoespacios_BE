@@ -23,8 +23,14 @@ export class Box {
   @Column({ default: 2 })
   capacidad: number;
 
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  precio: number;
+
   @Column({ type: 'text', array: true, nullable: true })
   equipamiento: string[];
+
+  @Column({ nullable: true })
+  urlImage: string;
 
   @Column({ default: 'DISPONIBLE' })
   estado: string;

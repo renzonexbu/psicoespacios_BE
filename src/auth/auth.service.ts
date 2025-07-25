@@ -6,12 +6,16 @@ import { User } from '../common/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
+import { RefreshToken } from '../common/entities/refresh-token.entity';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(RefreshToken)
+    private readonly refreshTokenRepository: Repository<RefreshToken>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -25,8 +29,19 @@ export class AuthService {
     }
 
     const payload = { sub: user.id, email: user.email, role: user.role };
+    const access_token = await this.jwtService.signAsync(payload);
+    // Crear refresh token
+    const refresh_token = uuidv4() + uuidv4();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 días
+    await this.refreshTokenRepository.save({
+      userId: user.id,
+      token: refresh_token,
+      expiresAt,
+      revoked: false,
+    });
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      access_token,
+      refresh_token,
       user: {
         id: user.id,
         email: user.email,
@@ -103,19 +118,26 @@ export class AuthService {
     };
   }
 
-  async refreshToken(userId: string) {
-    const user = await this.userRepository.findOne({ 
-      where: { id: userId } 
-    });
-
+  async refreshToken(refreshToken: string) {
+    const token = await this.refreshTokenRepository.findOne({ where: { token: refreshToken, revoked: false } });
+    if (!token || token.expiresAt < new Date()) {
+      throw new UnauthorizedException('Refresh token inválido o expirado');
+    }
+    const user = await this.userRepository.findOne({ where: { id: token.userId } });
     if (!user) {
       throw new UnauthorizedException('Usuario no encontrado');
     }
-
     const payload = { sub: user.id, email: user.email, role: user.role };
-    return {
-      access_token: await this.jwtService.signAsync(payload),
-    };
+    const access_token = await this.jwtService.signAsync(payload);
+    return { access_token };
+  }
+
+  async revokeRefreshToken(refreshToken: string) {
+    const token = await this.refreshTokenRepository.findOne({ where: { token: refreshToken } });
+    if (token) {
+      token.revoked = true;
+      await this.refreshTokenRepository.save(token);
+    }
   }
 
   async getFullProfile(id: string) {
