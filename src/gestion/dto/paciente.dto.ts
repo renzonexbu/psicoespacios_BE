@@ -44,6 +44,30 @@ export class UpdatePacienteDto {
   estado?: string;
 }
 
+export class PacienteWithUserDto {
+  id: string;
+  idUsuarioPaciente: string;
+  idUsuarioPsicologo: string;
+  primeraSesionRegistrada: Date;
+  proximaSesion?: Date | null;
+  estado?: string | null;
+  usuario: {
+    id: string;
+    nombre: string;
+    apellido: string;
+    email: string;
+    rut: string;
+    telefono: string;
+    fechaNacimiento: Date;
+    fotoUrl?: string | null;
+    direccion?: string | null;
+    role: string;
+    estado: string;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+}
+
 export class CreateFichaSesionDto {
   @IsDateString()
   @IsNotEmpty()

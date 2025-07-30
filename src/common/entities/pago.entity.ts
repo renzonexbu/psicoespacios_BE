@@ -5,7 +5,9 @@ import { SolicitudDerivacion } from './solicitud-derivacion.entity';
 
 export enum TipoPago {
   SUSCRIPCION = 'SUSCRIPCION',
-  DERIVACION = 'DERIVACION'
+  DERIVACION = 'DERIVACION',
+  SESION = 'SESION',
+  RESERVA = 'RESERVA'
 }
 
 export enum EstadoPago {
@@ -92,9 +94,9 @@ export class Pago {
   @Column({ type: 'timestamp', nullable: true })
   fechaReembolso: Date;
 
-  @CreateDateColumn({ type: 'timestamp' })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp' })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 }

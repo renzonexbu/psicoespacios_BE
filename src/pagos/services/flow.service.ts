@@ -13,8 +13,8 @@ export class FlowService {
   private readonly frontUrl: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.apiKey = '25F41F46-9C8A-4705-B0BE-1L1832F85190';
-    this.secretKey = 'b1daeb63ff319f82ab8660f9fe35a4334914f1dd';
+    this.apiKey = '5B2A0FB8-CE70-455E-AAAB-5AB11L67E99A';
+    this.secretKey = '3699c4008de7bc5e08ce58ddde71e76348c5e104';
     this.commerceId = 'TU_COMMERCE_ID';
     this.baseUrl = 'https://sandbox.flow.cl/api';
     this.frontUrl = this.configService.get<string>('FRONT_URL', 'https://TU_FRONTEND');
@@ -35,7 +35,7 @@ export class FlowService {
       currency: 'CLP',
       amount: amount,
       email: "manu.araya@psicoespacios.cl",
-      urlConfirmation: 'https://webhook.site/b11eb1a1-63a0-4e9c-a894-f665fa8eeada',
+      urlConfirmation: 'https://webhook.site/7160f234-da3b-454a-8ab1-6d4ff17283f2',
       urlReturn: `${this.frontUrl}/pago-exitoso`,
     };
     params['s'] = this.sign(params);
