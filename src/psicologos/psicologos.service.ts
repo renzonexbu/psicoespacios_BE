@@ -7,13 +7,25 @@ import { CreateReservaDto } from './dto/create-reserva.dto';
 import { QueryHistorialTurnosDto } from './dto/query-historial-turnos.dto';
 import { Psicologo } from './entities/psicologo.entity';
 import { Reserva, EstadoReserva } from './entities/reserva.entity';
-import { DisponibilidadDia, DisponibilidadHorario, HorarioSlot } from './entities/disponibilidad.entity';
+import { Disponibilidad } from './entities/disponibilidad.entity';
 import { 
   ResourceNotFoundException, 
   BadRequestException, 
   DatabaseConnectionException, 
   ConflictException 
 } from '../common/exceptions';
+
+// Interfaces temporales para compatibilidad con el servicio existente
+export interface DisponibilidadDia {
+  fecha: string;
+  disponible: boolean;
+}
+
+export interface HorarioSlot {
+  horaInicio: string;
+  horaFin: string;
+  disponible: boolean;
+}
 
 @Injectable()
 export class PsicologosService {

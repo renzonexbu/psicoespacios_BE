@@ -13,7 +13,7 @@ import { AdminModule } from './admin/admin.module';
 import { ContactoModule } from './contacto/contacto.module';
 import { HealthModule } from './health/health.module';
 import { runMigrations } from './database/migration-runner';
-// import { PsicologosModule } from './psicologos/psicologos.module';
+import { PsicologosModule } from './psicologos/psicologos.module';
 import { JsonParsingErrorMiddleware } from './common/middleware/json-parsing-error.middleware';
 import { BlogsModule } from './blogs/blogs.module';
 import { VouchersModule } from './vouchers/vouchers.module';
@@ -87,7 +87,7 @@ import { ArriendosModule } from './arriendos/arriendos.module';
     AdminModule,
     ContactoModule,
     HealthModule,
-    // PsicologosModule, // <-- Comentar para dejar de usar el módulo viejo
+    PsicologosModule,
     BlogsModule,
     VouchersModule,
     UploadsModule,
