@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 @Controller('api/v1/auth')
@@ -20,15 +21,14 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post('refresh-token')
-  async refreshToken(@Body('refresh_token') refreshToken: string) {
-    return this.authService.refreshToken(refreshToken);
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+    return this.authService.refreshToken(refreshTokenDto.refresh_token);
   }
 
   @Post('logout')
-  async logout(@Body('refresh_token') refreshToken: string) {
-    await this.authService.revokeRefreshToken(refreshToken);
+  async logout(@Body() refreshTokenDto: RefreshTokenDto) {
+    await this.authService.revokeRefreshToken(refreshTokenDto.refresh_token);
     return { message: 'Refresh token revocado' };
   }
 

@@ -1,12 +1,9 @@
-import { IsUUID, IsDateString, IsString, IsNumber, IsOptional } from 'class-validator';
+import { IsUUID, IsDateString, IsString, IsNumber, IsOptional, IsEnum } from 'class-validator';
+import { EstadoReserva } from '../../common/entities/reserva.entity';
 
 export class CreateReservaDto {
-  @IsOptional()
   @IsUUID()
-  boxId?: string;
-
-  @IsUUID()
-  pacienteId: string;
+  boxId: string;
 
   @IsUUID()
   psicologoId: string;
@@ -15,18 +12,21 @@ export class CreateReservaDto {
   fecha: string;
 
   @IsString()
-  horario: string;
+  horaInicio: string;
+
+  @IsString()
+  horaFin: string;
 
   @IsNumber()
   precio: number;
 
   @IsOptional()
-  @IsString()
-  estado?: string;
+  @IsEnum(EstadoReserva)
+  estado?: EstadoReserva;
 }
 
 export class UpdateReservaDto {
   @IsOptional()
-  @IsString()
-  estado?: string;
+  @IsEnum(EstadoReserva)
+  estado?: EstadoReserva;
 }

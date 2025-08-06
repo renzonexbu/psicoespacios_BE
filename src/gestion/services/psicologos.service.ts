@@ -220,10 +220,10 @@ export class PsicologosService {
     }
     // Buscar reservas existentes para ese psicólogo y fecha
     const reservas = await this.reservaRepository.find({
-      where: { psicologoId: psicologo.usuario.id, fecha },
+      where: { psicologoId: psicologo.usuario.id, fecha: new Date(fecha) },
     });
     // Filtrar bloques ocupados
-    const bloquesOcupados = reservas.map(r => r.horario);
+    const bloquesOcupados = reservas.map(r => `${r.horaInicio}-${r.horaFin}`);
     const bloquesLibres = bloques.filter(b => !bloquesOcupados.includes(b));
     return bloquesLibres;
   }

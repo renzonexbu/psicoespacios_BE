@@ -1,5 +1,12 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
+export enum EstadoReserva {
+  PENDIENTE = 'pendiente',
+  CONFIRMADA = 'confirmada',
+  CANCELADA = 'cancelada',
+  COMPLETADA = 'completada'
+}
+
 @Entity('reservas')
 export class Reserva {
   @PrimaryGeneratedColumn('uuid')
@@ -9,22 +16,26 @@ export class Reserva {
   boxId: string;
 
   @Column({ type: 'uuid' })
-  pacienteId: string;
-
-  @Column({ type: 'uuid' })
   psicologoId: string;
 
   @Column({ type: 'date' })
-  fecha: string;
+  fecha: Date;
 
-  @Column({ type: 'varchar' })
-  horario: string;
+  @Column({ type: 'varchar', length: 5 })
+  horaInicio: string; // Formato "HH:00" (ej: "09:00")
 
-  @Column({ type: 'numeric', precision: 10, scale: 2 })
+  @Column({ type: 'varchar', length: 5 })
+  horaFin: string; // Formato "HH:00" (ej: "10:00")
+
+  @Column({
+    type: 'enum',
+    enum: EstadoReserva,
+    default: EstadoReserva.PENDIENTE
+  })
+  estado: EstadoReserva;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
   precio: number;
-
-  @Column({ type: 'varchar', default: 'PENDIENTE' })
-  estado: string;
 
   @CreateDateColumn()
   createdAt: Date;

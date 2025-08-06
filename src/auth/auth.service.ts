@@ -102,8 +102,20 @@ export class AuthService {
     await this.userRepository.save(user);
     
     const payload = { sub: user.id, email: user.email, role: user.role };
+    const access_token = await this.jwtService.signAsync(payload);
+    // Crear refresh token para el registro también
+    const refresh_token = uuidv4() + uuidv4();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 días
+    await this.refreshTokenRepository.save({
+      userId: user.id,
+      token: refresh_token,
+      expiresAt,
+      revoked: false,
+    });
+    
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      access_token,
+      refresh_token,
       user: {
         id: user.id,
         email: user.email,
@@ -127,9 +139,29 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Usuario no encontrado');
     }
+    
+    // Revocar el refresh token actual
+    token.revoked = true;
+    await this.refreshTokenRepository.save(token);
+    
+    // Generar nuevo access token
     const payload = { sub: user.id, email: user.email, role: user.role };
     const access_token = await this.jwtService.signAsync(payload);
-    return { access_token };
+    
+    // Generar nuevo refresh token
+    const new_refresh_token = uuidv4() + uuidv4();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 días
+    await this.refreshTokenRepository.save({
+      userId: user.id,
+      token: new_refresh_token,
+      expiresAt,
+      revoked: false,
+    });
+    
+    return { 
+      access_token,
+      refresh_token: new_refresh_token
+    };
   }
 
   async revokeRefreshToken(refreshToken: string) {

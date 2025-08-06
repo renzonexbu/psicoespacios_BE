@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Reserva } from '../common/entities/reserva.entity';
+import { Reserva, EstadoReserva } from '../common/entities/reserva.entity';
 import { User } from '../common/entities/user.entity';
 import { Box } from '../common/entities/box.entity';
 import { CreateReservaDto, UpdateReservaDto } from './dto/reserva.dto';
@@ -20,7 +20,7 @@ export class ReservasService {
   async create(createReservaDto: CreateReservaDto) {
     const reserva = this.reservaRepository.create({
       ...createReservaDto,
-      estado: createReservaDto.estado || 'PENDIENTE',
+      estado: createReservaDto.estado || EstadoReserva.PENDIENTE,
     });
     return await this.reservaRepository.save(reserva);
   }
@@ -40,27 +40,22 @@ export class ReservasService {
     if (reserva.psicologoId !== userId) {
       throw new ForbiddenException('No tienes permiso para cancelar esta reserva');
     }
-    reserva.estado = updateDto.estado || 'CANCELADA';
+    reserva.estado = updateDto.estado || EstadoReserva.CANCELADA;
     return await this.reservaRepository.save(reserva);
   }
 
   async findByPsicologoAndFecha(psicologoId: string, fecha: string): Promise<any[]> {
     const reservas = await this.reservaRepository.find({
-      where: { psicologoId, fecha },
+      where: { psicologoId, fecha: new Date(fecha) },
     });
-    // Obtener los datos de usuario de cada paciente
-    const pacienteIds = reservas.map(r => r.pacienteId);
-    const pacientes = await this.userRepository.findByIds(pacienteIds);
-    // Mapear reservas con info del paciente
+    
+    // Mapear reservas con info del psicólogo
     return reservas.map(reserva => {
-      const paciente = pacientes.find(p => p.id === reserva.pacienteId);
       return {
         ...reserva,
-        paciente: paciente ? {
-          nombre: paciente.nombre,
-          apellido: paciente.apellido,
-          fotoUrl: paciente.fotoUrl,
-        } : null,
+        psicologo: {
+          id: reserva.psicologoId,
+        },
       };
     });
   }
