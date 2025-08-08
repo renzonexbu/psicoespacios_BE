@@ -20,6 +20,8 @@ import { VouchersModule } from './vouchers/vouchers.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { BoxesModule } from './boxes/boxes.module';
 import { ArriendosModule } from './arriendos/arriendos.module';
+import { NotasModule } from './notas/notas.module';
+import { ReservasPsicologosModule } from './reservas-psicologos/reservas-psicologos.module';
 
 @Module({
   imports: [
@@ -93,6 +95,8 @@ import { ArriendosModule } from './arriendos/arriendos.module';
     UploadsModule,
     BoxesModule,
     ArriendosModule,
+    NotasModule,
+    ReservasPsicologosModule,
   ],
 })
 export class AppModule implements OnModuleInit, NestModule {

@@ -1,0 +1,106 @@
+import { Controller, Get, Post, Body, Param, Put, Delete, Query, UseGuards, Request } from '@nestjs/common';
+import { ReservasPsicologosService } from './reservas-psicologos.service';
+import { CreateReservaPsicologoDto, UpdateReservaPsicologoDto, QueryReservasPsicologoDto } from './dto/reserva-psicologo.dto';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/enums/role.enum';
+import { EstadoReservaPsicologo, ModalidadSesion } from '../common/entities/reserva-psicologo.entity';
+
+@Controller('api/v1/reservas-sesiones')
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class ReservasPsicologosController {
+  constructor(private readonly reservasPsicologosService: ReservasPsicologosService) {}
+
+  /**
+   * Crear una nueva reserva de sesión con psicólogo
+   */
+  @Post()
+  @Roles(Role.TERAPEUTA, Role.ADMIN, Role.PACIENTE)
+  async create(@Body() createReservaDto: CreateReservaPsicologoDto) {
+    return this.reservasPsicologosService.create(createReservaDto);
+  }
+
+  /**
+   * Obtener todas las reservas con filtros
+   */
+  @Get()
+  @Roles(Role.TERAPEUTA, Role.ADMIN)
+  async findAll(@Query() query: QueryReservasPsicologoDto) {
+    return this.reservasPsicologosService.findAll(query);
+  }
+
+  /**
+   * Obtener una reserva específica
+   */
+  @Get(':id')
+  @Roles(Role.TERAPEUTA, Role.ADMIN, Role.PACIENTE)
+  async findOne(@Param('id') id: string) {
+    return this.reservasPsicologosService.findOne(id);
+  }
+
+  /**
+   * Obtener reservas de un psicólogo específico
+   */
+  @Get('psicologo/:psicologoId')
+  @Roles(Role.TERAPEUTA, Role.ADMIN)
+  async findByPsicologo(@Param('psicologoId') psicologoId: string) {
+    return this.reservasPsicologosService.findByPsicologo(psicologoId);
+  }
+
+  /**
+   * Obtener reservas de un paciente específico
+   */
+  @Get('paciente/:pacienteId')
+  @Roles(Role.TERAPEUTA, Role.ADMIN, Role.PACIENTE)
+  async findByPaciente(@Param('pacienteId') pacienteId: string) {
+    return this.reservasPsicologosService.findByPaciente(pacienteId);
+  }
+
+  /**
+   * Actualizar una reserva
+   */
+  @Put(':id')
+  @Roles(Role.TERAPEUTA, Role.ADMIN)
+  async update(
+    @Param('id') id: string,
+    @Body() updateReservaDto: UpdateReservaPsicologoDto
+  ) {
+    return this.reservasPsicologosService.update(id, updateReservaDto);
+  }
+
+  /**
+   * Cancelar una reserva
+   */
+  @Post(':id/cancel')
+  @Roles(Role.TERAPEUTA, Role.ADMIN, Role.PACIENTE)
+  async cancel(@Param('id') id: string) {
+    return this.reservasPsicologosService.cancel(id);
+  }
+
+  /**
+   * Eliminar una reserva
+   */
+  @Delete(':id')
+  @Roles(Role.TERAPEUTA, Role.ADMIN)
+  async remove(@Param('id') id: string) {
+    await this.reservasPsicologosService.remove(id);
+    return { message: 'Reserva eliminada correctamente' };
+  }
+
+  /**
+   * Obtener estados de reserva disponibles
+   */
+  @Get('estados/disponibles')
+  getEstadosReserva() {
+    return Object.values(EstadoReservaPsicologo);
+  }
+
+  /**
+   * Obtener modalidades de sesión disponibles
+   */
+  @Get('modalidades/disponibles')
+  getModalidadesSesion() {
+    return Object.values(ModalidadSesion);
+  }
+} 

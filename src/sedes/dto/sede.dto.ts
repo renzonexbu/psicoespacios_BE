@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray, IsObject } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsObject, IsNumber } from 'class-validator';
 
 export class CreateSedeDto {
   @IsString()
@@ -9,6 +9,9 @@ export class CreateSedeDto {
 
   @IsString()
   direccion: string;
+
+  @IsString()
+  ciudad: string;
 
   @IsOptional()
   @IsString()
@@ -29,6 +32,13 @@ export class CreateSedeDto {
   @IsOptional()
   @IsArray()
   features?: string[];
+
+  @IsOptional()
+  @IsObject()
+  coordenadas?: {
+    lat: number;
+    lng: number;
+  };
 
   @IsOptional()
   @IsObject()
@@ -61,6 +71,10 @@ export class UpdateSedeDto {
 
   @IsOptional()
   @IsString()
+  ciudad?: string;
+
+  @IsOptional()
+  @IsString()
   telefono?: string;
 
   @IsOptional()
@@ -78,6 +92,13 @@ export class UpdateSedeDto {
   @IsOptional()
   @IsArray()
   features?: string[];
+
+  @IsOptional()
+  @IsObject()
+  coordenadas?: {
+    lat: number;
+    lng: number;
+  };
 
   @IsOptional()
   @IsObject()
@@ -100,11 +121,16 @@ export class SedePublicDto {
   nombre: string;
   description: string;
   direccion: string;
+  ciudad: string;
   telefono?: string;
   email?: string;
   imageUrl?: string;
   thumbnailUrl?: string;
   features?: string[];
+  coordenadas?: {
+    lat: number;
+    lng: number;
+  };
   horarioAtencion?: {
     diasHabiles: {
       dia: string;

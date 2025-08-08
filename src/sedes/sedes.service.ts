@@ -34,11 +34,13 @@ export class SedesService {
       nombre: sede.nombre,
       description: sede.description,
       direccion: sede.direccion,
+      ciudad: sede.ciudad,
       telefono: sede.telefono,
       email: sede.email,
       imageUrl: sede.imageUrl,
       thumbnailUrl: sede.thumbnailUrl,
       features: sede.features,
+      coordenadas: sede.coordenadas,
       horarioAtencion: sede.horarioAtencion,
       serviciosDisponibles: sede.serviciosDisponibles,
       estado: sede.estado,
@@ -59,11 +61,13 @@ export class SedesService {
       nombre: sede.nombre,
       description: sede.description,
       direccion: sede.direccion,
+      ciudad: sede.ciudad,
       telefono: sede.telefono,
       email: sede.email,
       imageUrl: sede.imageUrl,
       thumbnailUrl: sede.thumbnailUrl,
       features: sede.features,
+      coordenadas: sede.coordenadas,
       horarioAtencion: sede.horarioAtencion,
       serviciosDisponibles: sede.serviciosDisponibles,
       estado: sede.estado,
@@ -84,7 +88,22 @@ export class SedesService {
   }
 
   async create(createSedeDto: CreateSedeDto): Promise<Sede> {
-    const sede = this.sedesRepository.create(createSedeDto);
+    // Crear la sede con todos los campos del DTO
+    const sede = this.sedesRepository.create({
+      nombre: createSedeDto.nombre,
+      description: createSedeDto.description,
+      direccion: createSedeDto.direccion,
+      ciudad: createSedeDto.ciudad,
+      telefono: createSedeDto.telefono,
+      email: createSedeDto.email,
+      imageUrl: createSedeDto.imageUrl,
+      thumbnailUrl: createSedeDto.thumbnailUrl,
+      features: createSedeDto.features,
+      coordenadas: createSedeDto.coordenadas,
+      horarioAtencion: createSedeDto.horarioAtencion,
+      serviciosDisponibles: createSedeDto.serviciosDisponibles,
+    });
+    
     return await this.sedesRepository.save(sede);
   }
 

@@ -14,6 +14,9 @@ export class Sede {
   @Column()
   direccion: string;
 
+  @Column()
+  ciudad: string;
+
   @Column({ nullable: true })
   telefono: string;
 
@@ -30,6 +33,12 @@ export class Sede {
   features: string[];
 
   @Column({ type: 'jsonb', nullable: true })
+  coordenadas?: {
+    lat: number;
+    lng: number;
+  };
+
+  @Column({ type: 'jsonb', nullable: true })
   horarioAtencion: {
     diasHabiles: {
       dia: string;
@@ -42,7 +51,7 @@ export class Sede {
   @Column({ type: 'text', array: true, nullable: true })
   serviciosDisponibles: string[];
 
- @Column({ default: 'ACTIVA' })
+  @Column({ default: 'ACTIVA' })
   estado: string;
 
   @OneToMany('Box', 'sede', { 

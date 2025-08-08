@@ -1,70 +1,64 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
-import { PsicologosService } from './psicologos.service';
-import { CreatePsicologoDto } from './dto/create-psicologo.dto';
-import { UpdatePsicologoDto } from './dto/update-psicologo.dto';
-import { QueryDisponibilidadDiasDto } from './dto/query-disponibilidad-dias.dto';
-import { QueryDisponibilidadHorariosDto } from './dto/query-disponibilidad-horarios.dto';
-import { CreateReservaDto } from './dto/create-reserva.dto';
-import { QueryHistorialTurnosDto } from './dto/query-historial-turnos.dto';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { PsicologosService } from '../gestion/services/psicologos.service';
+import { CreatePsicologoDto, UpdatePsicologoDto } from '../common/dto/psicologo.dto';
+import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { AgendaService } from './services/agenda.service';
+import { AgendaDisponibilidadDto, PsicologoDisponibilidadDto } from './dto/agenda-disponibilidad.dto';
 
 @Controller('api/v1/psicologos')
 export class PsicologosController {
-  constructor(private readonly psicologosService: PsicologosService) {}
+  constructor(
+    private readonly psicologosService: PsicologosService,
+    private readonly agendaService: AgendaService
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'PSICOLOGO')
+  @Roles(Role.ADMIN)
   create(@Body() createPsicologoDto: CreatePsicologoDto) {
     return this.psicologosService.create(createPsicologoDto);
   }
 
-  @Get('disponibilidad/dias')
-  consultarDiasDisponibles(@Query() query: QueryDisponibilidadDiasDto) {
-    return this.psicologosService.consultarDiasDisponibles(query);
-  }
-
-  @Get('disponibilidad/horarios')
-  consultarHorariosDisponibles(@Query() query: QueryDisponibilidadHorariosDto) {
-    return this.psicologosService.consultarHorariosDisponibles(query);
-  }
-
-  @Post('reservas')
-  @UseGuards(JwtAuthGuard)
-  reservarTurno(@Body() createReservaDto: CreateReservaDto) {
-    return this.psicologosService.reservarTurno(createReservaDto);
-  }
-
-  @Get('pacientes/:pacienteId/historial-turnos')
-  @UseGuards(JwtAuthGuard)
-  historialTurnosPaciente(@Param('pacienteId') pacienteId: string, @Query() query: QueryHistorialTurnosDto) {
-    return this.psicologosService.historialTurnosPaciente(pacienteId, query);
-  }
-
-  // Endpoints CRUD básicos para Psicologos
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.TERAPEUTA)
   findAll() {
     return this.psicologosService.findAll();
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PACIENTE)
   findOne(@Param('id') id: string) {
     return this.psicologosService.findOne(id);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'PSICOLOGO')
+  @Roles(Role.ADMIN, Role.TERAPEUTA)
   update(@Param('id') id: string, @Body() updatePsicologoDto: UpdatePsicologoDto) {
     return this.psicologosService.update(id, updatePsicologoDto);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles(Role.ADMIN)
   remove(@Param('id') id: string) {
     return this.psicologosService.remove(id);
+  }
+
+  // Endpoint para agenda completa (con boxes)
+  @Get('disponibilidad/agenda')
+  async getAgendaDisponibilidad(@Query() query: AgendaDisponibilidadDto) {
+    return this.agendaService.getAgendaDisponibilidad(query);
+  }
+
+  // Nuevo endpoint para disponibilidad del psicólogo (sin boxes)
+  @Get('disponibilidad/psicologo')
+  async getPsicologoDisponibilidad(@Query() query: PsicologoDisponibilidadDto) {
+    return this.agendaService.getPsicologoDisponibilidad(query);
   }
 }

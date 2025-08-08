@@ -2,7 +2,7 @@ export class BlogResponseDto {
   id: number;
   titulo: string;
   descripcion: string;
-  imagen: string;
+  imagen?: string;
   fecha: string;
   categoria: string;
   contenido: string;

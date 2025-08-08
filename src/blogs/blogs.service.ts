@@ -44,7 +44,7 @@ export class BlogsService {
     const blog = this.blogRepository.create({
       ...createBlogDto,
       fecha,
-      imagen: createBlogDto.imagen || null
+      imagen: createBlogDto.imagen || undefined
     });
 
     const savedBlog = await this.blogRepository.save(blog);
@@ -70,6 +70,9 @@ export class BlogsService {
 
     await this.blogRepository.update(id, updateBlogDto);
     const updatedBlog = await this.blogRepository.findOneBy({ id });
+    if (!updatedBlog) {
+      throw new NotFoundException(`Blog con ID ${id} no encontrado después de la actualización`);
+    }
     return this.mapToResponseDto(updatedBlog);
   }
 

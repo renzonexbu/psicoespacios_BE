@@ -11,8 +11,8 @@ export class Blog {
   @Column({ type: 'text' })
   descripcion: string;
 
-  @Column({ length: 255 })
-  imagen: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  imagen?: string;
 
   @Column({ type: 'date' })
   fecha: string;
