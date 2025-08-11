@@ -36,4 +36,7 @@ export class Voucher {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deletedAt: Date | null;
 } 

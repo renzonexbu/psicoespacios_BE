@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { Voucher } from '../common/entities/voucher.entity';
 import { CreateVoucherDto, UpdateVoucherDto } from '../common/dto/voucher.dto';
 import { Psicologo } from '../common/entities/psicologo.entity';
@@ -15,14 +15,35 @@ export class VouchersService {
   ) {}
 
   async create(createVoucherDto: CreateVoucherDto): Promise<Voucher> {
-    const psicologo = await this.psicologoRepository.findOne({ where: { id: createVoucherDto.psicologoId } });
-    if (!psicologo) throw new NotFoundException('Psicólogo no encontrado');
-    const voucher = this.voucherRepository.create({ ...createVoucherDto, psicologo });
+    // Buscar el psicólogo por su userId
+    const psicologo = await this.psicologoRepository.findOne({
+      where: { usuario: { id: createVoucherDto.psicologoUserId } },
+      relations: ['usuario']
+    });
+    
+    if (!psicologo) {
+      throw new NotFoundException('Psicólogo no encontrado para este usuario');
+    }
+
+    // Crear el voucher usando el ID del psicólogo (no del usuario)
+    const voucher = this.voucherRepository.create({
+      nombre: createVoucherDto.nombre,
+      porcentaje: createVoucherDto.porcentaje,
+      vencimiento: createVoucherDto.vencimiento,
+      modalidad: createVoucherDto.modalidad,
+      psicologoId: psicologo.id, // Usar el ID del psicólogo, no del usuario
+      limiteUsos: createVoucherDto.limiteUsos,
+      psicologo
+    });
+    
     return this.voucherRepository.save(voucher);
   }
 
   async findAll(): Promise<Voucher[]> {
-    return this.voucherRepository.find({ relations: ['psicologo'] });
+    return this.voucherRepository.find({ 
+      where: { deletedAt: IsNull() }, // Solo vouchers no eliminados
+      relations: ['psicologo'] 
+    });
   }
 
   async findOne(id: string): Promise<Voucher> {
@@ -39,6 +60,44 @@ export class VouchersService {
 
   async remove(id: string): Promise<void> {
     const voucher = await this.findOne(id);
-    await this.voucherRepository.remove(voucher);
+    // Soft delete: marcar como eliminado en lugar de eliminar físicamente
+    voucher.deletedAt = new Date();
+    await this.voucherRepository.save(voucher);
+  }
+
+  async restore(id: string): Promise<Voucher> {
+    const voucher = await this.voucherRepository.findOne({ 
+      where: { id, deletedAt: IsNull() } 
+    });
+    
+    if (!voucher) {
+      throw new NotFoundException('Voucher no encontrado o ya está activo');
+    }
+    
+    // Restaurar el voucher
+    voucher.deletedAt = null;
+    return this.voucherRepository.save(voucher);
+  }
+
+  async findByPsicologoUserId(psicologoUserId: string): Promise<Voucher[]> {
+    // Buscar el psicólogo por su userId
+    const psicologo = await this.psicologoRepository.findOne({
+      where: { usuario: { id: psicologoUserId } },
+      relations: ['usuario']
+    });
+
+    if (!psicologo) {
+      throw new NotFoundException('Psicólogo no encontrado para este usuario');
+    }
+
+    // Buscar todos los vouchers del psicólogo (solo los no eliminados)
+    return this.voucherRepository.find({
+      where: { 
+        psicologoId: psicologo.id,
+        deletedAt: IsNull() // Solo vouchers no eliminados
+      },
+      relations: ['psicologo', 'psicologo.usuario'],
+      order: { createdAt: 'DESC' }
+    });
   }
 } 

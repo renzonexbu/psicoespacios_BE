@@ -1,5 +1,6 @@
 export enum Role {
   ADMIN = 'ADMIN',
+  PSICOLOGO = 'PSICOLOGO',
   TERAPEUTA = 'TERAPEUTA',
   PACIENTE = 'PACIENTE',
 }

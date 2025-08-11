@@ -5,7 +5,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 
-@Controller('vouchers')
+@Controller('api/v1/vouchers')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class VouchersController {
   constructor(private readonly vouchersService: VouchersService) {}
@@ -38,5 +38,17 @@ export class VouchersController {
   @Roles('ADMIN', 'PSICOLOGO')
   remove(@Param('id') id: string) {
     return this.vouchersService.remove(id);
+  }
+
+  @Get('psicologo/:psicologoUserId')
+  @Roles('ADMIN', 'PSICOLOGO')
+  findByPsicologoUserId(@Param('psicologoUserId') psicologoUserId: string) {
+    return this.vouchersService.findByPsicologoUserId(psicologoUserId);
+  }
+
+  @Patch(':id/restore')
+  @Roles('ADMIN')
+  restore(@Param('id') id: string) {
+    return this.vouchersService.restore(id);
   }
 } 

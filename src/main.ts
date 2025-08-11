@@ -6,7 +6,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { DatabaseErrorInterceptor } from './common/interceptors/database-error.interceptor';
-import { ValidationInterceptor } from './common/interceptors/validation.interceptor';
+// Quitamos el import del ValidationInterceptor
+// import { ValidationInterceptor } from './common/interceptors/validation.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import * as express from 'express';
 import { join } from 'path';
@@ -31,29 +32,35 @@ async function bootstrap() {
       // Configurar interceptores globales
     app.useGlobalInterceptors(
       new DatabaseErrorInterceptor(),
-      new ValidationInterceptor(),
+      // Quitamos el ValidationInterceptor que causa problemas
+      // new ValidationInterceptor(),
       new TimeoutInterceptor(60000), // 60 segundos de timeout
     );
     
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        transform: true,
-        transformOptions: {
-          enableImplicitConversion: true,
-        },
-        exceptionFactory: (errors) => {
-          const result = {};
-          errors.forEach(error => {
-            result[error.property] = Object.values(error.constraints || { error: 'Valor inválido' });
-          });
-          return new BadRequestException({
-            message: 'Error de validación en los datos proporcionados',
-            errors: result,
-          });
-        }
-      }),
-    );
+    // Quitamos el ValidationPipe global que causa problemas con archivos
+    // app.useGlobalPipes(
+    //   new ValidationPipe({
+    //     whitelist: true,
+    //     transform: true,
+    //     transformOptions: {
+    //       enableImplicitConversion: true,
+    //     },
+    //     skipMissingProperties: false,
+    //     forbidNonWhitelisted: false,
+    //     exceptionFactory: (errors) => {
+    //       console.log('🔍 ValidationPipe - Errores de validación:', errors);
+    //       const result = {};
+    //       errors.forEach(error => {
+    //         result[error.property] = Object.values(error.constraints || { error: 'Valor inválido' });
+    //       });
+    //       return new BadRequestException({
+    //         message: 'Error de validación en los datos proporcionados',
+    //         errors: result,
+    //         details: errors,
+    //       });
+    //     }
+    //   }),
+    // );
 
     app.enableCors({
       origin: '*',

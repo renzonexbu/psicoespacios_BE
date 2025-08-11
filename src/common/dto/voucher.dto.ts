@@ -17,7 +17,7 @@ export class CreateVoucherDto {
   modalidad: string;
 
   @IsUUID()
-  psicologoId: string;
+  psicologoUserId: string; // Cambiado de psicologoId a psicologoUserId para mayor claridad
 
   @IsInt()
   @Min(1)

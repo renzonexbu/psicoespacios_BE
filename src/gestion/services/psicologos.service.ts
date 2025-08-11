@@ -229,26 +229,77 @@ export class PsicologosService {
   }
 
   async getPacientesAsignados(psicologoUserId: string): Promise<any[]> {
-    // Buscar todos los pacientes cuyo idUsuarioPsicologo coincida
-    const pacientes = await this.pacienteRepository.find({ where: { idUsuarioPsicologo: psicologoUserId } });
-    if (!pacientes.length) return [];
-    // Obtener los ids de usuario de los pacientes
-    const userIds = pacientes.map(p => p.idUsuarioPaciente);
-    // Buscar los usuarios
-    const usuarios = await this.userRepository.findByIds(userIds);
-    // Mapear pacientes con info de usuario
-    return pacientes.map(paciente => {
-      const usuario = usuarios.find(u => u.id === paciente.idUsuarioPaciente);
-      return {
-        ...paciente,
-        usuario: usuario ? {
-          nombre: usuario.nombre,
-          apellido: usuario.apellido,
-          fotoUrl: usuario.fotoUrl,
-          email: usuario.email,
-          telefono: usuario.telefono,
-        } : null,
-      };
+    const psicologo = await this.findByUserId(psicologoUserId);
+    
+    // Buscar reservas del psicólogo
+    const reservas = await this.reservaRepository.find({
+      where: { psicologoId: psicologoUserId },
+      order: { fecha: 'DESC' }
     });
+
+    // Por ahora, retornar un array vacío ya que no tenemos la relación paciente configurada
+    // TODO: Implementar cuando se configure la relación paciente en la entidad Reserva
+    return [];
+    
+    // Código comentado para cuando se configure la relación:
+    /*
+    // Buscar pacientes que tienen reservas con este psicólogo
+    const reservas = await this.reservaRepository.find({
+      where: { psicologoId: psicologoUserId },
+      relations: ['paciente', 'paciente.usuario'],
+      order: { fecha: 'DESC' }
+    });
+
+    // Agrupar por paciente y obtener la última reserva
+    const pacientesMap = new Map();
+    for (const reserva of reservas) {
+      if (!pacientesMap.has(reserva.paciente.id)) {
+        pacientesMap.set(reserva.paciente.id, {
+          pacienteId: reserva.paciente.id,
+          nombre: reserva.paciente.usuario.nombre,
+          apellido: reserva.paciente.usuario.apellido,
+          email: reserva.paciente.usuario.email,
+          ultimaReserva: reserva.fecha,
+          totalReservas: 1
+        });
+      } else {
+        pacientesMap.get(reserva.paciente.id).totalReservas++;
+      }
+    }
+
+    return Array.from(pacientesMap.values());
+    */
+  }
+
+  // Métodos para gestionar precios
+  async getPrecios(usuarioId: string): Promise<{ precioOnline: number | null; precioPresencial: number | null; updatedAt: Date }> {
+    const psicologo = await this.findByUserId(usuarioId);
+    
+    return {
+      precioOnline: psicologo.precioOnline,
+      precioPresencial: psicologo.precioPresencial,
+      updatedAt: psicologo.updatedAt
+    };
+  }
+
+  async updatePrecios(usuarioId: string, precios: { precioOnline?: number; precioPresencial?: number }): Promise<{ precioOnline: number | null; precioPresencial: number | null; updatedAt: Date }> {
+    const psicologo = await this.findByUserId(usuarioId);
+    
+    // Actualizar solo los precios proporcionados
+    if (precios.precioOnline !== undefined) {
+      psicologo.precioOnline = precios.precioOnline;
+    }
+    if (precios.precioPresencial !== undefined) {
+      psicologo.precioPresencial = precios.precioPresencial;
+    }
+    
+    // Guardar cambios
+    const psicologoActualizado = await this.psicologoRepository.save(psicologo);
+    
+    return {
+      precioOnline: psicologoActualizado.precioOnline,
+      precioPresencial: psicologoActualizado.precioPresencial,
+      updatedAt: psicologoActualizado.updatedAt
+    };
   }
 }

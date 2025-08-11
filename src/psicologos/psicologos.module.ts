@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MulterModule } from '@nestjs/platform-express';
 import { PsicologosController } from './psicologos.controller';
 import { PsicologosService } from '../gestion/services/psicologos.service';
 import { DisponibilidadController } from './controllers/disponibilidad.controller';
@@ -12,6 +13,10 @@ import { Psicologo } from '../common/entities/psicologo.entity';
 import { Reserva } from '../common/entities/reserva.entity';
 import { Paciente } from '../common/entities/paciente.entity';
 import { Box } from '../common/entities/box.entity';
+import { DocumentoPsicologo } from '../common/entities/documento-psicologo.entity';
+import { DocumentosPsicologoController } from './controllers/documentos-psicologo.controller';
+import { DocumentosPsicologoService } from './services/documentos-psicologo.service';
+import { BackblazeService } from '../uploads/services/backblaze.service';
 
 @Module({
   imports: [
@@ -23,10 +28,14 @@ import { Box } from '../common/entities/box.entity';
       Reserva,
       Paciente,
       Box,
+      DocumentoPsicologo,
     ]),
+    MulterModule.register({
+      dest: './uploads/temp',
+    }),
   ],
-  controllers: [PsicologosController, DisponibilidadController],
-  providers: [PsicologosService, DisponibilidadService, AgendaService],
-  exports: [DisponibilidadService, AgendaService],
+  controllers: [PsicologosController, DisponibilidadController, DocumentosPsicologoController],
+  providers: [PsicologosService, DisponibilidadService, AgendaService, DocumentosPsicologoService, BackblazeService],
+  exports: [DisponibilidadService, AgendaService, DocumentosPsicologoService],
 })
 export class PsicologosModule {}
