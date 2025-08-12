@@ -36,7 +36,7 @@ export class Nota {
   })
   tipo: TipoNota;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ name: 'es_privada', type: 'boolean', default: false })
   esPrivada: boolean; // Para notas que solo ve el psicólogo
 
   @Column({ type: 'jsonb', nullable: true })
@@ -48,9 +48,9 @@ export class Nota {
     [key: string]: any;
   };
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 } 

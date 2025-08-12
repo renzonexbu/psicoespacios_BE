@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Request, ForbiddenException } from '@nestjs/common';
 import { PsicologosService } from '../services/psicologos.service';
 import { CreatePsicologoDto, UpdatePsicologoDto } from '../../common/dto/psicologo.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -29,7 +29,7 @@ export class PsicologosController {
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.TERAPEUTA)
+  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
   findAll() {
     return this.psicologosService.findAll();
   }
@@ -43,44 +43,69 @@ export class PsicologosController {
 
   @Get('usuario/:usuarioId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.TERAPEUTA)
-  findByUserId(@Param('usuarioId') usuarioId: string) {
+  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
+  async findByUserId(@Param('usuarioId') usuarioId: string, @Request() req) {
+    // Verificar que el psicólogo solo puede ver su propio perfil
+    if (req.user.role === Role.PSICOLOGO && req.user.id !== usuarioId) {
+      throw new ForbiddenException('Solo puedes ver tu propio perfil');
+    }
     return this.psicologosService.findByUserId(usuarioId);
   }
 
   @Get('usuario/:usuarioId/descripcion')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.TERAPEUTA)
-  async getDescripcionByUserId(@Param('usuarioId') usuarioId: string) {
+  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
+  async getDescripcionByUserId(@Param('usuarioId') usuarioId: string, @Request() req) {
+    // Verificar que el psicólogo solo puede ver su propia descripción
+    if (req.user.role === Role.PSICOLOGO && req.user.id !== usuarioId) {
+      throw new ForbiddenException('Solo puedes ver tu propia descripción');
+    }
     const psicologo = await this.psicologosService.findByUserId(usuarioId);
     return { descripcion: psicologo.descripcion };
   }
 
   @Get(':id/disponibilidad/dias')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.TERAPEUTA)
+  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
   async disponibilidadDias(
     @Param('id') id: string,
     @Query('mes') mes: number,
-    @Query('anio') anio: number
+    @Query('anio') anio: number,
+    @Request() req
   ) {
+    // Verificar que el psicólogo solo puede ver su propia disponibilidad
+    if (req.user.role === Role.PSICOLOGO && req.user.id !== id) {
+      throw new ForbiddenException('Solo puedes ver tu propia disponibilidad');
+    }
     return this.psicologosService.disponibilidadDias(id, mes, anio);
   }
 
   @Get(':id/disponibilidad/horarios')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.TERAPEUTA)
+  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
   async disponibilidadHorarios(
     @Param('id') id: string,
-    @Query('fecha') fecha: string
+    @Query('fecha') fecha: string,
+    @Request() req
   ) {
+    // Verificar que el psicólogo solo puede ver su propia disponibilidad
+    if (req.user.role === Role.PSICOLOGO && req.user.id !== id) {
+      throw new ForbiddenException('Solo puedes ver tu propia disponibilidad');
+    }
     return this.psicologosService.disponibilidadHorarios(id, fecha);
   }
 
   @Get(':usuarioId/pacientes')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.TERAPEUTA)
-  async getPacientesAsignados(@Param('usuarioId') usuarioId: string) {
+  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
+  async getPacientesAsignados(
+    @Param('usuarioId') usuarioId: string,
+    @Request() req
+  ) {
+    // Verificar que el psicólogo solo puede ver sus propios pacientes
+    if (req.user.role === Role.PSICOLOGO && req.user.id !== usuarioId) {
+      throw new ForbiddenException('Solo puedes ver tus propios pacientes');
+    }
     return this.psicologosService.getPacientesAsignados(usuarioId);
   }
 
@@ -94,8 +119,16 @@ export class PsicologosController {
 
   @Patch('usuario/:usuarioId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.TERAPEUTA)
-  async updateByUserId(@Param('usuarioId') usuarioId: string, @Body() updatePsicologoDto: UpdatePsicologoDto) {
+  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
+  async updateByUserId(
+    @Param('usuarioId') usuarioId: string, 
+    @Body() updatePsicologoDto: UpdatePsicologoDto,
+    @Request() req
+  ) {
+    // Verificar que el psicólogo solo puede actualizar su propio perfil
+    if (req.user.role === Role.PSICOLOGO && req.user.id !== usuarioId) {
+      throw new ForbiddenException('Solo puedes actualizar tu propio perfil');
+    }
     const psicologo = await this.psicologosService.findByUserId(usuarioId);
     return this.psicologosService.update(psicologo.id, updatePsicologoDto);
   }

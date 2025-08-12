@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Psicologo } from '../../common/entities/psicologo.entity';
 import { User } from '../../common/entities/user.entity';
 import { CreatePsicologoDto, UpdatePsicologoDto, PsicologoPublicDto } from '../../common/dto/psicologo.dto';
+import { PacienteAsignadoDto } from '../dto/paciente-asignado.dto';
 import { Reserva } from '../../common/entities/reserva.entity';
 import { Paciente } from '../../common/entities/paciente.entity';
 
@@ -228,47 +229,46 @@ export class PsicologosService {
     return bloquesLibres;
   }
 
-  async getPacientesAsignados(psicologoUserId: string): Promise<any[]> {
-    const psicologo = await this.findByUserId(psicologoUserId);
-    
-    // Buscar reservas del psicólogo
-    const reservas = await this.reservaRepository.find({
-      where: { psicologoId: psicologoUserId },
-      order: { fecha: 'DESC' }
+  async getPacientesAsignados(psicologoUserId: string): Promise<PacienteAsignadoDto[]> {
+    // Buscar pacientes asignados directamente desde la tabla pacientes
+    const pacientes = await this.pacienteRepository.find({
+      where: { idUsuarioPsicologo: psicologoUserId },
+      order: { primeraSesionRegistrada: 'DESC' }
     });
 
-    // Por ahora, retornar un array vacío ya que no tenemos la relación paciente configurada
-    // TODO: Implementar cuando se configure la relación paciente en la entidad Reserva
-    return [];
-    
-    // Código comentado para cuando se configure la relación:
-    /*
-    // Buscar pacientes que tienen reservas con este psicólogo
-    const reservas = await this.reservaRepository.find({
-      where: { psicologoId: psicologoUserId },
-      relations: ['paciente', 'paciente.usuario'],
-      order: { fecha: 'DESC' }
-    });
-
-    // Agrupar por paciente y obtener la última reserva
-    const pacientesMap = new Map();
-    for (const reserva of reservas) {
-      if (!pacientesMap.has(reserva.paciente.id)) {
-        pacientesMap.set(reserva.paciente.id, {
-          pacienteId: reserva.paciente.id,
-          nombre: reserva.paciente.usuario.nombre,
-          apellido: reserva.paciente.usuario.apellido,
-          email: reserva.paciente.usuario.email,
-          ultimaReserva: reserva.fecha,
-          totalReservas: 1
-        });
-      } else {
-        pacientesMap.get(reserva.paciente.id).totalReservas++;
-      }
+    if (pacientes.length === 0) {
+      return [];
     }
 
-    return Array.from(pacientesMap.values());
-    */
+    // Obtener información completa de los usuarios (pacientes)
+    const pacientesConInfo = await Promise.all(
+      pacientes.map(async (paciente) => {
+        const usuarioPaciente = await this.userRepository.findOne({
+          where: { id: paciente.idUsuarioPaciente }
+        });
+
+        if (!usuarioPaciente) {
+          return null; // Usuario no encontrado, omitir
+        }
+
+        return {
+          id: paciente.id,
+          pacienteId: paciente.idUsuarioPaciente,
+          nombre: usuarioPaciente.nombre,
+          apellido: usuarioPaciente.apellido,
+          email: usuarioPaciente.email,
+          telefono: usuarioPaciente.telefono,
+          fechaNacimiento: usuarioPaciente.fechaNacimiento,
+          fotoUrl: usuarioPaciente.fotoUrl,
+          primeraSesionRegistrada: paciente.primeraSesionRegistrada,
+          proximaSesion: paciente.proximaSesion,
+          estado: paciente.estado || 'ACTIVO'
+        };
+      })
+    );
+
+    // Filtrar pacientes nulos y retornar
+    return pacientesConInfo.filter(paciente => paciente !== null);
   }
 
   // Métodos para gestionar precios

@@ -1,10 +1,20 @@
 import { Controller, Get, Put, Param, Body, UseGuards, Request, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/enums/role.enum';
 
 @Controller('api/v1/users')
 export class UsersController {
   constructor(private readonly authService: AuthService) {}
+
+  @Get('admin/all')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async getAllUsers() {
+    return this.authService.findAllUsers();
+  }
 
   @UseGuards(JwtAuthGuard)
   @Get(':id/perfil')

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { Box } from '../common/entities/box.entity';
 import { Sede } from '../common/entities/sede.entity';
 import { CreateBoxDto, UpdateBoxDto } from './dto/box.dto';
@@ -17,14 +17,23 @@ export class BoxesService {
 
   async findAll(): Promise<Box[]> {
     return this.boxesRepository.find({
+      where: { deletedAt: IsNull() }, // Solo boxes no eliminados
       relations: ['sede'],
       order: { numero: 'ASC' },
     });
   }
 
+  async findAllWithDeleted(): Promise<Box[]> {
+    return this.boxesRepository.find({
+      relations: ['sede'],
+      order: { numero: 'ASC' },
+      withDeleted: true, // Incluir boxes eliminados
+    });
+  }
+
   async findOne(id: string): Promise<Box> {
     const box = await this.boxesRepository.findOne({
-      where: { id },
+      where: { id, deletedAt: IsNull() }, // Solo boxes no eliminados
       relations: ['sede'],
     });
 
@@ -53,6 +62,7 @@ export class BoxesService {
         where: {
           numero: createBoxDto.numero,
           sede: { id: createBoxDto.sedeId },
+          deletedAt: IsNull(), // Solo considerar boxes activos
         },
       });
       if (existingBox) {
@@ -87,16 +97,26 @@ export class BoxesService {
     }
 
     // Verificar si ya existe otro box con el mismo número en la misma sede
-    if (updateBoxDto.numero && updateBoxDto.sedeId) {
-      const existingBox = await this.boxesRepository.findOne({
-        where: {
-          numero: updateBoxDto.numero,
-          sede: { id: updateBoxDto.sedeId },
-          id: Not(id), // Excluir el box actual
-        },
-      });
-      if (existingBox) {
-        throw new BadRequestException('Ya existe un box con ese número en esta sede');
+    // Solo validar si se está cambiando el número o la sede
+    const numeroChanged = updateBoxDto.numero && updateBoxDto.numero !== box.numero;
+    const sedeChanged = updateBoxDto.sedeId && updateBoxDto.sedeId !== box.sede?.id;
+    
+    if (numeroChanged || sedeChanged) {
+      const numeroToCheck = updateBoxDto.numero || box.numero;
+      const sedeIdToCheck = updateBoxDto.sedeId || box.sede?.id;
+      
+      if (numeroToCheck && sedeIdToCheck) {
+        const existingBox = await this.boxesRepository.findOne({
+          where: {
+            numero: numeroToCheck,
+            sede: { id: sedeIdToCheck },
+            id: Not(id), // Excluir el box actual
+            deletedAt: IsNull(), // Solo considerar boxes activos
+          },
+        });
+        if (existingBox) {
+          throw new BadRequestException('Ya existe un box con ese número en esta sede');
+        }
       }
     }
 
@@ -114,7 +134,23 @@ export class BoxesService {
 
   async remove(id: string): Promise<void> {
     const box = await this.findOne(id);
-    await this.boxesRepository.remove(box);
+    // Soft delete: marcar como eliminado en lugar de eliminar físicamente
+    box.deletedAt = new Date();
+    await this.boxesRepository.save(box);
+  }
+
+  async restore(id: string): Promise<Box> {
+    const box = await this.boxesRepository.findOne({ 
+      where: { id, deletedAt: IsNull() } 
+    });
+    
+    if (!box) {
+      throw new NotFoundException('Box no encontrado o ya está activo');
+    }
+    
+    // Restaurar el box
+    box.deletedAt = null;
+    return await this.boxesRepository.save(box);
   }
 
   async findBySede(sedeId: string): Promise<Box[]> {
@@ -127,7 +163,7 @@ export class BoxesService {
     }
 
     return this.boxesRepository.find({
-      where: { sede: { id: sedeId } },
+      where: { sede: { id: sedeId }, deletedAt: IsNull() }, // Solo boxes no eliminados
       relations: ['sede'],
       order: { numero: 'ASC' },
     });

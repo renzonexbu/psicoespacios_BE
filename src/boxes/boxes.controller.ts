@@ -16,6 +16,13 @@ export class BoxesController {
     return this.boxesService.findAll();
   }
 
+  @Get('admin/all')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  async findAllWithDeleted() {
+    return this.boxesService.findAllWithDeleted();
+  }
+
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.boxesService.findOne(id);
@@ -43,7 +50,15 @@ export class BoxesController {
   @Roles(Role.ADMIN)
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     await this.boxesService.remove(id);
-    return { message: 'Box eliminado correctamente' };
+    return { message: 'Box eliminado correctamente (soft delete)' };
+  }
+
+  @Post(':id/restore')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  async restore(@Param('id', ParseUUIDPipe) id: string) {
+    const box = await this.boxesService.restore(id);
+    return { message: 'Box restaurado correctamente', box };
   }
 
   @Get('sede/:sedeId')

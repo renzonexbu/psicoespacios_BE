@@ -9,7 +9,7 @@ import { TipoNota } from '../common/entities/nota.entity';
 
 @Controller('api/v1/notas')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.TERAPEUTA, Role.ADMIN)
+@Roles(Role.TERAPEUTA, Role.ADMIN, Role.PSICOLOGO)
 export class NotasController {
   constructor(private readonly notasService: NotasService) {}
 

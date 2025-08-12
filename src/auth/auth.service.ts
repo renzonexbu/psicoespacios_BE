@@ -5,9 +5,11 @@ import { Repository } from 'typeorm';
 import { User } from '../common/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UserResponseDto } from './dto/user-response.dto';
 import * as bcrypt from 'bcrypt';
 import { RefreshToken } from '../common/entities/refresh-token.entity';
 import { v4 as uuidv4 } from 'uuid';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class AuthService {
@@ -198,5 +200,17 @@ export class AuthService {
     if (!valid) throw new UnauthorizedException('La contraseña actual es incorrecta');
     user.password = await bcrypt.hash(newPassword, 10);
     await this.userRepository.save(user);
+  }
+
+  async findAllUsers(): Promise<UserResponseDto[]> {
+    const users = await this.userRepository.find({
+      order: { createdAt: 'DESC' }
+    });
+    
+    // Transformar usando el DTO para excluir password y formatear fechas
+    return users.map(user => {
+      const { password, ...userData } = user;
+      return plainToClass(UserResponseDto, userData, { excludeExtraneousValues: true });
+    });
   }
 }
