@@ -14,12 +14,19 @@ import { ServiceUnavailableException, ExternalServiceException } from '../except
  */
 @Injectable()
 export class TimeoutInterceptor implements NestInterceptor {
-  constructor(private readonly timeoutMs = 30000) {} // 30 segundos por defecto
+  constructor(private readonly timeoutMs = 60000) {} // 60 segundos por defecto
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    const request = context.switchToHttp().getRequest();
+    const url = request.url;
+    const method = request.method;
+    
+    console.log(`[TimeoutInterceptor] ${method} ${url} - Timeout configurado: ${this.timeoutMs}ms`);
+    
     return next.handle().pipe(
       timeout(this.timeoutMs), // Limitamos el tiempo de respuesta
       catchError(err => {
+        console.error(`[TimeoutInterceptor] Error en ${method} ${url}:`, err);
         if (err instanceof TimeoutError) {
           return throwError(() => new RequestTimeoutException(
             'La solicitud ha excedido el tiempo máximo de espera. Por favor, inténtelo de nuevo más tarde.'
@@ -37,8 +44,9 @@ export class TimeoutInterceptor implements NestInterceptor {
 
         // Si el servicio responde con errores 5xx
         if (err.status >= 500 && err.status < 600) {
+          console.error('Error 5xx detectado:', err);
           return throwError(() => new ServiceUnavailableException(
-            'El servicio no está respondiendo correctamente. Por favor, inténtelo más tarde.'
+            `El servicio no está respondiendo correctamente (${err.status}). Por favor, inténtelo más tarde.`
           ));
         }
 

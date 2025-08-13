@@ -18,6 +18,10 @@ import { DocumentosPsicologoController } from './controllers/documentos-psicolog
 import { DocumentosPsicologoService } from './services/documentos-psicologo.service';
 import { BackblazeService } from '../uploads/services/backblaze.service';
 
+// Sistema de Matching
+import { MatchingController } from './controllers/matching.controller';
+import { MatchingService } from './services/matching.service';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -34,8 +38,25 @@ import { BackblazeService } from '../uploads/services/backblaze.service';
       dest: './uploads/temp',
     }),
   ],
-  controllers: [PsicologosController, DisponibilidadController, DocumentosPsicologoController],
-  providers: [PsicologosService, DisponibilidadService, AgendaService, DocumentosPsicologoService, BackblazeService],
-  exports: [DisponibilidadService, AgendaService, DocumentosPsicologoService],
+  controllers: [
+    PsicologosController, 
+    DisponibilidadController, 
+    DocumentosPsicologoController,
+    MatchingController
+  ],
+  providers: [
+    PsicologosService, 
+    DisponibilidadService, 
+    AgendaService, 
+    DocumentosPsicologoService, 
+    BackblazeService,
+    MatchingService
+  ],
+  exports: [
+    DisponibilidadService, 
+    AgendaService, 
+    DocumentosPsicologoService,
+    MatchingService
+  ],
 })
 export class PsicologosModule {}

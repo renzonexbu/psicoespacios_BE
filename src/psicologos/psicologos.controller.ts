@@ -61,4 +61,16 @@ export class PsicologosController {
   async getPsicologoDisponibilidad(@Query() query: PsicologoDisponibilidadDto) {
     return this.agendaService.getPsicologoDisponibilidad(query);
   }
+
+  // Endpoint público para obtener todos los psicólogos activos (sin datos sensibles)
+  @Get('public')
+  async findAllPublic() {
+    return this.psicologosService.findAllPublic();
+  }
+
+  // Endpoint público para obtener un psicólogo específico por ID (sin datos sensibles)
+  @Get('public/:id')
+  async findOnePublic(@Param('id') id: string) {
+    return this.psicologosService.findOnePublic(id);
+  }
 }
