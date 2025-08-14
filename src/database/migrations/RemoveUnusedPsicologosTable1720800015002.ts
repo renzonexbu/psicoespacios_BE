@@ -13,3 +13,4 @@ export class RemoveUnusedPsicologosTable1720800015002 implements MigrationInterf
     console.log('No se puede revertir la eliminación de la tabla psicologos');
   }
 }
+

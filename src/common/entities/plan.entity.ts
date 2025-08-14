@@ -1,20 +1,18 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 export enum TipoPlan {
-  BASICO = 'BASICO',
-  INTERMEDIO = 'INTERMEDIO',
-  PREMIUM = 'PREMIUM'
+  MENSUAL = 'MENSUAL'
 }
 
 @Entity('planes')
 export class Plan {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id: string
 
   @Column({
     type: 'enum',
     enum: TipoPlan,
-    default: TipoPlan.BASICO
+    default: TipoPlan.MENSUAL
   })
   tipo: TipoPlan;
 
@@ -27,8 +25,8 @@ export class Plan {
   @Column()
   precio: number;
 
-  @Column()
-  duracion: number;
+  @Column({ default: 1 })
+  duracion: number; // Siempre será 1 mes
 
   @Column({ default: 4 })
   horasIncluidas: number;

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsUUID, IsOptional, IsString, IsNumber, IsEnum, IsObject, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsUUID, IsOptional, IsString, IsNumber, IsEnum, IsObject, ValidateNested, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum EstadoSuscripcion {
@@ -31,6 +31,22 @@ export class CreateSuscripcionDto {
   @IsNotEmpty()
   precioTotal: number;
 
+  @IsOptional()
+  @IsBoolean()
+  renovacionAutomatica?: boolean;
+
+  @IsOptional()
+  @IsString()
+  metodoPago?: string;
+
+  @IsOptional()
+  @IsString()
+  referenciaPago?: string;
+
+  @IsOptional()
+  @IsString()
+  codigoDescuento?: string;
+
   @ValidateNested()
   @Type(() => DatosPagoDto)
   @IsOptional()
@@ -45,6 +61,20 @@ export class UpdateSuscripcionDto {
   @IsString()
   @IsOptional()
   notasCancelacion?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  renovacionAutomatica?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  notificacionesHabilitadas?: boolean;
+}
+
+export class ConfigurarRenovacionDto {
+  @IsBoolean()
+  @IsNotEmpty()
+  renovacionAutomatica: boolean;
 }
 
 export class RenovarSuscripcionDto {
@@ -52,8 +82,26 @@ export class RenovarSuscripcionDto {
   @IsNotEmpty()
   precioTotal: number;
 
+  @IsOptional()
+  @IsString()
+  metodoPago?: string;
+
+  @IsOptional()
+  @IsString()
+  referenciaPago?: string;
+
   @ValidateNested()
   @Type(() => DatosPagoDto)
   @IsOptional()
   datosPago?: DatosPagoDto;
+}
+
+export class ActivarSuscripcionDto {
+  @IsOptional()
+  @IsObject()
+  datosPago?: {
+    metodo?: string;
+    referencia?: string;
+    metadatos?: Record<string, any>;
+  };
 }

@@ -204,3 +204,4 @@ export enum GeneroPreferido {
   NO_BINARIO = 'No binario',
   INDIFERENTE = 'Indiferente'
 }
+

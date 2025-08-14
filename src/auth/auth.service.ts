@@ -10,6 +10,9 @@ import * as bcrypt from 'bcrypt';
 import { RefreshToken } from '../common/entities/refresh-token.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { plainToClass } from 'class-transformer';
+import { Suscripcion, EstadoSuscripcion } from '../common/entities/suscripcion.entity';
+import { SuscripcionInfoDto } from './dto/suscripcion-info.dto';
+import { LoginResponseDto } from './dto/login-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -18,10 +21,12 @@ export class AuthService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
+    @InjectRepository(Suscripcion)
+    private readonly suscripcionRepository: Repository<Suscripcion>,
     private readonly jwtService: JwtService,
   ) {}
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto): Promise<LoginResponseDto> {
     const user = await this.userRepository.findOne({ 
       where: { email: loginDto.email } 
     });
@@ -41,6 +46,12 @@ export class AuthService {
       expiresAt,
       revoked: false,
     });
+    // Validar suscripción si es psicólogo
+    let suscripcionInfo: any = null;
+    if (user.role === 'PSICOLOGO') {
+      suscripcionInfo = await this.validarSuscripcionPsicologo(user.id);
+    }
+
     return {
       access_token,
       refresh_token,
@@ -56,6 +67,7 @@ export class AuthService {
         role: user.role,
         estado: user.estado,
       },
+      suscripcion: suscripcionInfo,
     };
   }
 
@@ -212,5 +224,65 @@ export class AuthService {
       const { password, ...userData } = user;
       return plainToClass(UserResponseDto, userData, { excludeExtraneousValues: true });
     });
+  }
+
+  /**
+   * Valida la suscripción de un psicólogo
+   * @param userId ID del usuario psicólogo
+   * @returns Información de la suscripción o null si no tiene
+   */
+  private async validarSuscripcionPsicologo(userId: string): Promise<SuscripcionInfoDto | null> {
+    try {
+      const suscripcion = await this.suscripcionRepository.findOne({
+        where: { 
+          usuarioId: userId,
+          estado: EstadoSuscripcion.ACTIVA
+        },
+        relations: ['plan']
+      });
+
+      if (!suscripcion) {
+              return {
+        tieneSuscripcion: false,
+        mensaje: 'No tienes una suscripción activa',
+        estado: 'SIN_SUSCRIPCION' as const
+      };
+      }
+
+      // Verificar si la suscripción está vencida
+      const ahora = new Date();
+      const estaVencida = suscripcion.fechaFin < ahora;
+
+      if (estaVencida) {
+        return {
+          tieneSuscripcion: false,
+          mensaje: 'Tu suscripción ha vencido',
+          estado: 'VENCIDA' as const,
+          fechaVencimiento: suscripcion.fechaFin,
+          plan: suscripcion.plan?.nombre || 'Plan no especificado'
+        };
+      }
+
+      // Calcular días restantes
+      const diasRestantes = Math.ceil((suscripcion.fechaFin.getTime() - ahora.getTime()) / (1000 * 60 * 60 * 24));
+
+      return {
+        tieneSuscripcion: true,
+        mensaje: 'Suscripción activa',
+        estado: 'ACTIVA' as const,
+        plan: suscripcion.plan?.nombre || 'Plan no especificado',
+        fechaVencimiento: suscripcion.fechaFin,
+        diasRestantes,
+        renovacionAutomatica: suscripcion.renovacionAutomatica || false,
+        precioRenovacion: suscripcion.precioRenovacion
+      };
+    } catch (error) {
+      console.error('Error al validar suscripción:', error);
+      return {
+        tieneSuscripcion: false,
+        mensaje: 'Error al verificar suscripción',
+        estado: 'ERROR' as const
+      };
+    }
   }
 }

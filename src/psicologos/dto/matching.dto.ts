@@ -230,3 +230,4 @@ export class FormularioMatchingPsicologoDto {
   @IsEnum(ModalidadAtencion, { each: true })
   modalidad_atencion: ModalidadAtencion[];
 }
+

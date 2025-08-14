@@ -28,35 +28,15 @@ async function seed() {
     const planRepo = dataSource.getRepository(Plan);
     const planes = [
       {
-        tipo: TipoPlan.BASICO,
-        nombre: 'Plan Básico',
+        tipo: TipoPlan.MENSUAL,
+        nombre: 'Plan Mensual Básico',
         descripcion: 'Plan ideal para comenzar',
         precio: 29990,
         duracion: 1,
         horasIncluidas: 20,
         beneficios: ['Reservas de box hasta 20 horas mensuales', 'Sistema de derivación básico', 'Reportes básicos'],
         activo: true,
-      },
-      {
-        tipo: TipoPlan.INTERMEDIO,
-        nombre: 'Plan Profesional',
-        descripcion: 'Para profesionales establecidos',
-        precio: 49990,
-        duracion: 1,
-        horasIncluidas: 40,
-        beneficios: ['Reservas de box hasta 40 horas mensuales', 'Sistema de derivación avanzado', 'Reportes avanzados', 'Sistema de fichas ilimitado'],
-        activo: true,
-      },
-      {
-        tipo: TipoPlan.PREMIUM,
-        nombre: 'Plan Premium',
-        descripcion: 'Todas las características disponibles',
-        precio: 79990,
-        duracion: 1,
-        horasIncluidas: 100,
-        beneficios: ['Horas ilimitadas', 'Sistema de derivación premium', 'Reportes personalizados', 'Sistema de fichas avanzado', 'Soporte prioritario 24/7'],
-        activo: true,
-      },
+      }
     ];
 
     for (const planData of planes) {

@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { AgendaService } from './services/agenda.service';
 import { AgendaDisponibilidadDto, PsicologoDisponibilidadDto } from './dto/agenda-disponibilidad.dto';
+import { UpdatePreciosDto } from './dto/precios.dto';
 
 @Controller('api/v1/psicologos')
 export class PsicologosController {
@@ -72,5 +73,24 @@ export class PsicologosController {
   @Get('public/:id')
   async findOnePublic(@Param('id') id: string) {
     return this.psicologosService.findOnePublic(id);
+  }
+
+  // Endpoint para obtener precios del psicólogo
+  @Get(':id/precios')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.PSICOLOGO, Role.PACIENTE)
+  async getPrecios(@Param('id') usuarioId: string) {
+    return this.psicologosService.getPrecios(usuarioId);
+  }
+
+  // Endpoint para actualizar precios del psicólogo
+  @Patch(':id/precios')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.PSICOLOGO)
+  async updatePrecios(
+    @Param('id') usuarioId: string, 
+    @Body() updatePreciosDto: UpdatePreciosDto
+  ) {
+    return this.psicologosService.updatePrecios(usuarioId, updatePreciosDto);
   }
 }
