@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsUUID, IsOptional, IsEnum, IsDateString, IsNumber, IsObject } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID, IsOptional, IsEnum, IsDateString, IsNumber, IsObject, Matches } from 'class-validator';
 import { EstadoReservaPsicologo, ModalidadSesion } from '../../common/entities/reserva-psicologo.entity';
 
 export class CreateReservaPsicologoDto {
@@ -16,10 +16,16 @@ export class CreateReservaPsicologoDto {
 
   @IsString()
   @IsNotEmpty()
+  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: 'horaInicio debe tener el formato HH:MM (ej: 09:00, 14:30)'
+  })
   horaInicio: string; // HH:MM
 
   @IsString()
   @IsNotEmpty()
+  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: 'horaFin debe tener el formato HH:MM (ej: 09:00, 14:30)'
+  })
   horaFin: string; // HH:MM
 
   @IsOptional()

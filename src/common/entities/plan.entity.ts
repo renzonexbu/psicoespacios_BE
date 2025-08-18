@@ -31,7 +31,7 @@ export class Plan {
   @Column({ default: 4 })
   horasIncluidas: number;
 
-  @Column({ type: 'text', array: true, nullable: true })
+  @Column({ type: 'json', nullable: true })
   beneficios: string[];
 
   @Column({ default: true })

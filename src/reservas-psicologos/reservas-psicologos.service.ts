@@ -1,10 +1,11 @@
 import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Repository, Between, DataSource } from 'typeorm';
 import { ReservaPsicologo, EstadoReservaPsicologo, ModalidadSesion } from '../common/entities/reserva-psicologo.entity';
 import { User } from '../common/entities/user.entity';
 import { Psicologo } from '../common/entities/psicologo.entity';
 import { Box } from '../common/entities/box.entity';
+import { Paciente } from '../common/entities/paciente.entity';
 import { 
   CreateReservaPsicologoDto, 
   UpdateReservaPsicologoDto, 
@@ -25,6 +26,9 @@ export class ReservasPsicologosService {
     private readonly psicologoRepository: Repository<Psicologo>,
     @InjectRepository(Box)
     private readonly boxRepository: Repository<Box>,
+    @InjectRepository(Paciente)
+    private readonly pacienteRepository: Repository<Paciente>,
+    private readonly dataSource: DataSource,
   ) {}
 
   /**
@@ -33,88 +37,126 @@ export class ReservasPsicologosService {
   async create(createReservaDto: CreateReservaPsicologoDto): Promise<ReservaPsicologoResponseDto> {
     this.logger.log(`Creando reserva de sesión: psicólogo ${createReservaDto.psicologoId}, paciente ${createReservaDto.pacienteId}`);
 
-    // Verificar que el psicólogo existe
-    const psicologo = await this.psicologoRepository.findOne({
-      where: { id: createReservaDto.psicologoId },
-      relations: ['usuario']
-    });
-
-    if (!psicologo) {
-      throw new NotFoundException('Psicólogo no encontrado');
-    }
-
-    // Verificar que el paciente existe
-    const paciente = await this.userRepository.findOne({
-      where: { id: createReservaDto.pacienteId }
-    });
-
-    if (!paciente) {
-      throw new NotFoundException('Paciente no encontrado');
-    }
-
-    // Validar boxId para sesiones presenciales
-    if (createReservaDto.modalidad === ModalidadSesion.PRESENCIAL) {
-      if (!createReservaDto.boxId) {
-        throw new BadRequestException('boxId es requerido para sesiones presenciales');
-      }
-
-      const box = await this.boxRepository.findOne({
-        where: { id: createReservaDto.boxId }
+    // Usar transacción para asegurar consistencia
+    return await this.dataSource.transaction(async (manager) => {
+      
+      // 1. Verificar que el psicólogo existe
+      const psicologo = await manager.findOne(Psicologo, {
+        where: { id: createReservaDto.psicologoId },
+        relations: ['usuario']
       });
 
-      if (!box) {
-        throw new NotFoundException('Box no encontrado');
+      if (!psicologo) {
+        throw new NotFoundException('Psicólogo no encontrado');
       }
 
-      if (box.estado !== 'DISPONIBLE') {
-        throw new BadRequestException('El box seleccionado no está disponible');
+      // 2. Verificar que el paciente existe
+      const paciente = await manager.findOne(User, {
+        where: { id: createReservaDto.pacienteId }
+      });
+
+      if (!paciente) {
+        throw new NotFoundException('Paciente no encontrado');
       }
 
-      // Verificar que no hay conflicto de horarios para el box
-      const conflictoBox = await this.verificarConflictoHorariosBox(
-        createReservaDto.boxId,
+      // 3. Crear o actualizar registro en tabla pacientes
+      let pacienteRecord = await manager.findOne(Paciente, {
+        where: { idUsuarioPaciente: createReservaDto.pacienteId }
+      });
+
+      if (pacienteRecord) {
+        // Actualizar psicólogo existente
+        this.logger.log(`Actualizando paciente existente: ${pacienteRecord.id}`);
+        pacienteRecord.idUsuarioPsicologo = createReservaDto.psicologoId;
+        pacienteRecord.ultima_actualizacion_matching = new Date();
+        pacienteRecord.estado = 'ACTIVO';
+      } else {
+        // Crear nuevo paciente
+        this.logger.log(`Creando nuevo paciente para usuario: ${createReservaDto.pacienteId}`);
+        pacienteRecord = manager.create(Paciente, {
+          idUsuarioPaciente: createReservaDto.pacienteId,
+          idUsuarioPsicologo: createReservaDto.psicologoId,
+          primeraSesionRegistrada: new Date(),
+          estado: 'ACTIVO',
+          perfil_matching_completado: false,
+          diagnosticos_principales: [],
+          temas_principales: [],
+          estilo_terapeutico_preferido: [],
+          enfoque_teorico_preferido: [],
+          afinidad_personal_preferida: [],
+          modalidad_preferida: [],
+          genero_psicologo_preferido: []
+        });
+      }
+
+      await manager.save(pacienteRecord);
+      this.logger.log(`Paciente ${pacienteRecord.id} guardado/actualizado exitosamente`);
+
+      // 4. Validar boxId para sesiones presenciales
+      if (createReservaDto.modalidad === ModalidadSesion.PRESENCIAL) {
+        if (!createReservaDto.boxId) {
+          throw new BadRequestException('boxId es requerido para sesiones presenciales');
+        }
+
+        const box = await manager.findOne(Box, {
+          where: { id: createReservaDto.boxId }
+        });
+
+        if (!box) {
+          throw new NotFoundException('Box no encontrado');
+        }
+
+        if (box.estado !== 'DISPONIBLE') {
+          throw new BadRequestException('El box seleccionado no está disponible');
+        }
+
+        // Verificar que no hay conflicto de horarios para el box
+        const conflictoBox = await this.verificarConflictoHorariosBox(
+          createReservaDto.boxId,
+          createReservaDto.fecha,
+          createReservaDto.horaInicio,
+          createReservaDto.horaFin
+        );
+
+        if (conflictoBox) {
+          throw new BadRequestException('Ya existe una reserva en ese horario para este box');
+        }
+      } else if (createReservaDto.boxId) {
+        throw new BadRequestException('boxId no debe ser proporcionado para sesiones online');
+      }
+
+      // 5. Verificar que no hay conflicto de horarios para el psicólogo
+      const conflicto = await this.verificarConflictoHorarios(
+        createReservaDto.psicologoId,
         createReservaDto.fecha,
         createReservaDto.horaInicio,
         createReservaDto.horaFin
       );
 
-      if (conflictoBox) {
-        throw new BadRequestException('Ya existe una reserva en ese horario para este box');
+      if (conflicto) {
+        throw new BadRequestException('Ya existe una reserva en ese horario para este psicólogo');
       }
-    } else if (createReservaDto.boxId) {
-      throw new BadRequestException('boxId no debe ser proporcionado para sesiones online');
-    }
 
-    // Verificar que no hay conflicto de horarios para el psicólogo
-    const conflicto = await this.verificarConflictoHorarios(
-      createReservaDto.psicologoId,
-      createReservaDto.fecha,
-      createReservaDto.horaInicio,
-      createReservaDto.horaFin
-    );
+      // 6. Crear la reserva
+      const reserva = manager.create(ReservaPsicologo, {
+        psicologo: { id: createReservaDto.psicologoId },
+        paciente: { id: createReservaDto.pacienteId },
+        fecha: new Date(createReservaDto.fecha),
+        horaInicio: createReservaDto.horaInicio,
+        horaFin: createReservaDto.horaFin,
+        boxId: createReservaDto.boxId,
+        modalidad: createReservaDto.modalidad || ModalidadSesion.PRESENCIAL,
+        estado: EstadoReservaPsicologo.CONFIRMADA, // Cambiado a CONFIRMADA
+        observaciones: createReservaDto.observaciones,
+        metadatos: createReservaDto.metadatos || {},
+      });
 
-    if (conflicto) {
-      throw new BadRequestException('Ya existe una reserva en ese horario para este psicólogo');
-    }
+      const savedReserva = await manager.save(reserva);
+      this.logger.log(`Reserva creada con ID: ${savedReserva.id}`);
 
-    // Crear la reserva
-    const reserva = this.reservaPsicologoRepository.create({
-      psicologo: { id: createReservaDto.psicologoId },
-      paciente: { id: createReservaDto.pacienteId },
-      fecha: new Date(createReservaDto.fecha),
-      horaInicio: createReservaDto.horaInicio,
-      horaFin: createReservaDto.horaFin,
-      boxId: createReservaDto.boxId,
-      modalidad: createReservaDto.modalidad || ModalidadSesion.PRESENCIAL,
-      estado: EstadoReservaPsicologo.PENDIENTE,
-      observaciones: createReservaDto.observaciones,
-      metadatos: createReservaDto.metadatos || {},
+      // 7. Retornar respuesta completa
+      return this.mapToResponseDto(savedReserva, psicologo.usuario, paciente);
     });
-
-    const savedReserva = await this.reservaPsicologoRepository.save(reserva);
-    this.logger.log(`Reserva creada con ID: ${savedReserva.id}`);
-
-    return this.mapToResponseDto(savedReserva, psicologo.usuario, paciente);
   }
 
   /**
@@ -420,4 +462,5 @@ export class ReservasPsicologosService {
       updatedAt: reserva.updatedAt,
     };
   }
+
 } 

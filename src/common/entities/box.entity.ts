@@ -41,10 +41,10 @@ export class Box {
   // @OneToMany(() => Reserva, reserva => reserva.box)
   // reservas: Reserva[];
 
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn({ type: 'timestamp', name: 'createdAt' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp' })
+  @UpdateDateColumn({ type: 'timestamp', name: 'updatedAt' })
   updatedAt: Date;
 
   @Column({ type: 'timestamp', nullable: true })

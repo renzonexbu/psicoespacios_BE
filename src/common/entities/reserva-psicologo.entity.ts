@@ -31,13 +31,13 @@ export class ReservaPsicologo {
   @Column({ type: 'date' })
   fecha: Date;
 
-  @Column({ type: 'varchar', length: 5 })
+  @Column({ type: 'varchar', length: 5, name: 'hora_inicio' })
   horaInicio: string; // Formato "HH:MM"
 
-  @Column({ type: 'varchar', length: 5 })
+  @Column({ type: 'varchar', length: 5, name: 'hora_fin' })
   horaFin: string; // Formato "HH:MM"
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'uuid', nullable: true, name: 'box_id' })
   boxId: string; // Para sesiones presenciales, null para online
 
   @Column({
@@ -67,9 +67,9 @@ export class ReservaPsicologo {
     [key: string]: any;
   };
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 } 

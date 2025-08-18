@@ -11,6 +11,7 @@ import { User } from '../common/entities/user.entity';
 import { Sede } from '../common/entities/sede.entity';
 import { Psicologo } from '../common/entities/psicologo.entity';
 import { Reserva } from '../common/entities/reserva.entity';
+import { ReservaPsicologo } from '../common/entities/reserva-psicologo.entity';
 import { Paciente } from '../common/entities/paciente.entity';
 import { Box } from '../common/entities/box.entity';
 import { DocumentoPsicologo } from '../common/entities/documento-psicologo.entity';
@@ -30,6 +31,7 @@ import { MatchingService } from './services/matching.service';
       Sede,
       Psicologo,
       Reserva,
+      ReservaPsicologo,
       Paciente,
       Box,
       DocumentoPsicologo,

@@ -66,4 +66,49 @@ export class PsicologoDisponibilidadResponseDto {
   slots: DisponibilidadSlotDto[];
   totalSlots: number;
   slotsDisponibles: number;
+}
+
+// DTO para obtener box disponible en un horario específico
+export class BoxDisponibleDto {
+  @IsUUID()
+  psicologoId: string;
+
+  @IsDateString()
+  fecha: string; // YYYY-MM-DD
+
+  @IsString()
+  horaInicio: string; // HH:MM
+
+  @IsUUID()
+  sedeId: string;
+}
+
+// DTO de respuesta con información del box
+export class BoxDisponibleResponseDto {
+  boxId: string;
+  boxNumero: string;
+  sedeId: string;
+  sedeNombre: string;
+  sedeDireccion?: string;
+  psicologoId: string;
+  psicologoNombre: string;
+  fecha: string;
+  horaInicio: string;
+  horaFin: string;
+  disponible: boolean;
+}
+
+// DTO de respuesta con información completa del box
+export class BoxInfoResponseDto {
+  id: string;
+  numero: string;
+  estado: string;
+  urlImage?: string;
+  sedeId: string;
+  sedeNombre: string;
+  sedeDireccion?: string;
+  sedeTelefono?: string;
+  sedeEmail?: string;
+  createdAt: Date;
+  updatedAt: Date;
 } 

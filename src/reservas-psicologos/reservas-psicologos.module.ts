@@ -6,10 +6,11 @@ import { ReservaPsicologo } from '../common/entities/reserva-psicologo.entity';
 import { User } from '../common/entities/user.entity';
 import { Psicologo } from '../common/entities/psicologo.entity';
 import { Box } from '../common/entities/box.entity';
+import { Paciente } from '../common/entities/paciente.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ReservaPsicologo, User, Psicologo, Box]),
+    TypeOrmModule.forFeature([ReservaPsicologo, User, Psicologo, Box, Paciente]),
   ],
   controllers: [ReservasPsicologosController],
   providers: [ReservasPsicologosService],

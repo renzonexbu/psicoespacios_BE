@@ -56,9 +56,9 @@ export class Psicologo {
   @Column({ type: 'jsonb', nullable: true })
   disponibilidad: any; // horarios disponibles
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'createdAt' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updatedAt' })
   updatedAt: Date;
 }

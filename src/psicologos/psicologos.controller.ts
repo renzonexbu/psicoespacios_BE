@@ -6,8 +6,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { AgendaService } from './services/agenda.service';
-import { AgendaDisponibilidadDto, PsicologoDisponibilidadDto } from './dto/agenda-disponibilidad.dto';
-import { UpdatePreciosDto } from './dto/precios.dto';
+import { AgendaDisponibilidadDto, PsicologoDisponibilidadDto, BoxDisponibleDto } from './dto/agenda-disponibilidad.dto';
 
 @Controller('api/v1/psicologos')
 export class PsicologosController {
@@ -30,11 +29,16 @@ export class PsicologosController {
     return this.psicologosService.findAll();
   }
 
-  @Get(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PACIENTE)
-  findOne(@Param('id') id: string) {
-    return this.psicologosService.findOne(id);
+  // Endpoint público para obtener todos los psicólogos activos (sin datos sensibles)
+  @Get('public')
+  async findAllPublic() {
+    return this.psicologosService.findAllPublic();
+  }
+
+  // Endpoint público para obtener un psicólogo específico por ID (sin datos sensibles)
+  @Get('public/:id')
+  async findOnePublic(@Param('id') id: string) {
+    return this.psicologosService.findOnePublic(id);
   }
 
   @Patch(':id')
@@ -63,34 +67,23 @@ export class PsicologosController {
     return this.agendaService.getPsicologoDisponibilidad(query);
   }
 
-  // Endpoint público para obtener todos los psicólogos activos (sin datos sensibles)
-  @Get('public')
-  async findAllPublic() {
-    return this.psicologosService.findAllPublic();
+  // Endpoint para obtener box disponible en un horario específico (presencial)
+  @Get('box-disponible')
+  async getBoxDisponible(@Query() query: BoxDisponibleDto) {
+    return this.agendaService.getBoxDisponible(query);
   }
 
-  // Endpoint público para obtener un psicólogo específico por ID (sin datos sensibles)
-  @Get('public/:id')
-  async findOnePublic(@Param('id') id: string) {
-    return this.psicologosService.findOnePublic(id);
+  // Endpoint para obtener datos de un box específico
+  @Get('box/:id')
+  async getBoxById(@Param('id') id: string) {
+    return this.agendaService.getBoxById(id);
   }
 
-  // Endpoint para obtener precios del psicólogo
-  @Get(':id/precios')
+  // Endpoint para obtener un psicólogo específico por ID (debe estar al final)
+  @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.PSICOLOGO, Role.PACIENTE)
-  async getPrecios(@Param('id') usuarioId: string) {
-    return this.psicologosService.getPrecios(usuarioId);
-  }
-
-  // Endpoint para actualizar precios del psicólogo
-  @Patch(':id/precios')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.PSICOLOGO)
-  async updatePrecios(
-    @Param('id') usuarioId: string, 
-    @Body() updatePreciosDto: UpdatePreciosDto
-  ) {
-    return this.psicologosService.updatePrecios(usuarioId, updatePreciosDto);
+  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PACIENTE)
+  findOne(@Param('id') id: string) {
+    return this.psicologosService.findOne(id);
   }
 }

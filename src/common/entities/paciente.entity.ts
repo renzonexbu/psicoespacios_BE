@@ -58,10 +58,4 @@ export class Paciente {
 
   @Column({ type: 'timestamp', nullable: true })
   ultima_actualizacion_matching: Date;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }
