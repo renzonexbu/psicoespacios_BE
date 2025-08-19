@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../common/entities/user.entity';
+import { Psicologo } from '../common/entities/psicologo.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { UserResponseDto } from './dto/user-response.dto';
@@ -19,6 +20,8 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Psicologo)
+    private readonly psicologoRepository: Repository<Psicologo>,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     @InjectRepository(Suscripcion)
@@ -48,8 +51,20 @@ export class AuthService {
     });
     // Validar suscripción si es psicólogo
     let suscripcionInfo: any = null;
+    let psicologoId: string | undefined = undefined;
+    
     if (user.role === 'PSICOLOGO') {
       suscripcionInfo = await this.validarSuscripcionPsicologo(user.id);
+      
+      // Obtener el psicologoId
+      const psicologo = await this.psicologoRepository.findOne({
+        where: { usuario: { id: user.id } },
+        relations: ['usuario']
+      });
+      
+      if (psicologo) {
+        psicologoId = psicologo.id;
+      }
     }
 
     return {
@@ -66,6 +81,7 @@ export class AuthService {
         fotoUrl: user.fotoUrl,
         role: user.role,
         estado: user.estado,
+        psicologoId, // Solo para psicólogos
       },
       suscripcion: suscripcionInfo,
     };

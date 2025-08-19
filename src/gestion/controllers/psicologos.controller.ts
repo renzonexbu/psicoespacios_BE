@@ -95,18 +95,29 @@ export class PsicologosController {
     return this.psicologosService.disponibilidadHorarios(id, fecha);
   }
 
-  @Get(':usuarioId/pacientes')
+  @Get(':psicologoId/pacientes')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
   async getPacientesAsignados(
-    @Param('usuarioId') usuarioId: string,
+    @Param('psicologoId') psicologoId: string,
     @Request() req
   ) {
+    // Debug: mostrar información del usuario y parámetros
+    console.log('[DEBUG] Usuario del token:', {
+      id: req.user.id,
+      role: req.user.role,
+      psicologoId: req.user.psicologoId
+    });
+    console.log('[DEBUG] Parámetro psicologoId:', psicologoId);
+    
     // Verificar que el psicólogo solo puede ver sus propios pacientes
-    if (req.user.role === Role.PSICOLOGO && req.user.id !== usuarioId) {
+    if (req.user.role === Role.PSICOLOGO && req.user.psicologoId !== psicologoId) {
+      console.log('[DEBUG] Acceso denegado - psicologoId del token:', req.user.psicologoId, 'vs parámetro:', psicologoId);
       throw new ForbiddenException('Solo puedes ver tus propios pacientes');
     }
-    return this.psicologosService.getPacientesAsignados(usuarioId);
+    
+    console.log('[DEBUG] Acceso permitido');
+    return this.psicologosService.getPacientesAsignados(psicologoId);
   }
 
   @Patch(':id')

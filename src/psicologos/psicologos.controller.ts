@@ -24,7 +24,7 @@ export class PsicologosController {
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.TERAPEUTA)
+  @Roles(Role.ADMIN, Role.PSICOLOGO)
   findAll() {
     return this.psicologosService.findAll();
   }
@@ -43,7 +43,7 @@ export class PsicologosController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.TERAPEUTA)
+  @Roles(Role.ADMIN, Role.PSICOLOGO)
   update(@Param('id') id: string, @Body() updatePsicologoDto: UpdatePsicologoDto) {
     return this.psicologosService.update(id, updatePsicologoDto);
   }
@@ -82,7 +82,7 @@ export class PsicologosController {
   // Endpoint para obtener un psicólogo específico por ID (debe estar al final)
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PACIENTE)
+  @Roles(Role.ADMIN, Role.PSICOLOGO, Role.PACIENTE)
   findOne(@Param('id') id: string) {
     return this.psicologosService.findOne(id);
   }

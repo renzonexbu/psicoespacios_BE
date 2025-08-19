@@ -20,6 +20,7 @@ export class LoginResponseDto {
     fotoUrl: string;
     role: string;
     estado: string;
+    psicologoId?: string; // Solo para usuarios con rol PSICOLOGO
   };
 
   @Expose()

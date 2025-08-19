@@ -99,6 +99,7 @@ export class ReservaPsicologoResponseDto {
   psicologoNombre: string;
   pacienteId: string;
   pacienteNombre: string;
+  pacienteFotoUrl?: string; // URL de la foto del paciente
   fecha: Date;
   horaInicio: string;
   horaFin: string;

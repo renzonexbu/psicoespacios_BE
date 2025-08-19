@@ -250,6 +250,32 @@ export class ReservasPsicologosService {
   }
 
   /**
+   * Obtener reservas de un psicólogo por su usuarioId
+   */
+  async findByUsuarioPsicologo(usuarioId: string): Promise<ReservaPsicologoResponseDto[]> {
+    this.logger.log(`Obteniendo reservas del psicólogo por usuarioId: ${usuarioId}`);
+
+    // Primero obtener el psicólogo por usuarioId
+    const psicologo = await this.psicologoRepository.findOne({
+      where: { usuario: { id: usuarioId } },
+      relations: ['usuario']
+    });
+
+    if (!psicologo) {
+      throw new NotFoundException('Psicólogo no encontrado para este usuario');
+    }
+
+    // Luego obtener las reservas del psicólogo
+    const reservas = await this.reservaPsicologoRepository.find({
+      where: { psicologo: { id: psicologo.id } },
+      relations: ['psicologo', 'psicologo.usuario', 'paciente'],
+      order: { fecha: 'DESC', horaInicio: 'ASC' },
+    });
+
+    return reservas.map(reserva => this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente));
+  }
+
+  /**
    * Actualizar una reserva
    */
   async update(id: string, updateReservaDto: UpdateReservaPsicologoDto): Promise<ReservaPsicologoResponseDto> {
@@ -450,6 +476,7 @@ export class ReservasPsicologosService {
       psicologoNombre: `${psicologoUsuario.nombre} ${psicologoUsuario.apellido}`,
       pacienteId: reserva.paciente.id,
       pacienteNombre: `${paciente.nombre} ${paciente.apellido}`,
+      pacienteFotoUrl: paciente.fotoUrl, // URL de la foto del paciente
       fecha: reserva.fecha,
       horaInicio: reserva.horaInicio,
       horaFin: reserva.horaFin,

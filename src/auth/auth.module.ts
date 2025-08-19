@@ -7,13 +7,14 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { User } from '../common/entities/user.entity';
+import { Psicologo } from '../common/entities/psicologo.entity';
 import { UsersController } from './users.controller';
 import { RefreshToken } from '../common/entities/refresh-token.entity';
 import { Suscripcion } from '../common/entities/suscripcion.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, RefreshToken, Suscripcion]),
+    TypeOrmModule.forFeature([User, Psicologo, RefreshToken, Suscripcion]),
     PassportModule,
     JwtModule.registerAsync({
       inject: [ConfigService],

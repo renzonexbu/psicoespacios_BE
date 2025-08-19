@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { Sede } from './sede.entity';
 import { Reserva } from './reserva.entity';
 
@@ -36,6 +36,7 @@ export class Box {
   estado: string;
 
   @ManyToOne(() => Sede, sede => sede.boxes, { nullable: true })
+  @JoinColumn({ name: 'sedeId' })
   sede: Sede;
 
   // @OneToMany(() => Reserva, reserva => reserva.box)
