@@ -1,6 +1,7 @@
 import { Controller, Post, Get, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { VouchersService } from './vouchers.service';
 import { CreateVoucherDto, UpdateVoucherDto } from '../common/dto/voucher.dto';
+import { ValidarCuponResponseDto } from './dto/validar-cupon.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -22,6 +23,17 @@ export class VouchersController {
     return this.vouchersService.findAll();
   }
 
+  @Get('psicologo/:psicologoUserId')
+  @Roles('ADMIN', 'PSICOLOGO')
+  findByPsicologoUserId(@Param('psicologoUserId') psicologoUserId: string) {
+    return this.vouchersService.findByPsicologoUserId(psicologoUserId);
+  }
+
+  @Get('validar/:codigo')
+  async validarCupon(@Param('codigo') codigo: string): Promise<ValidarCuponResponseDto> {
+    return this.vouchersService.validarCupon(codigo);
+  }
+
   @Get(':id')
   @Roles('ADMIN', 'PSICOLOGO')
   findOne(@Param('id') id: string) {
@@ -38,12 +50,6 @@ export class VouchersController {
   @Roles('ADMIN', 'PSICOLOGO')
   remove(@Param('id') id: string) {
     return this.vouchersService.remove(id);
-  }
-
-  @Get('psicologo/:psicologoUserId')
-  @Roles('ADMIN', 'PSICOLOGO')
-  findByPsicologoUserId(@Param('psicologoUserId') psicologoUserId: string) {
-    return this.vouchersService.findByPsicologoUserId(psicologoUserId);
   }
 
   @Patch(':id/restore')

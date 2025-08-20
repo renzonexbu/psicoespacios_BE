@@ -1,9 +1,11 @@
+
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
 import { Psicologo } from './psicologo.entity';
 
 export enum EstadoReservaPsicologo {
   PENDIENTE = 'pendiente',
+  PENDIENTE_PAGO = 'pendiente_pago',
   CONFIRMADA = 'confirmada',
   CANCELADA = 'cancelada',
   COMPLETADA = 'completada',
@@ -56,6 +58,12 @@ export class ReservaPsicologo {
 
   @Column({ type: 'text', nullable: true })
   observaciones: string;
+
+  @Column({ type: 'uuid', nullable: true, name: 'cupon_id' })
+  cuponId: string; // ID del cupón usado
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true, name: 'descuento_aplicado' })
+  descuentoAplicado: number; // Monto del descuento aplicado
 
   @Column({ type: 'jsonb', nullable: true })
   metadatos: {

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsUUID, IsOptional, IsEnum, IsDateString, IsNumber, IsObject, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID, IsOptional, IsEnum, IsDateString, IsNumber, IsObject, Matches, Min } from 'class-validator';
 import { EstadoReservaPsicologo, ModalidadSesion } from '../../common/entities/reserva-psicologo.entity';
 
 export class CreateReservaPsicologoDto {
@@ -41,6 +41,15 @@ export class CreateReservaPsicologoDto {
   observaciones?: string;
 
   @IsOptional()
+  @IsUUID()
+  cuponId?: string; // ID del cupón usado
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  descuentoAplicado?: number; // Monto del descuento en pesos
+
+  @IsOptional()
   @IsObject()
   metadatos?: {
     motivo?: string;
@@ -48,6 +57,13 @@ export class CreateReservaPsicologoDto {
     precio?: number;
     ubicacion?: string;
     link?: string;
+    pagoId?: string; // ID del pago cuando se confirme
+    cuponInfo?: {
+      id: string;
+      nombre: string;
+      porcentaje: number;
+      modalidad: string;
+    };
     [key: string]: any;
   };
 }
@@ -82,6 +98,15 @@ export class UpdateReservaPsicologoDto {
   observaciones?: string;
 
   @IsOptional()
+  @IsUUID()
+  cuponId?: string; // ID del cupón usado
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  descuentoAplicado?: number; // Monto del descuento en pesos
+
+  @IsOptional()
   @IsObject()
   metadatos?: {
     motivo?: string;
@@ -89,6 +114,13 @@ export class UpdateReservaPsicologoDto {
     precio?: number;
     ubicacion?: string;
     link?: string;
+    pagoId?: string; // ID del pago cuando se confirme
+    cuponInfo?: {
+      id: string;
+      nombre: string;
+      porcentaje: number;
+      modalidad: string;
+    };
     [key: string]: any;
   };
 }
@@ -107,6 +139,8 @@ export class ReservaPsicologoResponseDto {
   modalidad: ModalidadSesion;
   estado: EstadoReservaPsicologo;
   observaciones?: string;
+  cuponId?: string; // ID del cupón usado
+  descuentoAplicado?: number; // Monto del descuento aplicado
   metadatos?: any;
   createdAt: Date;
   updatedAt: Date;
@@ -136,4 +170,10 @@ export class QueryReservasPsicologoDto {
   @IsOptional()
   @IsEnum(EstadoReservaPsicologo)
   estado?: EstadoReservaPsicologo;
+}
+
+export class ActualizarPagoDto {
+  @IsUUID()
+  @IsNotEmpty()
+  pagoId: string;
 } 

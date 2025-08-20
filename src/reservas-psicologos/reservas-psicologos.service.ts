@@ -148,7 +148,16 @@ export class ReservasPsicologosService {
         modalidad: createReservaDto.modalidad || ModalidadSesion.PRESENCIAL,
         estado: EstadoReservaPsicologo.CONFIRMADA, // Cambiado a CONFIRMADA
         observaciones: createReservaDto.observaciones,
-        metadatos: createReservaDto.metadatos || {},
+        cuponId: createReservaDto.cuponId,
+        descuentoAplicado: createReservaDto.descuentoAplicado || 0,
+        metadatos: {
+          ...(createReservaDto.metadatos || {}),
+          pagoId: undefined, // Se actualizará cuando se confirme el pago
+          cuponInfo: createReservaDto.cuponId ? {
+            id: createReservaDto.cuponId,
+            // La información completa del cupón se puede obtener del voucher
+          } : undefined,
+        },
       });
 
       const savedReserva = await manager.save(reserva);
@@ -235,7 +244,7 @@ export class ReservasPsicologosService {
   }
 
   /**
-   * Obtener reservas de un paciente específico
+   * Obtener reservas de un paciente específico por su ID de paciente
    */
   async findByPaciente(pacienteId: string): Promise<ReservaPsicologoResponseDto[]> {
     this.logger.log(`Obteniendo reservas del paciente: ${pacienteId}`);
@@ -245,6 +254,24 @@ export class ReservasPsicologosService {
       relations: ['psicologo', 'psicologo.usuario', 'paciente'],
       order: { fecha: 'DESC', horaInicio: 'ASC' },
     });
+
+    return reservas.map(reserva => this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente));
+  }
+
+  /**
+   * Obtener reservas de un paciente por su usuarioId
+   */
+  async findByUsuarioPaciente(usuarioId: string): Promise<ReservaPsicologoResponseDto[]> {
+    this.logger.log(`Obteniendo reservas del paciente por usuarioId: ${usuarioId}`);
+
+    // Buscar reservas directamente por el usuarioId del paciente
+    const reservas = await this.reservaPsicologoRepository.find({
+      where: { paciente: { id: usuarioId } },
+      relations: ['psicologo', 'psicologo.usuario', 'paciente'],
+      order: { fecha: 'DESC', horaInicio: 'ASC' },
+    });
+
+    this.logger.log(`Reservas encontradas para usuario ${usuarioId}: ${reservas.length}`);
 
     return reservas.map(reserva => this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente));
   }
@@ -391,6 +418,33 @@ export class ReservasPsicologosService {
   }
 
   /**
+   * Actualizar pagoId en una reserva (cuando se confirma el pago)
+   */
+  async actualizarPagoId(id: string, pagoId: string): Promise<ReservaPsicologoResponseDto> {
+    this.logger.log(`Actualizando pagoId para reserva: ${id}, pago: ${pagoId}`);
+
+    const reserva = await this.reservaPsicologoRepository.findOne({
+      where: { id },
+      relations: ['psicologo', 'psicologo.usuario', 'paciente']
+    });
+
+    if (!reserva) {
+      throw new NotFoundException('Reserva no encontrada');
+    }
+
+    // Actualizar metadatos con el pagoId
+    const metadatos = reserva.metadatos || {};
+    metadatos.pagoId = pagoId;
+
+    reserva.metadatos = metadatos;
+    await this.reservaPsicologoRepository.save(reserva);
+
+    this.logger.log(`PagoId actualizado para reserva: ${id}`);
+
+    return this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente);
+  }
+
+  /**
    * Eliminar una reserva
    */
   async remove(id: string): Promise<void> {
@@ -484,6 +538,8 @@ export class ReservasPsicologosService {
       modalidad: reserva.modalidad,
       estado: reserva.estado,
       observaciones: reserva.observaciones,
+      cuponId: reserva.cuponId,
+      descuentoAplicado: reserva.descuentoAplicado,
       metadatos: reserva.metadatos,
       createdAt: reserva.createdAt,
       updatedAt: reserva.updatedAt,

@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Patch, Delete, Query, UseGuards, Request } from '@nestjs/common';
 import { ReservasPsicologosService } from './reservas-psicologos.service';
-import { CreateReservaPsicologoDto, UpdateReservaPsicologoDto, QueryReservasPsicologoDto } from './dto/reserva-psicologo.dto';
+import { CreateReservaPsicologoDto, UpdateReservaPsicologoDto, QueryReservasPsicologoDto, ActualizarPagoDto } from './dto/reserva-psicologo.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -49,12 +49,21 @@ export class ReservasPsicologosController {
   }
 
   /**
-   * Obtener reservas de un paciente específico
+   * Obtener reservas de un paciente específico por su ID de paciente
    */
   @Get('paciente/:pacienteId')
   @Roles(Role.PSICOLOGO, Role.ADMIN, Role.PACIENTE)
   async findByPaciente(@Param('pacienteId') pacienteId: string) {
     return this.reservasPsicologosService.findByPaciente(pacienteId);
+  }
+
+  /**
+   * Obtener reservas de un paciente por su usuarioId
+   */
+  @Get('usuario-paciente/:usuarioId')
+  @Roles(Role.PSICOLOGO, Role.ADMIN, Role.PACIENTE)
+  async findByUsuarioPaciente(@Param('usuarioId') usuarioId: string) {
+    return this.reservasPsicologosService.findByUsuarioPaciente(usuarioId);
   }
 
   /**
@@ -85,6 +94,18 @@ export class ReservasPsicologosController {
   @Roles(Role.PSICOLOGO, Role.ADMIN, Role.PACIENTE)
   async cancel(@Param('id') id: string) {
     return this.reservasPsicologosService.cancel(id);
+  }
+
+  /**
+   * Actualizar pagoId en una reserva (cuando se confirma el pago)
+   */
+  @Patch(':id/pago')
+  @Roles(Role.ADMIN, Role.PSICOLOGO)
+  async actualizarPagoId(
+    @Param('id') id: string,
+    @Body() actualizarPagoDto: ActualizarPagoDto
+  ) {
+    return this.reservasPsicologosService.actualizarPagoId(id, actualizarPagoDto.pagoId);
   }
 
   /**

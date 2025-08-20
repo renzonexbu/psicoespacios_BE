@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Request, ForbiddenException } from '@nestjs/common';
 import { PsicologosService } from '../services/psicologos.service';
 import { CreatePsicologoDto, UpdatePsicologoDto } from '../../common/dto/psicologo.dto';
+import { UpdatePreciosDto } from '../../psicologos/dto/precios.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -34,13 +35,6 @@ export class PsicologosController {
     return this.psicologosService.findAll();
   }
 
-  @Get(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PACIENTE)
-  findOne(@Param('id') id: string) {
-    return this.psicologosService.findOne(id);
-  }
-
   @Get('usuario/:usuarioId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
@@ -62,6 +56,35 @@ export class PsicologosController {
     }
     const psicologo = await this.psicologosService.findByUserId(usuarioId);
     return { descripcion: psicologo.descripcion };
+  }
+
+  @Get('usuario/:usuarioId/precios')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
+  async getPreciosByUserId(
+    @Param('usuarioId') usuarioId: string,
+    @Request() req
+  ) {
+    // Verificar que el psicólogo solo puede ver sus propios precios
+    if (req.user.role === Role.PSICOLOGO && req.user.id !== usuarioId) {
+      throw new ForbiddenException('Solo puedes ver tus propios precios');
+    }
+    return this.psicologosService.getPrecios(usuarioId);
+  }
+
+  @Patch('usuario/:usuarioId/precios')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
+  async updatePreciosByUserId(
+    @Param('usuarioId') usuarioId: string,
+    @Body() updatePreciosDto: UpdatePreciosDto,
+    @Request() req
+  ) {
+    // Verificar que el psicólogo solo puede actualizar sus propios precios
+    if (req.user.role === Role.PSICOLOGO && req.user.id !== usuarioId) {
+      throw new ForbiddenException('Solo puedes actualizar tus propios precios');
+    }
+    return this.psicologosService.updatePrecios(usuarioId, updatePreciosDto);
   }
 
   @Get(':id/disponibilidad/dias')
@@ -142,6 +165,13 @@ export class PsicologosController {
     }
     const psicologo = await this.psicologosService.findByUserId(usuarioId);
     return this.psicologosService.update(psicologo.id, updatePsicologoDto);
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PACIENTE)
+  findOne(@Param('id') id: string) {
+    return this.psicologosService.findOne(id);
   }
 
   @Delete(':id')

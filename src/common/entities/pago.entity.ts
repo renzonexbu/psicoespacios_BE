@@ -1,7 +1,8 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
 import { Suscripcion } from './suscripcion.entity';
 import { SolicitudDerivacion } from './solicitud-derivacion.entity';
+import { Voucher } from './voucher.entity';
 
 export enum TipoPago {
   SUSCRIPCION = 'SUSCRIPCION',
@@ -55,6 +56,13 @@ export class Pago {
   @ManyToOne(() => SolicitudDerivacion, { nullable: true })
   solicitudDerivacion: SolicitudDerivacion;
 
+  @ManyToOne(() => Voucher, { nullable: true })
+  @JoinColumn({ name: 'cuponId' })
+  cupon: Voucher;
+
+  @Column({ type: 'uuid', nullable: true })
+  cuponId: string;
+
   @Column({
     type: 'enum',
     enum: TipoPago,
@@ -71,6 +79,29 @@ export class Pago {
     }
   })
   monto: number;
+
+  @Column({ 
+    type: 'decimal', 
+    precision: 10, 
+    scale: 2,
+    default: 0,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value),
+    }
+  })
+  descuentoAplicado: number;
+
+  @Column({ 
+    type: 'decimal', 
+    precision: 10, 
+    scale: 2,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value),
+    }
+  })
+  montoFinal: number;
 
   @Column({
     type: 'enum',

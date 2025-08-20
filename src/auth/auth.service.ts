@@ -205,7 +205,44 @@ export class AuthService {
   async getFullProfile(id: string) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) throw new UnauthorizedException('Usuario no encontrado');
+    
     const { password, ...userData } = user;
+    
+    // Si es psicólogo, agregar información adicional del perfil
+    if (user.role === 'PSICOLOGO') {
+      try {
+        const psicologo = await this.psicologoRepository.findOne({
+          where: { usuario: { id } },
+          relations: ['usuario']
+        });
+        
+        if (psicologo) {
+          return {
+            ...userData,
+            psicologo: {
+              id: psicologo.id,
+              diagnosticos_experiencia: psicologo.diagnosticos_experiencia,
+              temas_experiencia: psicologo.temas_experiencia,
+              estilo_terapeutico: psicologo.estilo_terapeutico,
+              afinidad_paciente_preferida: psicologo.afinidad_paciente_preferida,
+              genero: psicologo.genero,
+              numeroRegistroProfesional: psicologo.numeroRegistroProfesional,
+              experiencia: psicologo.experiencia,
+              descripcion: psicologo.descripcion,
+              precioPresencial: psicologo.precioPresencial,
+              precioOnline: psicologo.precioOnline,
+              disponibilidad: psicologo.disponibilidad,
+              createdAt: psicologo.createdAt,
+              updatedAt: psicologo.updatedAt
+            }
+          };
+        }
+      } catch (error) {
+        console.error('Error al obtener perfil de psicólogo:', error);
+        // Si hay error, devolver solo datos del usuario
+      }
+    }
+    
     return userData;
   }
 
