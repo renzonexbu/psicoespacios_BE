@@ -39,3 +39,5 @@ export class PreciosPsicologoController {
     return this.psicologosService.updatePrecios(usuarioId, updatePreciosDto);
   }
 }
+
+

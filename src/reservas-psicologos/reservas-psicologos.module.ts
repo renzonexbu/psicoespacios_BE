@@ -7,10 +7,12 @@ import { User } from '../common/entities/user.entity';
 import { Psicologo } from '../common/entities/psicologo.entity';
 import { Box } from '../common/entities/box.entity';
 import { Paciente } from '../common/entities/paciente.entity';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([ReservaPsicologo, User, Psicologo, Box, Paciente]),
+    MailModule,
   ],
   controllers: [ReservasPsicologosController],
   providers: [ReservasPsicologosService],

@@ -39,6 +39,13 @@ export class FixSuscripcionesEnum1720800016000 implements MigrationInterface {
       WHERE "estado" = 'PENDIENTE';
     `);
 
+    // Convertir "COMPLETADA" a "ACTIVA" (valor válido más cercano)
+    await queryRunner.query(`
+      UPDATE "suscripciones" 
+      SET "estado" = 'ACTIVA' 
+      WHERE "estado" = 'COMPLETADA';
+    `);
+
     // Eliminar el valor por defecto temporalmente
     await queryRunner.query(`
       ALTER TABLE "suscripciones" ALTER COLUMN "estado" DROP DEFAULT;

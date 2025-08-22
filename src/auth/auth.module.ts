@@ -11,11 +11,13 @@ import { Psicologo } from '../common/entities/psicologo.entity';
 import { UsersController } from './users.controller';
 import { RefreshToken } from '../common/entities/refresh-token.entity';
 import { Suscripcion } from '../common/entities/suscripcion.entity';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Psicologo, RefreshToken, Suscripcion]),
     PassportModule,
+    MailModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({

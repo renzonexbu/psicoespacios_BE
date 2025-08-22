@@ -37,30 +37,30 @@ async function bootstrap() {
       new TimeoutInterceptor(60000), // 60 segundos de timeout
     );
     
-    // Quitamos el ValidationPipe global que causa problemas con archivos
-    // app.useGlobalPipes(
-    //   new ValidationPipe({
-    //     whitelist: true,
-    //     transform: true,
-    //     transformOptions: {
-    //       enableImplicitConversion: true,
-    //     },
-    //     skipMissingProperties: false,
-    //     forbidNonWhitelisted: false,
-    //     exceptionFactory: (errors) => {
-    //       console.log('🔍 ValidationPipe - Errores de validación:', errors);
-    //       const result = {};
-    //       errors.forEach(error => {
-    //         result[error.property] = Object.values(error.constraints || { error: 'Valor inválido' });
-    //       });
-    //       return new BadRequestException({
-    //         message: 'Error de validación en los datos proporcionados',
-    //         errors: result,
-    //         details: errors,
-    //       });
-    //     }
-    //   }),
-    // );
+    // Configurar ValidationPipe global para validación de DTOs
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
+        skipMissingProperties: false,
+        forbidNonWhitelisted: false,
+        exceptionFactory: (errors) => {
+          console.log('🔍 ValidationPipe - Errores de validación:', errors);
+          const result = {};
+          errors.forEach(error => {
+            result[error.property] = Object.values(error.constraints || { error: 'Valor inválido' });
+          });
+          return new BadRequestException({
+            message: 'Error de validación en los datos proporcionados',
+            errors: result,
+            details: errors,
+          });
+        }
+      }),
+    );
 
     app.enableCors({
       origin: '*',

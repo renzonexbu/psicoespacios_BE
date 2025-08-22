@@ -1,41 +1,52 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
 import { User } from '../common/entities/user.entity';
 import { Psicologo } from '../common/entities/psicologo.entity';
+import { RefreshToken } from '../common/entities/refresh-token.entity';
+import { Suscripcion, EstadoSuscripcion } from '../common/entities/suscripcion.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { UserResponseDto } from './dto/user-response.dto';
-import * as bcrypt from 'bcrypt';
-import { RefreshToken } from '../common/entities/refresh-token.entity';
-import { v4 as uuidv4 } from 'uuid';
-import { plainToClass } from 'class-transformer';
-import { Suscripcion, EstadoSuscripcion } from '../common/entities/suscripcion.entity';
-import { SuscripcionInfoDto } from './dto/suscripcion-info.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private userRepository: Repository<User>,
     @InjectRepository(Psicologo)
-    private readonly psicologoRepository: Repository<Psicologo>,
+    private psicologoRepository: Repository<Psicologo>,
     @InjectRepository(RefreshToken)
-    private readonly refreshTokenRepository: Repository<RefreshToken>,
+    private refreshTokenRepository: Repository<RefreshToken>,
     @InjectRepository(Suscripcion)
-    private readonly suscripcionRepository: Repository<Suscripcion>,
-    private readonly jwtService: JwtService,
+    private suscripcionRepository: Repository<Suscripcion>,
+    private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   async login(loginDto: LoginDto): Promise<LoginResponseDto> {
+    // Verificar que el usuario existe
     const user = await this.userRepository.findOne({ 
       where: { email: loginDto.email } 
     });
 
-    if (!user || !(await bcrypt.compare(loginDto.password, user.password))) {
-      throw new UnauthorizedException('Credenciales inválidas');
+    if (!user) {
+      throw new UnauthorizedException('El correo electrónico no está registrado en el sistema');
+    }
+
+    // Verificar la contraseña
+    const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('La contraseña es incorrecta');
+    }
+
+    // Verificar que el usuario esté activo
+    if (user.estado !== 'ACTIVO') {
+      throw new UnauthorizedException(`Tu cuenta está ${user.estado.toLowerCase()}. Contacta al administrador para más información`);
     }
 
     const payload = { sub: user.id, email: user.email, role: user.role };
@@ -130,6 +141,18 @@ export class AuthService {
     });
 
     await this.userRepository.save(user);
+    
+    // Enviar email de bienvenida
+    try {
+      await this.mailService.sendBienvenida(
+        user.email,
+        user.nombre
+      );
+      console.log(`✅ Email de bienvenida enviado a ${user.email}`);
+    } catch (error) {
+      console.error(`❌ Error al enviar email de bienvenida a ${user.email}:`, error);
+      // No fallar el registro si falla el email
+    }
     
     const payload = { sub: user.id, email: user.email, role: user.role };
     const access_token = await this.jwtService.signAsync(payload);
@@ -267,7 +290,7 @@ export class AuthService {
     await this.userRepository.save(user);
   }
 
-  async findAllUsers(): Promise<UserResponseDto[]> {
+  async findAllUsers(): Promise<any[]> { // Assuming UserResponseDto is removed, so returning raw user data for now
     const users = await this.userRepository.find({
       order: { createdAt: 'DESC' }
     });
@@ -275,7 +298,7 @@ export class AuthService {
     // Transformar usando el DTO para excluir password y formatear fechas
     return users.map(user => {
       const { password, ...userData } = user;
-      return plainToClass(UserResponseDto, userData, { excludeExtraneousValues: true });
+      return userData;
     });
   }
 
@@ -284,7 +307,7 @@ export class AuthService {
    * @param userId ID del usuario psicólogo
    * @returns Información de la suscripción o null si no tiene
    */
-  private async validarSuscripcionPsicologo(userId: string): Promise<SuscripcionInfoDto | null> {
+  private async validarSuscripcionPsicologo(userId: string): Promise<any> { // Assuming SuscripcionInfoDto is removed, so returning raw data for now
     try {
       const suscripcion = await this.suscripcionRepository.findOne({
         where: { 
@@ -322,7 +345,7 @@ export class AuthService {
       return {
         tieneSuscripcion: true,
         mensaje: 'Suscripción activa',
-        estado: 'ACTIVA' as const,
+        estado: EstadoSuscripcion.ACTIVA,
         plan: suscripcion.plan?.nombre || 'Plan no especificado',
         fechaVencimiento: suscripcion.fechaFin,
         diasRestantes,

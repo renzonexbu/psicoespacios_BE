@@ -94,6 +94,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     // Personalización adicional de mensajes por código HTTP
+    // Solo sobrescribir si no hay un mensaje personalizado
     switch (statusCode) {
       case HttpStatus.BAD_REQUEST:
         if (!message || message === 'Bad Request') {
@@ -101,33 +102,52 @@ export class AllExceptionsFilter implements ExceptionFilter {
         }
         break;
       case HttpStatus.UNAUTHORIZED:
-        message = 'No autorizado: es necesario autenticarse';
+        // Solo sobrescribir si no hay mensaje personalizado
+        if (!message || message === 'Unauthorized') {
+          message = 'No autorizado: es necesario autenticarse';
+        }
         error = ErrorType.AUTHENTICATION;
         break;
       case HttpStatus.FORBIDDEN:
-        message = 'Prohibido: no tiene permisos para acceder a este recurso';
+        // Solo sobrescribir si no hay mensaje personalizado
+        if (!message || message === 'Forbidden') {
+          message = 'Prohibido: no tiene permisos para acceder a este recurso';
+        }
         error = ErrorType.AUTHORIZATION;
         break;
       case HttpStatus.NOT_FOUND:
-        message = 'Recurso no encontrado';
+        // Solo sobrescribir si no hay mensaje personalizado
+        if (!message || message === 'Not Found') {
+          message = 'Recurso no encontrado';
+        }
         error = ErrorType.NOT_FOUND;
         break;
       case HttpStatus.METHOD_NOT_ALLOWED:
-        message = 'Método no permitido para este recurso';
+        if (!message || message === 'Method Not Allowed') {
+          message = 'Método no permitido para este recurso';
+        }
         break;
       case HttpStatus.CONFLICT:
-        message = 'Conflicto: la solicitud no pudo completarse debido a un conflicto con el estado actual del recurso';
+        if (!message || message === 'Conflict') {
+          message = 'Conflicto: la solicitud no pudo completarse debido a un conflicto con el estado actual del recurso';
+        }
         error = ErrorType.CONFLICT;
         break;
       case HttpStatus.UNPROCESSABLE_ENTITY:
-        message = 'Entidad no procesable: la solicitud fue bien formada pero no se puede procesar';
+        if (!message || message === 'Unprocessable Entity') {
+          message = 'Entidad no procesable: la solicitud fue bien formada pero no se puede procesar';
+        }
         error = ErrorType.VALIDATION;
         break;
       case HttpStatus.TOO_MANY_REQUESTS:
-        message = 'Demasiadas solicitudes: por favor, inténtelo más tarde';
+        if (!message || message === 'Too Many Requests') {
+          message = 'Demasiadas solicitudes: por favor, inténtelo más tarde';
+        }
         break;
       case HttpStatus.SERVICE_UNAVAILABLE:
-        message = 'Servicio no disponible temporalmente';
+        if (!message || message === 'Service Unavailable') {
+          message = 'Servicio no disponible temporalmente';
+        }
         break;
     }
 

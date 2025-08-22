@@ -6,6 +6,7 @@ import { User } from '../common/entities/user.entity';
 import { Psicologo } from '../common/entities/psicologo.entity';
 import { Box } from '../common/entities/box.entity';
 import { Paciente } from '../common/entities/paciente.entity';
+import { MailService } from '../mail/mail.service';
 import { 
   CreateReservaPsicologoDto, 
   UpdateReservaPsicologoDto, 
@@ -29,6 +30,7 @@ export class ReservasPsicologosService {
     @InjectRepository(Paciente)
     private readonly pacienteRepository: Repository<Paciente>,
     private readonly dataSource: DataSource,
+    private readonly mailService: MailService,
   ) {}
 
   /**
@@ -163,7 +165,23 @@ export class ReservasPsicologosService {
       const savedReserva = await manager.save(reserva);
       this.logger.log(`Reserva creada con ID: ${savedReserva.id}`);
 
-      // 7. Retornar respuesta completa
+      // 7. Enviar email de confirmación (fuera de la transacción)
+      try {
+        await this.mailService.sendReservaConfirmada(
+          paciente.email,
+          psicologo.usuario.nombre,
+          createReservaDto.fecha,
+          createReservaDto.horaInicio,
+          createReservaDto.modalidad || ModalidadSesion.PRESENCIAL,
+          createReservaDto.metadatos?.ubicacion
+        );
+        this.logger.log(`Email de confirmación enviado a ${paciente.email}`);
+      } catch (error) {
+        this.logger.error(`Error al enviar email de confirmación: ${error.message}`);
+        // No fallar la operación si el email falla
+      }
+
+      // 8. Retornar respuesta completa
       return this.mapToResponseDto(savedReserva, psicologo.usuario, paciente);
     });
   }

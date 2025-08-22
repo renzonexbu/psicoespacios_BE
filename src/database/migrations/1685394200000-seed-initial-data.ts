@@ -115,6 +115,9 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
       return;
     }
 
+    // ⚠️ SOLO CREAR USUARIO ADMIN - NO CREAR USUARIOS DE EJEMPLO
+    console.log('⚠️ Solo creando usuario administrador (no usuarios de ejemplo)...');
+
     // Hashear las contraseñas
     const hashPassword = async (password: string): Promise<string> => {
       const salt = await bcrypt.genSalt();
@@ -130,7 +133,8 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
       ('admin@psicoespacios.com', '${adminPassword}', 'Administrador', 'Sistema', 'ADMIN', 'ACTIVO')
     `);
 
-    // Insertar psicólogos
+    // ❌ COMENTADO: No insertar psicólogos de ejemplo
+    /*
     const psicologos = [
       {
         email: 'maria.rodriguez@psicoespacios.com',
@@ -214,6 +218,7 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
         '${usuario.rut}', '${usuario.telefono}', '${usuario.role}', '${usuario.estado}')
       `);
     }
+    */
 
     console.log('Tabla de usuarios poblada exitosamente.');
   }
@@ -703,7 +708,12 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
   /**
    * Poblar tabla de contactos
    */
+  // ❌ COMENTADO: No insertar contactos de ejemplo
   private async seedContactos(queryRunner: QueryRunner): Promise<void> {
+    console.log('⚠️ Omitiendo población de contactos de ejemplo...');
+    return;
+    
+    /*
     console.log('Poblando tabla de contactos...');
 
     // Comprobar si ya existen contactos
@@ -766,6 +776,7 @@ export class SeedInitialData1685394200000 implements MigrationInterface {
     }
 
     console.log('Tabla de contactos poblada exitosamente.');
+    */
   }
 
   /**

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Respuesta a tu consulta</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #E91711;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            color: #E91711;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .tagline {
+            color: #666;
+            font-style: italic;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #E91711;
+        }
+        .contact-info {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #E91711;
+        }
+        .contact-info h3 {
+            margin-top: 0;
+            color: #E91711;
+        }
+        .contact-info p {
+            margin: 8px 0;
+        }
+        .response {
+            background-color: #e8f5e8;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        .response h3 {
+            margin-top: 0;
+            color: #28a745;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 14px;
+        }
+        .info-message {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">PsicoEspacios</div>
+            <div class="tagline">Espacios para el bienestar psicológico</div>
+        </div>
+
+        <div class="content">
+            <div class="greeting">Hola {{nombre}},</div>
+            
+            <p>Hemos revisado tu consulta.</p>
+
+            <div class="contact-info">
+                <h3>📋 Detalles de tu consulta:</h3>
+                <p><strong>Asunto:</strong> {{asunto}}</p>
+                <p><strong>Tipo:</strong> {{tipo}}</p>
+                <p><strong>Fecha de respuesta:</strong> {{fechaRespuesta}}</p>
+            </div>
+
+            <div class="response">
+                <h3>💬 Nuestra respuesta:</h3>
+                <p>{{{respuesta}}}</p>
+            </div>
+
+            <p>Si tienes alguna pregunta adicional o necesitas más información, no dudes en contactarnos nuevamente.</p>
+        </div>
+
+        <div class="footer">
+            <p>Gracias por confiar en PsicoEspacios</p>
+            <p>Este es un email automático, por favor no respondas a este mensaje</p>
+        </div>
+
+        <div class="info-message">
+            <p>Hemos registrado tu consulta en nuestro sistema.</p>
+        </div>
+    </div>
+</body>
+</html>

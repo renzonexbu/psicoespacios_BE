@@ -53,3 +53,5 @@ export class CreatePagoDto {
   @IsObject()
   metadatos?: Record<string, any>;
 }
+
+

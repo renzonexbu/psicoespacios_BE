@@ -36,3 +36,5 @@ export class PagoResponseDto {
   createdAt: Date;
   updatedAt: Date;
 }
+
+

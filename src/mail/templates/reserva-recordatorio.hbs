@@ -1,0 +1,41 @@
+<h2 style="color: #ffc107; text-align: center;">⏰ Recordatorio de Sesión</h2>
+
+<div class="warning-box">
+  <p><strong>¡Tu sesión es mañana!</strong></p>
+</div>
+
+<div class="info-box">
+  <h3>📅 Detalles de la Sesión</h3>
+  <p><strong>Psicólogo:</strong> {{psicologoNombre}}</p>
+  <p><strong>Fecha:</strong> {{fecha}}</p>
+  <p><strong>Hora:</strong> {{hora}}</p>
+  <p><strong>Modalidad:</strong> {{modalidad}}</p>
+  {{#if ubicacion}}
+  <p><strong>Ubicación:</strong> {{ubicacion}}</p>
+  {{/if}}
+</div>
+
+<div class="info-box">
+  <h3>🔍 Checklist de Preparación</h3>
+  <ul>
+    <li>✅ Confirma tu disponibilidad</li>
+    <li>✅ Prepara tus preguntas o temas a tratar</li>
+    <li>✅ Si es presencial: planifica el tiempo de traslado</li>
+    <li>✅ Si es online: verifica tu equipo y conexión</li>
+    <li>✅ Ten a mano tu documento de identidad</li>
+  </ul>
+</div>
+
+<div class="success-box">
+  <p><strong>💡 Consejo:</strong> Llega 10 minutos antes para aprovechar al máximo tu sesión.</p>
+</div>
+
+        <p style="text-align: center; color: #666; font-style: italic;">
+          ¡Te esperamos en tu sesión!
+        </p>
+
+<p style="text-align: center; margin-top: 20px;">
+  <strong>¡Nos vemos mañana!</strong><br>
+  Si necesitas reprogramar, contacta con nosotros lo antes posible.
+</p>
+

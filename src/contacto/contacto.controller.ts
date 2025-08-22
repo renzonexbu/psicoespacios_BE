@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Patch } from '@nestjs/common';
 import { ContactoService } from './contacto.service';
 import { CreateContactoDto } from './dto/create-contacto.dto';
 import { UpdateContactoDto } from './dto/update-contacto.dto';
+import { ResponderContactoDto } from './dto/responder-contacto.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -41,5 +42,12 @@ export class ContactoController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.contactoService.remove(id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Patch(':id/responder')
+  responder(@Param('id') id: string, @Body() responderContactoDto: ResponderContactoDto) {
+    return this.contactoService.responder(id, responderContactoDto);
   }
 }

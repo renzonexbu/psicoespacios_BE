@@ -24,64 +24,11 @@ export const initialUsers: Partial<User>[] = [
     fechaNacimiento: new Date('1990-01-01'),
     role: Role.ADMIN,
     estado: EstadoUsuario.ACTIVO,
-  },
-  {
-    email: 'terapeuta@psicoespacios.com',
-    password: hashSync('terapia123', 10),
-    nombre: 'Teresa',
-    apellido: 'Psicóloga',
-    rut: '98765432-1',
-    telefono: '+56987654321',
-    fechaNacimiento: new Date('1985-05-15'),
-    role: Role.TERAPEUTA,
-    estado: EstadoUsuario.ACTIVO,
-  },
-  {
-    email: 'paciente@psicoespacios.com',
-    password: hashSync('paciente123', 10),
-    nombre: 'Pablo',
-    apellido: 'Paciente',
-    rut: '11223344-5',
-    telefono: '+56911223344',
-    fechaNacimiento: new Date('1992-10-20'),
-    role: Role.PACIENTE,
-    estado: EstadoUsuario.ACTIVO,
   }
 ];
 
-// Sedes iniciales
-export const initialSedes: Partial<Sede>[] = [
-  {
-    nombre: 'Sede Central',
-    direccion: 'Av. Providencia 1234, Providencia',
-    estado: 'ACTIVA',
-    serviciosDisponibles: ['Terapia Individual', 'Terapia de Pareja', 'Talleres Grupales']
-  },
-  {
-    nombre: 'Sede Norte',
-    direccion: 'Av. Independencia 567, Independencia',
-    estado: 'ACTIVA',
-    serviciosDisponibles: ['Terapia Individual', 'Evaluación Psicológica']
-  }
-];
 
-// Contactos iniciales
-export const initialContactos: Partial<Contacto>[] = [
-  {
-    nombre: 'Juan Pérez',
-    email: 'juan@example.com',
-    telefono: '+56922334455',
-    mensaje: 'Me interesa agendar una sesión para terapia individual',
-    estado: ContactoEstado.NUEVA,
-  },
-  {
-    nombre: 'María González',
-    email: 'maria@example.com',
-    telefono: '+56933445566',
-    mensaje: 'Quisiera información sobre los talleres grupales',
-    estado: ContactoEstado.PENDIENTE,
-  }
-];
+
 
 // Planes iniciales
 export const initialPlanes: Partial<Plan>[] = [
@@ -95,57 +42,10 @@ export const initialPlanes: Partial<Plan>[] = [
       'Reserva con 48 horas de anticipación',
       'Acceso a WiFi'
     ]
-  },
-  {
-    nombre: 'Plan Estándar',
-    precio: 50000,
-    duracion: 1,
-    horasIncluidas: 15,
-    beneficios: [
-      'Acceso a boxes durante 15 horas mensuales',
-      'Reserva con 72 horas de anticipación',
-      'Acceso a WiFi',
-      'Uso de áreas comunes'
-    ]
-  },
-  {
-    nombre: 'Plan Premium',
-    precio: 90000,
-    duracion: 1,
-    horasIncluidas: 30,
-    beneficios: [
-      'Acceso a boxes durante 30 horas mensuales',
-      'Reserva hasta con 1 mes de anticipación',
-      'Acceso a WiFi',
-      'Uso de áreas comunes',
-      'Acceso preferencial a boxes premium'
-    ]
   }
 ];
 
 // Función para crear boxes iniciales
-export const createInitialBoxes = (sedes: Sede[]): Partial<Box>[] => {
-  const boxes: Partial<Box>[] = [];
-  
-  sedes.forEach(sede => {
-    for (let i = 1; i <= 3; i++) {
-      boxes.push({
-        numero: `${i}`,
-        nombre: `Box ${i}`,
-        capacidad: Math.floor(Math.random() * 3) + 2, // Entre 2 y 4
-        equipamiento: [
-          'Sillones: 2',
-          'Escritorio: 1',
-          'Material terapéutico: 1'
-        ],
-        estado: 'DISPONIBLE',
-        sede: sede
-      });
-    }
-  });
-  
-  return boxes;
-};
 
 // Configuración del sistema inicial
 export const initialConfiguracion = {

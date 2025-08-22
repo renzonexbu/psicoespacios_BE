@@ -22,6 +22,7 @@ import { BoxesModule } from './boxes/boxes.module';
 import { ArriendosModule } from './arriendos/arriendos.module';
 import { NotasModule } from './notas/notas.module';
 import { ReservasPsicologosModule } from './reservas-psicologos/reservas-psicologos.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -97,6 +98,7 @@ import { ReservasPsicologosModule } from './reservas-psicologos/reservas-psicolo
     ArriendosModule,
     NotasModule,
     ReservasPsicologosModule,
+    MailModule,
   ],
 })
 export class AppModule implements OnModuleInit, NestModule {
