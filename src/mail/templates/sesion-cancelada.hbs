@@ -1,40 +1,281 @@
-<h2 style="color: #dc3545; text-align: center;">❌ Sesión Cancelada</h2>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesión Cancelada - PsicoEspacios</title>
+    <style>
+        /* Reset y base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Container principal */
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #E91711;
+            padding: 20px 15px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        }
+        
+        .logo {
+            color: #E91711;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .tagline {
+            color: #666;
+            font-style: italic;
+            font-size: 14px;
+        }
+        
+        /* Contenido principal */
+        .content {
+            padding: 0 15px 20px;
+        }
+        
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #E91711;
+            font-weight: 600;
+        }
+        
+        /* Mensaje de cancelación */
+        .cancellation-message {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            padding: 20px 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #dc3545;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);
+        }
+        
+        .cancellation-message h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        
+        /* Detalles de la sesión cancelada */
+        .session-details {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #E91711;
+            box-shadow: 0 2px 8px rgba(233, 23, 17, 0.1);
+        }
+        
+        .session-details h3 {
+            color: #E91711;
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .session-details p {
+            margin: 12px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .session-details strong {
+            color: #495057;
+            font-weight: 600;
+        }
+        
+        /* Información del psicólogo */
+        .psychologist-info {
+            background: linear-gradient(135deg, #e7f3ff 0%, #d1ecf1 100%);
+            padding: 20px 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+        }
+        
+        .psychologist-info h3 {
+            color: #007bff;
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .psychologist-info p {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        /* Próximos pasos */
+        .next-steps {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            padding: 20px 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
+        }
+        
+        .next-steps h3 {
+            color: #155724;
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .next-steps p {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #155724;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px 15px;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 13px;
+            background-color: #f8f9fa;
+        }
+        
+        .footer p {
+            margin: 5px 0;
+        }
+        
+        /* Responsive para tablets */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 600px;
+                margin: 20px auto;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .logo {
+                font-size: 28px;
+            }
+            
+            .content {
+                padding: 0 20px 30px;
+            }
+            
+            .cancellation-message,
+            .session-details,
+            .psychologist-info,
+            .next-steps {
+                padding: 25px 20px;
+            }
+        }
+        
+        /* Responsive para móviles pequeños */
+        @media (max-width: 480px) {
+            .header {
+                padding: 15px 10px;
+            }
+            
+            .logo {
+                font-size: 20px;
+            }
+            
+            .content {
+                padding: 0 10px 15px;
+            }
+            
+            .cancellation-message,
+            .session-details,
+            .psychologist-info,
+            .next-steps {
+                padding: 15px 10px;
+                margin: 15px 0;
+            }
+            
+            .greeting {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">PsicoEspacios</div>
+            <div class="tagline">Espacios para el bienestar psicológico</div>
+        </div>
 
-<div class="warning-box">
-  <p><strong>Tu sesión ha sido cancelada.</strong></p>
-</div>
+        <div class="content">
+            <div class="greeting">¡Hola {{nombrePaciente}}!</div>
+            
+            <div class="cancellation-message">
+                <h3>❌ Sesión Cancelada</h3>
+                <p>Tu sesión ha sido cancelada. Te informamos los detalles a continuación.</p>
+            </div>
 
-<div class="info-box">
-  <h3>📅 Detalles de la Sesión Cancelada</h3>
-  <p><strong>Psicólogo:</strong> {{psicologoNombre}}</p>
-  <p><strong>Fecha:</strong> {{fecha}}</p>
-  <p><strong>Hora:</strong> {{hora}}</p>
-</div>
+            <div class="session-details">
+                <h3>📅 Sesión Cancelada</h3>
+                <p><strong>Fecha:</strong> {{fecha}}</p>
+                <p><strong>Hora:</strong> {{hora}}</p>
+                <p><strong>Modalidad:</strong> {{modalidad}}</p>
+                <p><strong>Motivo de cancelación:</strong> {{motivoCancelacion}}</p>
+            </div>
 
-<div class="info-box">
-  <h3>🔄 Opciones Disponibles</h3>
-  <ul>
-    <li>📅 <strong>Reprogramar:</strong> Agenda una nueva sesión</li>
-    <li>💰 <strong>Reembolso:</strong> Solicita la devolución del pago</li>
-    <li>🎫 <strong>Cupón:</strong> Aplica un cupón para futuras sesiones</li>
-    <li>📞 <strong>Contacto:</strong> Habla directamente con tu psicólogo</li>
-  </ul>
-</div>
+            <div class="psychologist-info">
+                <h3>👨‍⚕️ Psicólogo Asignado</h3>
+                <p><strong>Nombre:</strong> {{nombrePsicologo}}</p>
+                <p><strong>Especialidad:</strong> {{especialidad}}</p>
+                <p><strong>Email:</strong> {{emailPsicologo}}</p>
+            </div>
 
-<div class="success-box">
-  <p><strong>💡 Recomendación:</strong> Considera reprogramar tu sesión para mantener la continuidad de tu tratamiento.</p>
-</div>
+            <div class="next-steps">
+                <h3>🔄 Próximos Pasos</h3>
+                <p>Si deseas reprogramar tu sesión, puedes contactar directamente a tu psicólogo o a nuestro equipo de atención al cliente. Estamos aquí para ayudarte a encontrar un nuevo horario que se adapte a tu agenda.</p>
+            </div>
 
-<p style="text-align: center; color: #666; font-style: italic;">
-  Para reprogramar o solicitar reembolso, contacta directamente con tu psicólogo.
-</p>
+            <p style="margin: 20px 0; font-size: 14px; line-height: 1.5; color: #6c757d;">
+                Si tienes alguna pregunta sobre la cancelación o necesitas ayuda para reprogramar, no dudes en contactarnos.
+            </p>
+        </div>
 
-<p style="text-align: center; margin-top: 20px;">
-  <strong>¡No te desanimes!</strong><br>
-  Los imprevistos son normales. Lo importante es continuar con tu bienestar mental.
-</p>
-
-<div style="text-align: center; margin-top: 30px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
-  <p><strong>📞 Necesitas ayuda?</strong> Contacta con nosotros para resolver cualquier duda sobre la cancelación.</p>
-</div>
+        <div class="footer">
+            <p>Gracias por confiar en PsicoEspacios</p>
+            <p>Este es un email automático, por favor no respondas a este mensaje</p>
+        </div>
+    </div>
+</body>
+</html>
 

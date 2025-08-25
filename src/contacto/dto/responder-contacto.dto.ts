@@ -10,3 +10,4 @@ export class ResponderContactoDto {
   @IsOptional()
   estado?: ContactoEstado;
 }
+

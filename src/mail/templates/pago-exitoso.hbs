@@ -1,37 +1,284 @@
-<h2 style="color: #28a745; text-align: center;">💳 Pago Confirmado</h2>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Exitoso - PsicoEspacios</title>
+    <style>
+        /* Reset y base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Container principal */
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #E91711;
+            padding: 20px 15px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        }
+        
+        .logo {
+            color: #E91711;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .tagline {
+            color: #666;
+            font-style: italic;
+            font-size: 14px;
+        }
+        
+        /* Contenido principal */
+        .content {
+            padding: 0 15px 20px;
+        }
+        
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #E91711;
+            font-weight: 600;
+        }
+        
+        /* Mensaje de éxito */
+        .success-message {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            padding: 20px 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
+        }
+        
+        .success-message h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        
+        /* Detalles del pago */
+        .payment-details {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #E91711;
+            box-shadow: 0 2px 8px rgba(233, 23, 17, 0.1);
+        }
+        
+        .payment-details h3 {
+            color: #E91711;
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .payment-details p {
+            margin: 12px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .payment-details strong {
+            color: #495057;
+            font-weight: 600;
+        }
+        
+        /* Detalles de la sesión */
+        .session-details {
+            background: linear-gradient(135deg, #e7f3ff 0%, #d1ecf1 100%);
+            padding: 20px 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+        }
+        
+        .session-details h3 {
+            color: #007bff;
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .session-details p {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        /* Información del psicólogo */
+        .psychologist-info {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            padding: 20px 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
+        }
+        
+        .psychologist-info h3 {
+            color: #856404;
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .psychologist-info p {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #856404;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px 15px;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 13px;
+            background-color: #f8f9fa;
+        }
+        
+        .footer p {
+            margin: 5px 0;
+        }
+        
+        /* Responsive para tablets */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 600px;
+                margin: 20px auto;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .logo {
+                font-size: 28px;
+            }
+            
+            .content {
+                padding: 0 20px 30px;
+            }
+            
+            .success-message,
+            .payment-details,
+            .session-details,
+            .psychologist-info {
+                padding: 25px 20px;
+            }
+        }
+        
+        /* Responsive para móviles pequeños */
+        @media (max-width: 480px) {
+            .header {
+                padding: 15px 10px;
+            }
+            
+            .logo {
+                font-size: 20px;
+            }
+            
+            .content {
+                padding: 0 10px 15px;
+            }
+            
+            .success-message,
+            .payment-details,
+            .session-details,
+            .psychologist-info {
+                padding: 15px 10px;
+                margin: 15px 0;
+            }
+            
+            .greeting {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">PsicoEspacios</div>
+            <div class="tagline">Espacios para el bienestar psicológico</div>
+        </div>
 
-<div class="success-box">
-  <p><strong>¡Tu pago ha sido procesado exitosamente!</strong></p>
-</div>
+        <div class="content">
+            <div class="greeting">¡Hola {{nombrePaciente}}!</div>
+            
+            <div class="success-message">
+                <h3>✅ Pago Procesado Exitosamente</h3>
+                <p>Tu pago ha sido confirmado y tu sesión está programada.</p>
+            </div>
 
-<div class="info-box">
-  <h3>💰 Detalles del Pago</h3>
-  <p><strong>Monto:</strong> {{monto}}</p>
-  <p><strong>Fecha:</strong> {{fecha}}</p>
-  <p><strong>Psicólogo:</strong> {{psicologoNombre}}</p>
-  <p><strong>Estado:</strong> <span style="color: #28a745;">✅ Confirmado</span></p>
-</div>
+            <div class="payment-details">
+                <h3>💳 Detalles del Pago</h3>
+                <p><strong>Monto:</strong> ${{monto}}</p>
+                <p><strong>Método de pago:</strong> {{metodoPago}}</p>
+                <p><strong>Fecha de pago:</strong> {{fechaPago}}</p>
+                <p><strong>ID de transacción:</strong> {{idTransaccion}}</p>
+            </div>
 
-<div class="info-box">
-  <h3>📋 Próximos Pasos</h3>
-  <ul>
-    <li>Recibirás un email de confirmación de tu sesión</li>
-    <li>Guarda este comprobante para tus registros</li>
-    <li>Tu sesión está confirmada y agendada</li>
-    <li>Recibirás recordatorios 24h antes de la sesión</li>
-  </ul>
-</div>
+            <div class="session-details">
+                <h3>📅 Detalles de la Sesión</h3>
+                <p><strong>Fecha:</strong> {{fecha}}</p>
+                <p><strong>Hora:</strong> {{hora}}</p>
+                <p><strong>Modalidad:</strong> {{modalidad}}</p>
+                <p><strong>Duración:</strong> {{duracion}}</p>
+            </div>
 
-<div class="warning-box">
-  <p><strong>📧 Comprobante:</strong> Este email sirve como comprobante de pago. Guárdalo en tu bandeja de entrada.</p>
-</div>
+            <div class="psychologist-info">
+                <h3>👨‍⚕️ Psicólogo Asignado</h3>
+                <p><strong>Nombre:</strong> {{nombrePsicologo}}</p>
+                <p><strong>Especialidad:</strong> {{especialidad}}</p>
+                <p><strong>Email:</strong> {{emailPsicologo}}</p>
+            </div>
 
-        <p style="text-align: center; color: #666; font-style: italic;">
-          Tu sesión está confirmada y lista para comenzar.
-        </p>
+            <p style="margin: 20px 0; font-size: 14px; line-height: 1.5; color: #6c757d;">
+                Recibirás un email de confirmación con todos los detalles de tu sesión. ¡Gracias por confiar en PsicoEspacios!
+            </p>
+        </div>
 
-<p style="text-align: center; margin-top: 20px;">
-  <strong>¡Gracias por confiar en PsicoEspacios!</strong><br>
-  Si tienes alguna pregunta sobre tu pago, no dudes en contactarnos.
-</p>
+        <div class="footer">
+            <p>Gracias por confiar en PsicoEspacios</p>
+            <p>Este es un email automático, por favor no respondas a este mensaje</p>
+        </div>
+    </div>
+</body>
+</html>
 

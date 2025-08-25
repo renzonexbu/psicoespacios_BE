@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reserva Confirmada - PsicoEspacios</title>
+    <title>Recordatorio de Sesión - PsicoEspacios</title>
     <style>
         /* Reset y base */
         * {
@@ -63,19 +63,19 @@
             font-weight: 600;
         }
         
-        /* Mensaje de confirmación */
-        .confirmation-message {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            color: #155724;
+        /* Mensaje de recordatorio */
+        .reminder-message {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            color: #856404;
             padding: 20px 15px;
             border-radius: 12px;
             margin: 20px 0;
-            border-left: 4px solid #28a745;
+            border-left: 4px solid #ffc107;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);
         }
         
-        .confirmation-message h3 {
+        .reminder-message h3 {
             font-size: 18px;
             margin-bottom: 8px;
         }
@@ -134,18 +134,18 @@
             line-height: 1.5;
         }
         
-        /* Instrucciones */
-        .instructions {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        /* Preparación */
+        .preparation {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
             padding: 20px 15px;
             border-radius: 12px;
             margin: 20px 0;
-            border-left: 4px solid #ffc107;
-            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
+            border-left: 4px solid #28a745;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
         }
         
-        .instructions h3 {
-            color: #856404;
+        .preparation h3 {
+            color: #155724;
             font-size: 16px;
             margin-bottom: 15px;
             display: flex;
@@ -153,10 +153,10 @@
             gap: 8px;
         }
         
-        .instructions p {
+        .preparation p {
             font-size: 14px;
             line-height: 1.5;
-            color: #856404;
+            color: #155724;
         }
         
         /* Footer */
@@ -195,10 +195,10 @@
                 padding: 0 20px 30px;
             }
             
-            .confirmation-message,
+            .reminder-message,
             .session-details,
             .psychologist-info,
-            .instructions {
+            .preparation {
                 padding: 25px 20px;
             }
         }
@@ -217,10 +217,10 @@
                 padding: 0 10px 15px;
             }
             
-            .confirmation-message,
+            .reminder-message,
             .session-details,
             .psychologist-info,
-            .instructions {
+            .preparation {
                 padding: 15px 10px;
                 margin: 15px 0;
             }
@@ -241,9 +241,9 @@
         <div class="content">
             <div class="greeting">¡Hola {{nombrePaciente}}!</div>
             
-            <div class="confirmation-message">
-                <h3>✅ Sesión Confirmada</h3>
-                <p>Tu sesión ha sido confirmada exitosamente. ¡Nos vemos pronto!</p>
+            <div class="reminder-message">
+                <h3>⏰ Recordatorio de Sesión</h3>
+                <p>Mañana tienes una sesión programada. ¡No te la pierdas!</p>
             </div>
 
             <div class="session-details">
@@ -261,13 +261,13 @@
                 <p><strong>Email:</strong> {{emailPsicologo}}</p>
             </div>
 
-            <div class="instructions">
-                <h3>📋 Instrucciones Importantes</h3>
-                <p>Por favor, llega 10 minutos antes de tu hora programada. Si tienes alguna pregunta o necesitas reprogramar, contáctanos con anticipación.</p>
+            <div class="preparation">
+                <h3>📋 Preparación para la Sesión</h3>
+                <p>Recuerda llegar 10 minutos antes de tu hora programada. Si es sesión online, verifica tu conexión a internet y encuentra un lugar tranquilo.</p>
             </div>
 
             <p style="margin: 20px 0; font-size: 14px; line-height: 1.5; color: #6c757d;">
-                ¡Esperamos verte en tu sesión! Si tienes alguna pregunta, no dudes en contactarnos.
+                ¡Esperamos verte en tu sesión! Si tienes alguna pregunta o necesitas reprogramar, contáctanos inmediatamente.
             </p>
         </div>
 
@@ -278,4 +278,3 @@
     </div>
 </body>
 </html>
-
