@@ -28,11 +28,20 @@ export class SuscripcionesController {
     return this.suscripcionesService.create(createSuscripcionDto, req.user.id);
   }
 
+  // IMPORTANTE: Esta ruta debe estar ANTES de las rutas con parámetros
   @Get('mi-suscripcion')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('PSICOLOGO')
   async findMiSuscripcion(@Request() req) {
     return this.suscripcionesService.findMiSuscripcion(req.user.id);
+  }
+
+  // Obtener próximas renovaciones mensuales
+  @Get('proximas-renovaciones')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PSICOLOGO')
+  async getProximasRenovacionesMensuales(@Request() req) {
+    return this.suscripcionesService.getProximasRenovacionesMensuales(req.user.id);
   }
 
   // Obtener información de renovación mensual
@@ -53,14 +62,6 @@ export class SuscripcionesController {
     @Request() req
   ) {
     return this.suscripcionesService.configurarRenovacionMensual(id, configDto, req.user.id);
-  }
-
-  // Obtener próximas renovaciones mensuales
-  @Get('proximas-renovaciones')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('PSICOLOGO')
-  async getProximasRenovacionesMensuales(@Request() req) {
-    return this.suscripcionesService.getProximasRenovacionesMensuales(req.user.id);
   }
 
   // Obtener historial de pagos

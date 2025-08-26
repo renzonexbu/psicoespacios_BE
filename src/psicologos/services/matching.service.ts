@@ -634,14 +634,6 @@ export class MatchingService {
 
       console.log(`[MatchingService] Psicólogo guardado exitosamente`);
 
-      // Cambiar el estado del usuario de PENDIENTE a ACTIVO
-      if (psicologo.usuario && psicologo.usuario.estado === 'PENDIENTE') {
-        console.log(`[MatchingService] Cambiando estado de usuario de PENDIENTE a ACTIVO`);
-        psicologo.usuario.estado = 'ACTIVO';
-        await this.userRepository.save(psicologo.usuario);
-        console.log(`[MatchingService] Estado de usuario actualizado exitosamente`);
-      }
-
       return psicologoActualizado;
     } catch (error) {
       console.error(`[MatchingService] Error al crear perfil de matching:`, error);
@@ -679,23 +671,79 @@ export class MatchingService {
   }
 
   // Método para verificar si un psicólogo tiene perfil de matching completo
-  async verificarPerfilCompleto(psicologoId: string): Promise<boolean> {
+  async verificarPerfilCompleto(userId: string): Promise<boolean> {
     const psicologo = await this.psicologoRepository.findOne({
-      where: { id: psicologoId }
+      where: { usuario: { id: userId } },
+      relations: ['usuario']
     });
 
     if (!psicologo) {
+      console.log(`[MatchingService] No se encontró psicólogo para usuario: ${userId}`);
       return false;
     }
 
     // Verificar que tenga al menos los campos básicos completos
-    return (
+    const perfilCompleto = (
       psicologo.diagnosticos_experiencia.length > 0 &&
       psicologo.temas_experiencia.length > 0 &&
       psicologo.estilo_terapeutico.length > 0 &&
       Boolean(psicologo.genero) &&
       psicologo.modalidad_atencion.length > 0
     );
+
+    console.log(`[MatchingService] Verificación perfil completo para usuario ${userId}:`, {
+      diagnosticos: psicologo.diagnosticos_experiencia.length,
+      temas: psicologo.temas_experiencia.length,
+      estilo: psicologo.estilo_terapeutico.length,
+      genero: psicologo.genero,
+      modalidad: psicologo.modalidad_atencion.length,
+      perfilCompleto
+    });
+
+    return perfilCompleto;
+  }
+
+  // Método para activar la cuenta de un psicólogo cuando su perfil esté completo
+  async activarCuentaPsicologo(userId: string): Promise<void> {
+    try {
+      // Buscar el psicólogo por usuario.id
+      const psicologo = await this.psicologoRepository.findOne({
+        where: { usuario: { id: userId } },
+        relations: ['usuario']
+      });
+
+      if (!psicologo) {
+        throw new Error(`Psicólogo no encontrado para usuario: ${userId}`);
+      }
+
+      if (!psicologo.usuario) {
+        throw new Error('Usuario del psicólogo no encontrado');
+      }
+
+      console.log(`[MatchingService] Psicólogo encontrado para usuario ${userId}:`, {
+        psicologoId: psicologo.id,
+        usuarioId: psicologo.usuario.id,
+        estadoActual: psicologo.usuario.estado
+      });
+
+      // Verificar que el perfil esté realmente completo antes de activar
+      const perfilCompleto = await this.verificarPerfilCompleto(userId);
+      if (!perfilCompleto) {
+        throw new Error('El perfil del psicólogo no está completo');
+      }
+
+      // Cambiar el estado del usuario de PENDIENTE a ACTIVO
+      if (psicologo.usuario.estado === 'PENDIENTE') {
+        psicologo.usuario.estado = 'ACTIVO';
+        await this.userRepository.save(psicologo.usuario);
+        console.log(`[MatchingService] Usuario ${psicologo.usuario.id} activado exitosamente de PENDIENTE a ACTIVO`);
+      } else {
+        console.log(`[MatchingService] Usuario ${psicologo.usuario.id} ya está activo (estado: ${psicologo.usuario.estado})`);
+      }
+    } catch (error) {
+      console.error(`[MatchingService] Error al activar cuenta del psicólogo para usuario ${userId}:`, error);
+      throw error;
+    }
   }
 
   // Método para obtener un paciente por ID

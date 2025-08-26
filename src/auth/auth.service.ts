@@ -11,6 +11,7 @@ import { Suscripcion, EstadoSuscripcion } from '../common/entities/suscripcion.e
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
+import { RegisterResponseDto } from './dto/register-response.dto';
 import { MailService } from '../mail/mail.service';
 
 @Injectable()
@@ -44,8 +45,8 @@ export class AuthService {
       throw new UnauthorizedException('La contraseña es incorrecta');
     }
 
-    // Verificar que el usuario esté activo
-    if (user.estado !== 'ACTIVO') {
+    // Verificar que el usuario no esté bloqueado o suspendido
+    if (user.estado === 'BLOQUEADO' || user.estado === 'SUSPENDIDO') {
       throw new UnauthorizedException(`Tu cuenta está ${user.estado.toLowerCase()}. Contacta al administrador para más información`);
     }
 
@@ -98,7 +99,7 @@ export class AuthService {
     };
   }
 
-  async register(registerDto: RegisterDto) {
+  async register(registerDto: RegisterDto): Promise<RegisterResponseDto> {
     const existingUser = await this.userRepository.findOne({
       where: { email: registerDto.email },
     });
@@ -137,7 +138,8 @@ export class AuthService {
       telefono: registerDto.telefono,
       fechaNacimiento: registerDto.fechaNacimiento,
       fotoUrl: registerDto.fotoUrl,
-      role: registerDto.role
+      role: registerDto.role,
+      estado: 'PENDIENTE' // Usuarios nuevos comienzan como PENDIENTES
     });
 
     await this.userRepository.save(user);
@@ -179,6 +181,7 @@ export class AuthService {
         fechaNacimiento: user.fechaNacimiento,
         fotoUrl: user.fotoUrl,
         role: user.role,
+        estado: user.estado,
       },
     };
   }

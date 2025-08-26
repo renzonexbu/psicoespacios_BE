@@ -195,6 +195,19 @@ export class MatchingController {
       
       console.log(`[MatchingController] Perfil completo: ${perfilCompleto}`);
       
+      // Si el perfil está completo, activar la cuenta del psicólogo
+      let cuentaActivada = false;
+      if (perfilCompleto) {
+        try {
+          await this.matchingService.activarCuentaPsicologo(req.user.id);
+          cuentaActivada = true;
+          console.log(`[MatchingController] Cuenta del psicólogo ${req.user.id} activada exitosamente`);
+        } catch (error) {
+          console.error(`[MatchingController] Error al activar cuenta:`, error);
+          // No fallar el proceso si no se puede activar la cuenta
+        }
+      }
+      
       return {
         success: true,
         message: 'Perfil de matching del psicólogo creado/actualizado exitosamente',
@@ -202,7 +215,7 @@ export class MatchingController {
           psicologoId: req.user.id,
           perfil: perfilActualizado,
           perfilCompleto: perfilCompleto,
-          cuentaActivada: perfilCompleto
+          cuentaActivada: cuentaActivada
         }
       };
     } catch (error) {
