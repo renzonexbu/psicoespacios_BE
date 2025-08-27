@@ -53,11 +53,15 @@ export class BackblazeService {
     this.endpoint = this.configService.get<string>('BACKBLAZE_ENDPOINT', 'https://s3.us-west-002.backblazeb2.com');
 
     // Obtener credenciales
-    const accessKeyId = this.configService.get<string>('BACKBLAZE_ACCESS_KEY_ID');
-    const secretAccessKey = this.configService.get<string>('BACKBLAZE_SECRET_ACCESS_KEY');
+    const accessKeyId = this.configService.get<string>('BACKBLAZE_ACCESS_KEY_ID') || 
+                       this.configService.get<string>('BACKBLAZE_ACCOUNT_ID');
+    const secretAccessKey = this.configService.get<string>('BACKBLAZE_SECRET_ACCESS_KEY') || 
+                           this.configService.get<string>('BACKBLAZE_APPLICATION_KEY');
 
     if (!accessKeyId || !secretAccessKey) {
       this.logger.warn('Credenciales de Backblaze B2 no configuradas');
+      this.logger.warn('Variables requeridas: BACKBLAZE_ACCESS_KEY_ID y BACKBLAZE_SECRET_ACCESS_KEY');
+      this.logger.warn('O alternativas: BACKBLAZE_ACCOUNT_ID y BACKBLAZE_APPLICATION_KEY');
     }
 
     // Crear cliente S3 para Backblaze B2
@@ -72,6 +76,7 @@ export class BackblazeService {
     });
 
     this.logger.log(`Backblaze B2 configurado - Bucket: ${this.bucketName}, Endpoint: ${this.endpoint}`);
+    this.logger.log(`Credenciales configuradas - AccessKey: ${accessKeyId ? '✅ Configurada' : '❌ No configurada'}, SecretKey: ${secretAccessKey ? '✅ Configurada' : '❌ No configurada'}`);
   }
 
   /**
@@ -93,6 +98,7 @@ export class BackblazeService {
       const key = `${folder}/${uniqueFilename}`;
 
       this.logger.log(`Subiendo archivo: ${file.originalname} -> ${key}`);
+      this.logger.log(`Configuración actual - Bucket: ${this.bucketName}, Region: ${this.region}, Endpoint: ${this.endpoint}`);
 
       // Crear comando para subir archivo
       const uploadCommand = new PutObjectCommand({
@@ -107,6 +113,8 @@ export class BackblazeService {
         },
       });
 
+      this.logger.log(`Comando de upload creado, enviando a Backblaze...`);
+      
       // Subir archivo
       await this.s3Client.send(uploadCommand);
 
