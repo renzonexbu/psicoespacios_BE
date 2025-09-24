@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido a PsicoEspacios</title>
+    <style>
+        /* Reset y base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Container principal */
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #E91711;
+            padding: 20px 15px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        }
+        
+        .logo {
+            color: #E91711;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .tagline {
+            color: #666;
+            font-style: italic;
+            font-size: 14px;
+        }
+        
+        /* Contenido principal */
+        .content {
+            padding: 0 15px 20px;
+        }
+        
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #E91711;
+            font-weight: 600;
+        }
+        
+        /* Mensaje de bienvenida */
+        .welcome-message {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            padding: 20px 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
+        }
+        
+        .welcome-message h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        
+        /* Información de la cuenta */
+        .account-info {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #E91711;
+            box-shadow: 0 2px 8px rgba(233, 23, 17, 0.1);
+        }
+        
+        .account-info h3 {
+            color: #E91711;
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .account-info p {
+            margin: 12px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .account-info strong {
+            color: #495057;
+            font-weight: 600;
+        }
+        
+        /* Información del psicólogo */
+        .psychologist-info {
+            background: linear-gradient(135deg, #e7f3ff 0%, #d1ecf1 100%);
+            padding: 20px 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+        }
+        
+        .psychologist-info h3 {
+            color: #007bff;
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .psychologist-info p {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        /* Credenciales importantes */
+        .credentials {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            padding: 20px 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);
+        }
+        
+        .credentials h3 {
+            color: #856404;
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .credentials p {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #856404;
+        }
+        
+        .password-box {
+            background-color: #ffffff;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            color: #E91711;
+            letter-spacing: 2px;
+        }
+        
+        /* Próximos pasos */
+        .next-steps {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            padding: 20px 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #17a2b8;
+            box-shadow: 0 2px 8px rgba(23, 162, 184, 0.1);
+        }
+        
+        .next-steps h3 {
+            color: #0c5460;
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .next-steps p {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #0c5460;
+        }
+        
+        .next-steps ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .next-steps li {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #0c5460;
+            margin: 8px 0;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px 15px;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 13px;
+            background-color: #f8f9fa;
+        }
+        
+        .footer p {
+            margin: 5px 0;
+        }
+        
+        /* Responsive para tablets */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 600px;
+                margin: 20px auto;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .logo {
+                font-size: 28px;
+            }
+            
+            .content {
+                padding: 0 20px 30px;
+            }
+            
+            .welcome-message,
+            .account-info,
+            .psychologist-info,
+            .credentials,
+            .next-steps {
+                padding: 25px 20px;
+            }
+        }
+        
+        /* Responsive para móviles pequeños */
+        @media (max-width: 480px) {
+            .header {
+                padding: 15px 10px;
+            }
+            
+            .logo {
+                font-size: 20px;
+            }
+            
+            .content {
+                padding: 0 10px 15px;
+            }
+            
+            .welcome-message,
+            .account-info,
+            .psychologist-info,
+            .credentials,
+            .next-steps {
+                padding: 15px 10px;
+                margin: 15px 0;
+            }
+            
+            .greeting {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">PsicoEspacios</div>
+            <div class="tagline">Espacios para el bienestar psicológico</div>
+        </div>
+
+        <div class="content">
+            <div class="greeting">¡Hola {{nombre}} {{apellido}}!</div>
+            
+            <div class="welcome-message">
+                <h3>🎉 ¡Bienvenido a PsicoEspacios!</h3>
+                <p>Tu cuenta ha sido creada exitosamente por tu psicólogo. Estamos aquí para acompañarte en tu proceso de bienestar.</p>
+            </div>
+
+            <div class="account-info">
+                <h3>📋 Información de tu Cuenta</h3>
+                <p><strong>Nombre:</strong> {{nombre}} {{apellido}}</p>
+                <p><strong>Email:</strong> {{email}}</p>
+                <p><strong>Estado:</strong> Activa y lista para usar</p>
+            </div>
+
+            <div class="psychologist-info">
+                <h3>👨‍⚕️ Tu Psicólogo Asignado</h3>
+                <p><strong>Nombre:</strong> {{psicologoNombre}}</p>
+                <p><strong>Email:</strong> {{psicologoEmail}}</p>
+                <p>Tu psicólogo estará disponible para coordinar tus sesiones y acompañarte en tu proceso.</p>
+            </div>
+
+            <div class="credentials">
+                <h3>🔐 Credenciales de Acceso</h3>
+                <p><strong>Email:</strong> {{email}}</p>
+                <p><strong>Contraseña temporal:</strong></p>
+                <div class="password-box">{{password}}</div>
+                <p><strong>⚠️ Importante:</strong> Por seguridad, te recomendamos cambiar esta contraseña en tu primer acceso.</p>
+            </div>
+
+            <div class="next-steps">
+                <h3>📝 Próximos Pasos</h3>
+                <ul>
+                    <li>Inicia sesión en la plataforma con las credenciales proporcionadas</li>
+                    <li>Cambia tu contraseña temporal por una personal</li>
+                    <li>Completa tu perfil de usuario</li>
+                    <li>Coordina tu primera sesión con tu psicólogo</li>
+                    <li>Explora las funcionalidades disponibles en la plataforma</li>
+                </ul>
+            </div>
+
+            <p style="margin: 20px 0; font-size: 14px; line-height: 1.5; color: #6c757d;">
+                Si tienes alguna pregunta o necesitas ayuda, no dudes en contactar a tu psicólogo o al equipo de soporte de PsicoEspacios.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>Gracias por confiar en PsicoEspacios</p>
+            <p>Este es un email automático, por favor no respondas a este mensaje</p>
+        </div>
+    </div>
+</body>
+</html>

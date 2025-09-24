@@ -90,6 +90,7 @@ export class MailService {
       'nueva-nota': 'Nueva Nota Clínica - PsicoEspacios',
       'sesion-cancelada': 'Sesión Cancelada - PsicoEspacios',
       'bienvenida': 'Bienvenido a PsicoEspacios',
+      'bienvenida-paciente': 'Bienvenido a PsicoEspacios - Tu cuenta ha sido creada',
       'cupon-aplicado': 'Cupón Aplicado - PsicoEspacios',
       'respuesta-contacto': 'Respuesta a tu consulta de formulario web',
       'confirmacion-contacto': 'Confirmación de consulta recibida - PsicoEspacios',

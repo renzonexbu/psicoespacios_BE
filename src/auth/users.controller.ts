@@ -16,6 +16,13 @@ export class UsersController {
     return this.authService.findAllUsers();
   }
 
+  @Get('admin/psychologists')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async getAllPsychologists() {
+    return this.authService.findAllPsychologists();
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get(':id/perfil')
   async getProfile(

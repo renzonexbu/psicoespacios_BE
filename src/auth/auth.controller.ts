@@ -6,7 +6,11 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
+import { AssignSubrolDto } from './dto/assign-subrol.dto';
+import { AssignSubrolResponseDto } from './dto/assign-subrol-response.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 
 @Controller('api/v1/auth')
 export class AuthController {
@@ -53,6 +57,20 @@ export class AuthController {
   async changePassword(@Request() req, @Body() body: { currentPassword: string, newPassword: string }) {
     await this.authService.changePassword(req.user.id, body.currentPassword, body.newPassword);
     return { message: 'Contraseña actualizada correctamente' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Post('assign-subrol')
+  async assignSubrol(@Body() assignSubrolDto: AssignSubrolDto): Promise<AssignSubrolResponseDto> {
+    return this.authService.assignSubrol(assignSubrolDto.userId, assignSubrolDto.subrol);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Get('pending-psychologists')
+  async getPendingPsychologists() {
+    return this.authService.getPendingPsychologists();
   }
 }
 

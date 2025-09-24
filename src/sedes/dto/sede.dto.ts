@@ -142,3 +142,28 @@ export class SedePublicDto {
   serviciosDisponibles?: string[];
   estado: string;
 }
+
+export class AsignarBoxDto {
+  fecha: string; // YYYY-MM-DD
+  horaInicio: string; // HH:MM
+  horaFin: string; // HH:MM
+}
+
+export class BoxAsignadoResponseDto {
+  success: boolean;
+  message: string;
+  box: {
+    id: string;
+    nombre: string;
+    capacidad: number;
+    sedeId: string;
+    estado: string;
+  };
+  fecha: string;
+  horaInicio: string;
+  horaFin: string;
+  sede: {
+    id: string;
+    nombre: string;
+  };
+}

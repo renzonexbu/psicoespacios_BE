@@ -20,6 +20,10 @@ export class CreatePacienteDto {
   @IsString()
   @IsOptional()
   estado?: string;
+
+  @IsString()
+  @IsOptional()
+  tag?: string;
 }
 
 export class UpdatePacienteDto {
@@ -42,6 +46,10 @@ export class UpdatePacienteDto {
   @IsString()
   @IsOptional()
   estado?: string;
+
+  @IsString()
+  @IsOptional()
+  tag?: string;
 }
 
 export class PacienteWithUserDto {
@@ -51,6 +59,7 @@ export class PacienteWithUserDto {
   primeraSesionRegistrada: Date;
   proximaSesion?: Date | null;
   estado?: string | null;
+  tag?: string | null;
   usuario: {
     id: string;
     nombre: string;

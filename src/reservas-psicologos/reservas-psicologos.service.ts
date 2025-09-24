@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, DataSource } from 'typeorm';
+import { Repository, Between, DataSource, MoreThanOrEqual } from 'typeorm';
 import { ReservaPsicologo, EstadoReservaPsicologo, ModalidadSesion } from '../common/entities/reserva-psicologo.entity';
 import { User } from '../common/entities/user.entity';
 import { Psicologo } from '../common/entities/psicologo.entity';
@@ -140,10 +140,18 @@ export class ReservasPsicologosService {
       }
 
       // 6. Crear la reserva
+      // Corregir problema de timezone: crear fecha en zona horaria local
+      const fechaLocal = new Date(createReservaDto.fecha + 'T00:00:00');
+      
+      // Log para debugging de fechas
+      this.logger.log(`📅 Fecha recibida: ${createReservaDto.fecha}`);
+      this.logger.log(`📅 Fecha procesada: ${fechaLocal.toISOString()}`);
+      this.logger.log(`📅 Fecha local: ${fechaLocal.toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })}`);
+      
       const reserva = manager.create(ReservaPsicologo, {
         psicologo: { id: createReservaDto.psicologoId },
         paciente: { id: createReservaDto.pacienteId },
-        fecha: new Date(createReservaDto.fecha),
+        fecha: fechaLocal,
         horaInicio: createReservaDto.horaInicio,
         horaFin: createReservaDto.horaFin,
         boxId: createReservaDto.boxId,
@@ -229,6 +237,53 @@ export class ReservasPsicologosService {
   }
 
   /**
+   * Obtener todas las reservas de una sede específica
+   */
+  async findBySede(sedeId: string, query?: QueryReservasPsicologoDto): Promise<ReservaPsicologoResponseDto[]> {
+    this.logger.log(`Obteniendo reservas de la sede: ${sedeId}`);
+
+    const queryBuilder = this.reservaPsicologoRepository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.psicologo', 'psicologo')
+      .leftJoinAndSelect('psicologo.usuario', 'psicologoUsuario')
+      .leftJoinAndSelect('reserva.paciente', 'paciente')
+      .leftJoinAndSelect('reserva.box', 'box')
+      .leftJoinAndSelect('box.sede', 'sede')
+      .where('sede.id = :sedeId', { sedeId })
+      .orderBy('reserva.fecha', 'DESC')
+      .addOrderBy('reserva.horaInicio', 'ASC');
+
+    // Aplicar filtros adicionales si se proporcionan
+    if (query) {
+      if (query.psicologoId) {
+        queryBuilder.andWhere('reserva.psicologo.id = :psicologoId', { psicologoId: query.psicologoId });
+      }
+
+      if (query.pacienteId) {
+        queryBuilder.andWhere('reserva.paciente.id = :pacienteId', { pacienteId: query.pacienteId });
+      }
+
+      if (query.fechaDesde && query.fechaHasta) {
+        queryBuilder.andWhere('reserva.fecha BETWEEN :fechaDesde AND :fechaHasta', {
+          fechaDesde: new Date(query.fechaDesde),
+          fechaHasta: new Date(query.fechaHasta),
+        });
+      }
+
+      if (query.modalidad) {
+        queryBuilder.andWhere('reserva.modalidad = :modalidad', { modalidad: query.modalidad });
+      }
+
+      if (query.estado) {
+        queryBuilder.andWhere('reserva.estado = :estado', { estado: query.estado });
+      }
+    }
+
+    const reservas = await queryBuilder.getMany();
+    return reservas.map(reserva => this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente));
+  }
+
+  /**
    * Obtener una reserva específica
    */
   async findOne(id: string): Promise<ReservaPsicologoResponseDto> {
@@ -297,8 +352,8 @@ export class ReservasPsicologosService {
   /**
    * Obtener reservas de un psicólogo por su usuarioId
    */
-  async findByUsuarioPsicologo(usuarioId: string): Promise<ReservaPsicologoResponseDto[]> {
-    this.logger.log(`Obteniendo reservas del psicólogo por usuarioId: ${usuarioId}`);
+  async findByUsuarioPsicologo(usuarioId: string, soloFuturas: boolean = false): Promise<ReservaPsicologoResponseDto[]> {
+    this.logger.log(`Obteniendo reservas del psicólogo por usuarioId: ${usuarioId}, soloFuturas: ${soloFuturas}`);
 
     // Primero obtener el psicólogo por usuarioId
     const psicologo = await this.psicologoRepository.findOne({
@@ -310,13 +365,25 @@ export class ReservasPsicologosService {
       throw new NotFoundException('Psicólogo no encontrado para este usuario');
     }
 
+    // Construir condiciones de búsqueda
+    const whereConditions: any = { psicologo: { id: psicologo.id } };
+
+    // Si soloFuturas es true, filtrar solo sesiones del día actual en adelante
+    if (soloFuturas) {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0); // Inicio del día actual
+      
+      whereConditions.fecha = MoreThanOrEqual(hoy);
+    }
+
     // Luego obtener las reservas del psicólogo
     const reservas = await this.reservaPsicologoRepository.find({
-      where: { psicologo: { id: psicologo.id } },
+      where: whereConditions,
       relations: ['psicologo', 'psicologo.usuario', 'paciente'],
-      order: { fecha: 'DESC', horaInicio: 'ASC' },
+      order: { fecha: 'ASC', horaInicio: 'ASC' }, // Ordenar por fecha ascendente para sesiones futuras
     });
 
+    this.logger.log(`Reservas encontradas: ${reservas.length}`);
     return reservas.map(reserva => this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente));
   }
 

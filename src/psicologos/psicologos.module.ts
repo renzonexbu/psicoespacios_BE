@@ -18,6 +18,9 @@ import { DocumentoPsicologo } from '../common/entities/documento-psicologo.entit
 import { DocumentosPsicologoController } from './controllers/documentos-psicologo.controller';
 import { DocumentosPsicologoService } from './services/documentos-psicologo.service';
 import { BackblazeService } from '../uploads/services/backblaze.service';
+import { CrearPacienteService } from './services/crear-paciente.service';
+import { TransferirPacienteService } from './services/transferir-paciente.service';
+import { MailService } from '../mail/mail.service';
 
 // Sistema de Matching
 import { MatchingController } from './controllers/matching.controller';
@@ -52,6 +55,9 @@ import { MatchingService } from './services/matching.service';
     AgendaService, 
     DocumentosPsicologoService, 
     BackblazeService,
+    CrearPacienteService,
+    TransferirPacienteService,
+    MailService,
     MatchingService
   ],
   exports: [

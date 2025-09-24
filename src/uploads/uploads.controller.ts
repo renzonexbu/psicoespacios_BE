@@ -1,5 +1,6 @@
 import { Controller, Post, UploadedFile, UseInterceptors, BadRequestException, Delete, Param, UseGuards } from '@nestjs/common';
 import { File as MulterFile } from 'multer';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { BackblazeService } from './services/backblaze.service';
 import { BackblazeUploadInterceptor } from './interceptors/backblaze-upload.interceptor';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -56,13 +57,24 @@ export class UploadsController {
     }
 
     try {
+      console.log('[UploadsController] Archivo recibido:', {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        bufferLength: file.buffer?.length
+      });
+
       const result = await this.backblazeService.uploadFile(file, 'pdfs');
+      
+      console.log('[UploadsController] Archivo subido exitosamente:', result);
+      
       return {
         success: true,
         ...result,
         message: 'PDF subido exitosamente'
       };
     } catch (error) {
+      console.error('[UploadsController] Error al subir PDF:', error);
       throw new BadRequestException(`Error al subir PDF: ${error.message}`);
     }
   }
@@ -139,6 +151,60 @@ export class UploadsController {
       };
     } catch (error) {
       throw new BadRequestException(`Error al eliminar archivo: ${error.message}`);
+    }
+  }
+
+  @Post('test-simple')
+  @UseInterceptors(FileInterceptor('file'))
+  async testSimpleUpload(@UploadedFile() file: any) {
+    console.log('[UploadsController] Test simple - Archivo recibido:', {
+      originalname: file?.originalname,
+      mimetype: file?.mimetype,
+      size: file?.size,
+      bufferLength: file?.buffer?.length,
+      fieldname: file?.fieldname
+    });
+
+    return {
+      success: true,
+      message: 'Test simple completado',
+      fileInfo: {
+        originalname: file?.originalname,
+        mimetype: file?.mimetype,
+        size: file?.size,
+        bufferLength: file?.buffer?.length
+      }
+    };
+  }
+
+  @Post('test-backblaze-direct')
+  @UseInterceptors(FileInterceptor('file'))
+  async testBackblazeDirect(@UploadedFile() file: any) {
+    if (!file) {
+      throw new BadRequestException('No se subió ningún archivo');
+    }
+
+    try {
+      console.log('[UploadsController] Test directo Backblaze - Archivo recibido:', {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        bufferLength: file.buffer?.length
+      });
+
+      // Usar directamente el servicio de Backblaze
+      const result = await this.backblazeService.uploadFile(file, 'test');
+      
+      console.log('[UploadsController] Test directo Backblaze - Resultado:', result);
+      
+      return {
+        success: true,
+        message: 'Test directo Backblaze completado',
+        result
+      };
+    } catch (error) {
+      console.error('[UploadsController] Error en test directo Backblaze:', error);
+      throw new BadRequestException(`Error en test directo: ${error.message}`);
     }
   }
 

@@ -6,6 +6,7 @@ import { User } from '../../common/entities/user.entity';
 import { CreatePsicologoDto, UpdatePsicologoDto, PsicologoPublicDto } from '../../common/dto/psicologo.dto';
 import { PacienteAsignadoDto } from '../dto/paciente-asignado.dto';
 import { Reserva } from '../../common/entities/reserva.entity';
+import { ReservaPsicologo } from '../../common/entities/reserva-psicologo.entity';
 import { Paciente } from '../../common/entities/paciente.entity';
 
 @Injectable()
@@ -17,6 +18,8 @@ export class PsicologosService {
     private userRepository: Repository<User>,
     @InjectRepository(Reserva)
     private reservaRepository: Repository<Reserva>,
+    @InjectRepository(ReservaPsicologo)
+    private reservaPsicologoRepository: Repository<ReservaPsicologo>,
     @InjectRepository(Paciente)
     private pacienteRepository: Repository<Paciente>,
   ) {}
@@ -240,7 +243,7 @@ export class PsicologosService {
       return [];
     }
 
-    // Obtener información completa de los usuarios (pacientes)
+    // Obtener información completa de los usuarios (pacientes) y calcular próxima sesión
     const pacientesConInfo = await Promise.all(
       pacientes.map(async (paciente) => {
         const usuarioPaciente = await this.userRepository.findOne({
@@ -251,24 +254,72 @@ export class PsicologosService {
           return null; // Usuario no encontrado, omitir
         }
 
+        // Calcular la próxima sesión basándose en las reservas futuras
+        // El psicologoUserId ya es el ID del psicólogo (no del usuario)
+        const proximaSesion = await this.calcularProximaSesion(paciente.idUsuarioPaciente, psicologoUserId);
+
         return {
           id: paciente.id,
           pacienteId: paciente.idUsuarioPaciente,
           nombre: usuarioPaciente.nombre,
           apellido: usuarioPaciente.apellido,
+          rut: usuarioPaciente.rut,
           email: usuarioPaciente.email,
           telefono: usuarioPaciente.telefono,
           fechaNacimiento: usuarioPaciente.fechaNacimiento,
           fotoUrl: usuarioPaciente.fotoUrl,
           primeraSesionRegistrada: paciente.primeraSesionRegistrada,
-          proximaSesion: paciente.proximaSesion,
-          estado: paciente.estado || 'ACTIVO'
+          proximaSesion: proximaSesion,
+          estado: paciente.estado || 'ACTIVO',
+          tag: paciente.tag
         };
       })
     );
 
     // Filtrar pacientes nulos y retornar
     return pacientesConInfo.filter(paciente => paciente !== null);
+  }
+
+  /**
+   * Calcula la próxima sesión de un paciente basándose en las reservas futuras
+   */
+  private async calcularProximaSesion(pacienteId: string, psicologoId: string): Promise<Date | null> {
+    try {
+      console.log(`[DEBUG] Calculando próxima sesión para paciente: ${pacienteId}, psicólogo: ${psicologoId}`);
+      
+      // Buscar la próxima reserva futura del paciente con este psicólogo
+      // La tabla reservas_sesiones tiene:
+      // - paciente_id: referencia al usuario paciente (pacienteId)
+      // - psicologo_id: referencia al psicólogo (psicologoId)
+      const proximaReserva = await this.reservaPsicologoRepository
+        .createQueryBuilder('reserva')
+        .where('reserva.paciente.id = :pacienteId', { pacienteId })
+        .andWhere('reserva.psicologo.id = :psicologoId', { psicologoId })
+        .andWhere('reserva.fecha >= :hoy', { hoy: new Date() })
+        .andWhere('reserva.estado IN (:...estados)', { 
+          estados: ['PENDIENTE', 'CONFIRMADA'] 
+        })
+        .orderBy('reserva.fecha', 'ASC')
+        .addOrderBy('reserva.horaInicio', 'ASC')
+        .getOne();
+
+      console.log(`[DEBUG] Reserva encontrada:`, proximaReserva);
+
+      if (proximaReserva) {
+        // Combinar fecha y hora para crear un objeto Date completo
+        const fechaSesion = new Date(proximaReserva.fecha);
+        const [hora, minuto] = proximaReserva.horaInicio.split(':').map(Number);
+        fechaSesion.setHours(hora, minuto, 0, 0);
+        console.log(`[DEBUG] Fecha calculada: ${fechaSesion.toISOString()}`);
+        return fechaSesion;
+      }
+
+      console.log(`[DEBUG] No se encontró próxima sesión`);
+      return null; // No hay próxima sesión programada
+    } catch (error) {
+      console.error('Error calculando próxima sesión:', error);
+      return null;
+    }
   }
 
   // Métodos para gestionar precios

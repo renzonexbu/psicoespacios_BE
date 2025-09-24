@@ -49,6 +49,18 @@ export class ReservasPsicologosController {
   }
 
   /**
+   * Obtener todas las reservas de una sede específica
+   */
+  @Get('sede/:sedeId')
+  @Roles(Role.ADMIN)
+  async findBySede(
+    @Param('sedeId') sedeId: string,
+    @Query() query: QueryReservasPsicologoDto
+  ) {
+    return this.reservasPsicologosService.findBySede(sedeId, query);
+  }
+
+  /**
    * Obtener reservas de un paciente específico por su ID de paciente
    */
   @Get('paciente/:pacienteId')
@@ -71,8 +83,12 @@ export class ReservasPsicologosController {
    */
   @Get('usuario/:usuarioId/sesiones')
   @Roles(Role.PSICOLOGO, Role.ADMIN)
-  async findByUsuarioPsicologo(@Param('usuarioId') usuarioId: string) {
-    return this.reservasPsicologosService.findByUsuarioPsicologo(usuarioId);
+  async findByUsuarioPsicologo(
+    @Param('usuarioId') usuarioId: string,
+    @Query('soloFuturas') soloFuturas?: string
+  ) {
+    const soloFuturasBoolean = soloFuturas === 'true';
+    return this.reservasPsicologosService.findByUsuarioPsicologo(usuarioId, soloFuturasBoolean);
   }
 
   /**

@@ -13,10 +13,7 @@ import {
   AgendaResponseDto, 
   DisponibilidadSlotDto,
   PsicologoDisponibilidadDto,
-  PsicologoDisponibilidadResponseDto,
-  BoxDisponibleDto,
-  BoxDisponibleResponseDto,
-  BoxInfoResponseDto
+  PsicologoDisponibilidadResponseDto
 } from '../dto/agenda-disponibilidad.dto';
 
 @Injectable()
@@ -124,14 +121,28 @@ export class AgendaService {
       throw new BadRequestException('El psicólogo no tiene disponibilidad configurada');
     }
 
-    // 3. Generar slots solo del psicólogo (sin boxes)
+    // 3. Filtrar disponibilidad por modalidad si se especifica
+    let disponibilidadFiltrada = disponibilidad;
+    if (query.modalidad) {
+      if (query.modalidad === 'online') {
+        // Para online, solo incluir disponibilidad donde sede_id sea 'online'
+        disponibilidadFiltrada = disponibilidad.filter(d => d.sede_id === 'online');
+        console.log(`Filtrado para modalidad ONLINE: ${disponibilidadFiltrada.length} días disponibles`);
+      } else if (query.modalidad === 'presencial') {
+        // Para presencial, solo incluir disponibilidad donde sede_id sea un UUID (no 'online')
+        disponibilidadFiltrada = disponibilidad.filter(d => d.sede_id && d.sede_id !== 'online');
+        console.log(`Filtrado para modalidad PRESENCIAL: ${disponibilidadFiltrada.length} días disponibles`);
+      }
+    }
+
+    // 4. Generar slots solo del psicólogo (sin boxes)
     const slots = await this.generatePsicologoSlots(
       query,
-      disponibilidad,
+      disponibilidadFiltrada,
       psicologo
     );
 
-    // 4. Verificar reservas existentes del psicólogo
+    // 5. Verificar reservas existentes del psicólogo
     const slotsConReservas = await this.checkReservasPsicologo(slots, query.psicologoId);
 
     return {
@@ -171,9 +182,9 @@ export class AgendaService {
   }
 
   private crearFechaLocal(fechaString: string): Date {
-    // Crear fecha en UTC para evitar problemas de zona horaria
+    // Crear fecha en zona horaria local para evitar desplazamientos
     const [year, month, day] = fechaString.split('-').map(Number);
-    return new Date(Date.UTC(year, month - 1, day)); // month - 1 porque los meses van de 0-11
+    return new Date(year, month - 1, day); // month - 1 porque los meses van de 0-11
   }
 
   // Método para generar slots solo del psicólogo (sin boxes)
@@ -214,39 +225,16 @@ export class AgendaService {
           const horaInicio = hora;
           const horaFin = this.calcularHoraFin(hora);
 
-          // Solo generar slots para la modalidad especificada
-          // Si se especifica modalidad=presencial, solo incluir sedes que NO sean online
-          // Si se especifica modalidad=online, solo incluir sedes que SÍ sean online
-          if (query.modalidad === 'presencial' && disponibilidadDia.sede_id === 'online') {
-            continue; // Saltar slots online cuando se solicita presencial
-          }
+          // Determinar modalidad basada en sede_id
+          const modalidadSlot = disponibilidadDia.sede_id === 'online' ? 'online' : 'presencial';
           
-          if (query.modalidad === 'online' && disponibilidadDia.sede_id !== 'online') {
-            continue; // Saltar slots presenciales cuando se solicita online
-          }
-          
-                     // Si no se especifica modalidad, incluir todos los slots
-           const modalidadSlot = disponibilidadDia.sede_id === 'online' ? 'online' : 'presencial';
-           
-           // Para slots presenciales, incluir información de la sede
-           if (modalidadSlot === 'presencial' && disponibilidadDia.sede_id && disponibilidadDia.sede_id !== 'online') {
-             slots.push({
-               fecha: fechaString,
-               horaInicio,
-               horaFin,
-               disponible: true,
-               modalidad: modalidadSlot,
-               sedeId: disponibilidadDia.sede_id
-             });
-           } else {
-             slots.push({
-               fecha: fechaString,
-               horaInicio,
-               horaFin,
-               disponible: true,
-               modalidad: modalidadSlot
-             });
-           }
+          slots.push({
+            fecha: fechaString,
+            horaInicio,
+            horaFin,
+            disponible: true,
+            modalidad: modalidadSlot
+          });
         }
       }
     }
@@ -293,24 +281,32 @@ export class AgendaService {
       console.log(`📦 Reservas de boxes encontradas: ${todasLasReservasBoxes.length}`);
 
       // 2. Verificar reservas de sesiones existentes para este slot del psicólogo
-      const reservasSesiones = await this.reservaPsicologoRepository.find({
-        where: {
-          psicologo: { id: psicologoId },
-          fecha: fechaDate,
-          estado: EstadoReservaPsicologo.CONFIRMADA
-        },
-        relations: ['psicologo']
-      });
+      console.log(`🔍 Buscando reservas de sesiones para fecha: ${fechaDate.toISOString()}, psicólogo: ${psicologoId}`);
+      
+      // Usar query builder para más control y debugging
+      const reservasSesionesQuery = this.reservaPsicologoRepository
+        .createQueryBuilder('reserva')
+        .where('reserva.psicologo_id = :psicologoId', { psicologoId })
+        .andWhere('reserva.fecha = :fecha', { fecha: fechaDate })
+        .andWhere('reserva.estado = :estado', { estado: 'confirmada' });
+
+      console.log(`🔍 Query SQL generada: ${reservasSesionesQuery.getSql()}`);
+      console.log(`🔍 Parámetros: ${JSON.stringify(reservasSesionesQuery.getParameters())}`);
+
+      const reservasSesiones = await reservasSesionesQuery.getMany();
 
       // También verificar reservas pendientes (que ya están agendadas)
-      const reservasPendientes = await this.reservaPsicologoRepository.find({
-        where: {
-          psicologo: { id: psicologoId },
-          fecha: fechaDate,
-          estado: EstadoReservaPsicologo.PENDIENTE
-        },
-        relations: ['psicologo']
-      });
+      const reservasPendientesQuery = this.reservaPsicologoRepository
+        .createQueryBuilder('reserva')
+        .where('reserva.psicologo_id = :psicologoId', { psicologoId })
+        .andWhere('reserva.fecha = :fecha', { fecha: fechaDate })
+        .andWhere('reserva.estado = :estado', { estado: 'pendiente' });
+
+      const reservasPendientes = await reservasPendientesQuery.getMany();
+      
+      // Debug: Mostrar query SQL generado
+      console.log(`🔍 Query SQL para reservas confirmadas: ${reservasSesionesQuery.getSql()}`);
+      console.log(`🔍 Query SQL para reservas pendientes: ${reservasPendientesQuery.getSql()}`);
 
       // Combinar ambas listas de reservas
       const todasLasReservasSesiones = [...reservasSesiones, ...reservasPendientes];
@@ -319,8 +315,13 @@ export class AgendaService {
       if (todasLasReservasSesiones.length > 0) {
         console.log(`📝 Detalles de reservas de sesiones:`);
         todasLasReservasSesiones.forEach((reserva, index) => {
-          console.log(`   ${index + 1}. Fecha: ${reserva.fecha}, Hora: ${reserva.horaInicio}-${reserva.horaFin}, Estado: ${reserva.estado}`);
+          // Manejar tanto Date como string
+          const fechaReserva = reserva.fecha instanceof Date ? reserva.fecha : new Date(reserva.fecha);
+          console.log(`   ${index + 1}. Fecha: ${reserva.fecha} (tipo: ${typeof reserva.fecha}), Hora: ${reserva.horaInicio}-${reserva.horaFin}, Estado: ${reserva.estado}`);
+          console.log(`      📅 Fecha ISO: ${fechaReserva.toISOString()}, Fecha local: ${fechaReserva.toLocaleDateString()}`);
         });
+      } else {
+        console.log(`📝 No se encontraron reservas para esta fecha`);
       }
 
       // Marcar como no disponible si hay conflicto de horarios con reservas de boxes
@@ -496,18 +497,6 @@ export class AgendaService {
         }
       });
 
-      // También verificar reservas pendientes
-      const reservasPendientes = await this.reservaRepository.find({
-        where: {
-          psicologoId,
-          fecha: fechaDate,
-          estado: EstadoReserva.PENDIENTE
-        }
-      });
-
-      // Combinar ambas listas
-      const todasLasReservas = [...reservasExistentes, ...reservasPendientes];
-
       // Verificar si hay reservas para el box específico
       if (slot.boxId) {
         const reservasBox = await this.reservaRepository.find({
@@ -519,7 +508,7 @@ export class AgendaService {
         });
 
         // Marcar como no disponible si hay conflicto de horarios
-        const hayConflicto = todasLasReservas.some(reserva => 
+        const hayConflicto = reservasExistentes.some(reserva => 
           this.hayConflictoHorarios(
             reserva.horaInicio, 
             reserva.horaFin, 
@@ -540,7 +529,7 @@ export class AgendaService {
         }
       } else {
         // Para modalidad online, solo verificar reservas del psicólogo
-        const hayConflicto = todasLasReservas.some(reserva => 
+        const hayConflicto = reservasExistentes.some(reserva => 
           this.hayConflictoHorarios(
             reserva.horaInicio, 
             reserva.horaFin, 
@@ -589,195 +578,95 @@ export class AgendaService {
     return `${horaFin.getHours().toString().padStart(2, '0')}:${horaFin.getMinutes().toString().padStart(2, '0')}`;
   }
 
-  // Método para obtener box disponible en un horario específico (presencial)
-  async getBoxDisponible(query: BoxDisponibleDto): Promise<BoxDisponibleResponseDto> {
-    // 1. Verificar que el psicólogo existe
-    const psicologo = await this.psicologoRepository.findOne({
-      where: { id: query.psicologoId },
-      relations: ['usuario']
-    });
-
-    if (!psicologo) {
-      throw new NotFoundException('Psicólogo no encontrado');
-    }
-
-    // 2. Verificar que la sede existe
-    const sede = await this.sedeRepository.findOne({
-      where: { id: query.sedeId }
-    });
-
-    if (!sede) {
-      throw new NotFoundException('Sede no encontrada');
-    }
-
-    // 3. Verificar que el psicólogo tiene disponibilidad en esa fecha y hora
-    const disponibilidad = await this.disponibilidadRepository.findOne({
-      where: { 
-        psicologo: { id: psicologo.usuario.id },
-        active: true,
-        sede_id: query.sedeId
-      }
-    });
-
-    if (!disponibilidad) {
-      throw new BadRequestException('El psicólogo no tiene disponibilidad configurada para esta sede');
-    }
-
-    // 4. Verificar que la fecha corresponde al día de la semana configurado
-    const fechaDate = this.crearFechaLocal(query.fecha);
-    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    const diaSemana = diasSemana[fechaDate.getDay()];
+  // Método para obtener box disponible
+  async getBoxDisponible(query: any): Promise<any> {
+    // Implementación básica - puedes personalizarla según tus necesidades
+    const { sedeId, fecha, horaInicio, horaFin } = query;
     
-    if (this.normalizarDia(disponibilidad.day) !== diaSemana && disponibilidad.day !== diaSemana) {
-      throw new BadRequestException('El psicólogo no tiene disponibilidad en este día de la semana');
+    if (!sedeId || sedeId === 'online') {
+      return null;
     }
 
-    // 5. Verificar que la hora está en el rango configurado
-    if (!disponibilidad.hours.includes(query.horaInicio)) {
-      throw new BadRequestException('El psicólogo no tiene disponibilidad en este horario');
-    }
-
-    // 6. Obtener boxes disponibles en la sede
+    // Buscar boxes disponibles en la sede
     const boxes = await this.boxRepository.find({
       where: { 
-        sede: { id: query.sedeId },
+        sede: { id: sedeId },
         estado: 'DISPONIBLE'
-      },
-      relations: ['sede']
+      }
     });
 
     if (boxes.length === 0) {
-      throw new BadRequestException('No hay boxes disponibles en esta sede');
+      return null;
     }
 
-    // 7. Verificar que no hay reservas existentes en ese horario
-    const horaFin = this.calcularHoraFin(query.horaInicio);
-    
-         // Verificar reservas del psicólogo
-     const reservasPsicologo = await this.reservaRepository.find({
-       where: {
-         psicologoId: query.psicologoId,
-         fecha: fechaDate,
-         estado: EstadoReserva.CONFIRMADA
-       }
-     });
-
-     // También verificar reservas pendientes
-     const reservasPsicologoPendientes = await this.reservaRepository.find({
-       where: {
-         psicologoId: query.psicologoId,
-         fecha: fechaDate,
-         estado: EstadoReserva.PENDIENTE
-       }
-     });
-
-     // Combinar ambas listas
-     const todasLasReservasPsicologo = [...reservasPsicologo, ...reservasPsicologoPendientes];
-
-         // Verificar si hay conflicto de horarios con reservas existentes
-     const hayConflictoPsicologo = todasLasReservasPsicologo.some(reserva => 
-       this.hayConflictoHorarios(
-         reserva.horaInicio, 
-         reserva.horaFin, 
-         query.horaInicio, 
-         horaFin
-       )
-     );
-
-    if (hayConflictoPsicologo) {
-      throw new BadRequestException('El psicólogo ya tiene una reserva en este horario');
-    }
-
-    // 8. Buscar un box que no tenga reservas en ese horario
-    let boxDisponible: Box | null = null;
+    // Verificar disponibilidad para la fecha y hora específicas
+    const fechaDate = this.crearFechaLocal(fecha);
     
     for (const box of boxes) {
-             const reservasBox = await this.reservaRepository.find({
-         where: {
-           boxId: box.id,
-           fecha: fechaDate,
-           estado: EstadoReserva.CONFIRMADA
-         }
-       });
+      // Verificar si el box está libre en ese horario
+      const reservasExistentes = await this.reservaRepository.find({
+        where: {
+          boxId: box.id,
+          fecha: fechaDate,
+          estado: EstadoReserva.CONFIRMADA
+        }
+      });
 
-       // También verificar reservas pendientes del box
-       const reservasBoxPendientes = await this.reservaRepository.find({
-         where: {
-           boxId: box.id,
-           fecha: fechaDate,
-           estado: EstadoReserva.PENDIENTE
-         }
-       });
+      // Verificar también reservas de sesiones
+      const reservasSesiones = await this.reservaPsicologoRepository.find({
+        where: {
+          boxId: box.id,
+          fecha: fechaDate,
+          estado: EstadoReservaPsicologo.CONFIRMADA
+        }
+      });
 
-       // Combinar ambas listas
-       const todasLasReservasBox = [...reservasBox, ...reservasBoxPendientes];
+      const hayConflicto = reservasExistentes.some(reserva => 
+        this.hayConflictoHorarios(
+          reserva.horaInicio, 
+          reserva.horaFin, 
+          horaInicio, 
+          horaFin
+        )
+      ) || reservasSesiones.some(reserva => 
+        this.hayConflictoHorarios(
+          reserva.horaInicio, 
+          reserva.horaFin, 
+          horaInicio, 
+          horaFin
+        )
+      );
 
-             const hayConflictoBox = todasLasReservasBox.some(reserva => 
-         this.hayConflictoHorarios(
-           reserva.horaInicio, 
-           reserva.horaFin, 
-           query.horaInicio, 
-           horaFin
-         )
-       );
-
-      if (!hayConflictoBox) {
-        boxDisponible = box;
-        break;
+      if (!hayConflicto) {
+        return {
+          id: box.id,
+          numero: box.numero,
+          sedeId: box.sede?.id,
+          sedeNombre: box.sede?.nombre
+        };
       }
     }
 
-    if (!boxDisponible) {
-      throw new BadRequestException('No hay boxes disponibles en este horario');
+    return null;
+  }
+
+  // Método para obtener box por ID
+  async getBoxById(id: string): Promise<any> {
+    const box = await this.boxRepository.findOne({
+      where: { id },
+      relations: ['sede']
+    });
+
+    if (!box) {
+      throw new NotFoundException('Box no encontrado');
     }
 
-         // 9. Retornar información del box disponible
-     return {
-       boxId: boxDisponible.id,
-       boxNumero: boxDisponible.numero,
-       sedeId: sede.id,
-       sedeNombre: sede.nombre,
-       sedeDireccion: sede.direccion,
-       psicologoId: query.psicologoId,
-       psicologoNombre: `${psicologo.usuario.nombre} ${psicologo.usuario.apellido}`,
-       fecha: query.fecha,
-       horaInicio: query.horaInicio,
-       horaFin: horaFin,
-       disponible: true
-     };
-   }
-
-   // Método para obtener datos de un box específico
-   async getBoxById(boxId: string): Promise<BoxInfoResponseDto> {
-     // 1. Verificar que el box existe
-     const box = await this.boxRepository.findOne({
-       where: { id: boxId },
-       relations: ['sede']
-     });
-
-     if (!box) {
-       throw new NotFoundException('Box no encontrado');
-     }
-
-     // 2. Obtener información de la sede
-     const sede = box.sede;
-     if (!sede) {
-       throw new NotFoundException('Sede no encontrada para este box');
-     }
-
-     // 3. Retornar información completa del box
-     return {
-       id: box.id,
-       numero: box.numero,
-       estado: box.estado,
-       urlImage: box.urlImage,
-       sedeId: sede.id,
-       sedeNombre: sede.nombre,
-       sedeDireccion: sede.direccion,
-       sedeTelefono: sede.telefono,
-       sedeEmail: sede.email,
-       createdAt: box.createdAt,
-       updatedAt: box.updatedAt
-     };
-   }
+    return {
+      id: box.id,
+      numero: box.numero,
+      estado: box.estado,
+      sedeId: box.sede?.id,
+      sedeNombre: box.sede?.nombre
+    };
+  }
 } 

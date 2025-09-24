@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
+import { SubrolPsicologo } from '../enums/subrol-psicologo.enum';
 
 @Entity('users')
 export class User {
@@ -56,6 +57,13 @@ export class User {
     default: 'ACTIVO'
   })
   estado: string;
+
+  @Column({
+    type: 'enum',
+    enum: SubrolPsicologo,
+    nullable: true
+  })
+  subrol: SubrolPsicologo;
 
   @CreateDateColumn({ name: 'createdAt' })
   createdAt: Date;

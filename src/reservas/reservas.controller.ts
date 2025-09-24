@@ -4,6 +4,7 @@ import { CreateReservaDto, UpdateReservaDto } from './dto/reserva.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/enums/role.enum';
 
 @Controller('reservas')
 @UseGuards(JwtAuthGuard)
@@ -40,5 +41,15 @@ export class ReservasController {
     @Request() req,
   ) {
     return this.reservasService.cancel(id, updateReservaDto, req.user.id);
+  }
+
+  /**
+   * Obtener todas las reservas de una sede específica (solo para administradores)
+   */
+  @Get('admin/sede/:sedeId')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  async findBySede(@Param('sedeId') sedeId: string) {
+    return this.reservasService.findBySede(sedeId);
   }
 }

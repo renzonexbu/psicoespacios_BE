@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Param, Query, Body, UseGuards, BadRequestException, ParseUUIDPipe } from '@nestjs/common';
 import { SedesService } from './sedes.service';
-import { CreateSedeDto, UpdateSedeDto } from './dto/sede.dto';
+import { CreateSedeDto, UpdateSedeDto, AsignarBoxDto } from './dto/sede.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -70,6 +70,7 @@ export class SedesController {
     @Query('fecha') fecha: string,
     @Query('hora_inicio') horaInicio: string,
     @Query('hora_fin') horaFin: string,
+    @Query('asignar') asignar?: string, // Nuevo parámetro opcional
   ) {
     // Validar que todos los parámetros requeridos estén presentes
     if (!fecha) {
@@ -112,7 +113,63 @@ export class SedesController {
       throw new BadRequestException(`Formato de hora fin inválido: ${horaFin}. Use formato HH:MM o HH:MM:SS`);
     }
     
+    // Convertir parámetro asignar a boolean
+    const asignarBox = asignar === 'true' || asignar === '1';
+    
     return this.sedesService.checkBoxAvailability(
+      sedeId,
+      fechaObj,
+      horaInicio,
+      horaFin,
+      asignarBox,
+    );
+  }
+
+  /**
+   * Asignar automáticamente un box disponible para una fecha y hora específica
+   */
+  @Post(':sede_id/asignar-box')
+  @UseGuards(JwtAuthGuard)
+  async asignarBoxAutomaticamente(
+    @Param('sede_id', ParseUUIDPipe) sedeId: string,
+    @Body() asignarBoxDto: AsignarBoxDto
+  ) {
+    const { fecha, horaInicio, horaFin } = asignarBoxDto;
+    
+    // Validar parámetros
+    if (!fecha || !horaInicio || !horaFin) {
+      throw new BadRequestException('fecha, horaInicio y horaFin son obligatorios');
+    }
+
+    // Validar formato de fecha
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      throw new BadRequestException('Formato de fecha inválido. Use YYYY-MM-DD');
+    }
+
+    // Validar formato de hora
+    const horaRegex = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
+    if (!horaRegex.test(horaInicio) || !horaRegex.test(horaFin)) {
+      throw new BadRequestException('Formato de hora inválido. Use HH:MM');
+    }
+
+    // Validar que horaFin > horaInicio
+    if (horaFin <= horaInicio) {
+      throw new BadRequestException('La hora de fin debe ser posterior a la hora de inicio');
+    }
+
+    const fechaObj = new Date(fecha);
+    if (isNaN(fechaObj.getTime())) {
+      throw new BadRequestException('Fecha inválida');
+    }
+
+    // Validar que la fecha no sea pasada
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    if (fechaObj < hoy) {
+      throw new BadRequestException('La fecha debe ser igual o posterior a hoy');
+    }
+
+    return this.sedesService.asignarBoxAutomaticamente(
       sedeId,
       fechaObj,
       horaInicio,

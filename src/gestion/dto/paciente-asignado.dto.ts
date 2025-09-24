@@ -3,6 +3,7 @@ export class PacienteAsignadoDto {
   pacienteId: string;
   nombre: string;
   apellido: string;
+  rut: string;
   email: string;
   telefono: string;
   fechaNacimiento: Date;
@@ -10,4 +11,5 @@ export class PacienteAsignadoDto {
   primeraSesionRegistrada: Date;
   proximaSesion: Date | null;
   estado: string;
+  tag: string | null;
 } 

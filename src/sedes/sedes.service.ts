@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Sede } from '../common/entities/sede.entity';
 import { Box } from '../common/entities/box.entity';
+import { ReservaPsicologo, EstadoReservaPsicologo } from '../common/entities/reserva-psicologo.entity';
 import { CreateSedeDto, UpdateSedeDto, SedePublicDto } from './dto/sede.dto';
 
 @Injectable()
@@ -12,6 +13,8 @@ export class SedesService {
     private sedesRepository: Repository<Sede>,
     @InjectRepository(Box)
     private boxesRepository: Repository<Box>,
+    @InjectRepository(ReservaPsicologo)
+    private reservaPsicologoRepository: Repository<ReservaPsicologo>,
   ) {}
 
   async findAll(): Promise<Sede[]> {
@@ -138,6 +141,7 @@ export class SedesService {
     fecha: Date,
     horaInicio: string,
     horaFin: string,
+    asignarBox: boolean = false,
   ) {
     // Validar que la sede existe
     const sede = await this.sedesRepository.findOne({
@@ -186,34 +190,119 @@ export class SedesService {
     }
     
     try {
+      // Primero obtener todos los boxes de la sede
       const boxes = await this.boxesRepository
         .createQueryBuilder('box')
-        .leftJoin('box.reservas', 'reserva', 
-          'reserva.estado = :estado', 
-          { estado: 'CONFIRMADA' }
-        )
         .where('box.sedeId = :sedeId', { sedeId })
         .andWhere('box.estado = :estado', { estado: 'DISPONIBLE' })
-        .andWhere(
-          '(reserva.fechaInicio IS NULL OR NOT (' +
-          'reserva.fechaInicio <= :horaFin AND ' +
-          'reserva.fechaFin >= :horaInicio))',
-          {
-            horaInicio: `${fechaStr} ${horaInicio}`,
-            horaFin: `${fechaStr} ${horaFin}`,
-          },
-        )
+        .orderBy('box.nombre', 'ASC')
         .getMany();
+
+      // Filtrar boxes que no tienen conflictos de horario
+      const boxesDisponibles: Box[] = [];
+      
+      for (const box of boxes) {
+        // Verificar si hay reservas conflictivas para este box en la fecha/hora especificada
+        const reservasConflictivas = await this.reservaPsicologoRepository
+          .createQueryBuilder('reserva')
+          .where('reserva.boxId = :boxId', { boxId: box.id })
+          .andWhere('reserva.fecha = :fecha', { fecha: fechaStr })
+          .andWhere('reserva.estado IN (:...estados)', { 
+            estados: ['confirmada', 'pendiente'] // Solo estados que existen en la BD
+          })
+          .andWhere(
+            '(reserva.horaInicio < :horaFin AND reserva.horaFin > :horaInicio)',
+            { horaInicio, horaFin }
+          )
+          .getCount();
+
+        if (reservasConflictivas === 0) {
+          boxesDisponibles.push(box);
+        }
+      }
+
+      // Si se solicita asignar automáticamente y hay boxes disponibles
+      let boxAsignado: any = null;
+      if (asignarBox && boxesDisponibles.length > 0) {
+        // Seleccionar el primer box disponible (lógica simple)
+        // En el futuro se podría implementar lógica más sofisticada
+        boxAsignado = boxesDisponibles[0];
+        
+        // Marcar el box como temporalmente reservado (opcional)
+        // Esto evitaría que otros usuarios lo reserven simultáneamente
+        // await this.boxesRepository.update(boxAsignado.id, { estado: 'TEMPORALMENTE_RESERVADO' });
+      }
 
       return {
         fecha: fechaStr,
         horaInicio,
         horaFin,
-        boxesDisponibles: boxes,
-        total: boxes.length
+        boxesDisponibles: boxesDisponibles,
+        total: boxesDisponibles.length,
+        boxAsignado: boxAsignado,
+        asignacionAutomatica: asignarBox
       };
     } catch (error) {
       throw new BadRequestException('Error al buscar disponibilidad: ' + error.message);
+    }
+  }
+
+  /**
+   * Asignar automáticamente un box disponible para una fecha y hora específica
+   */
+  async asignarBoxAutomaticamente(
+    sedeId: string,
+    fecha: Date,
+    horaInicio: string,
+    horaFin: string,
+  ) {
+    try {
+      // Primero verificar disponibilidad
+      const disponibilidad = await this.checkBoxAvailability(
+        sedeId,
+        fecha,
+        horaInicio,
+        horaFin,
+        false // Solo verificar, no asignar
+      );
+
+      if (disponibilidad.total === 0) {
+        throw new BadRequestException('No hay boxes disponibles para la fecha y hora especificadas');
+      }
+
+      // Seleccionar el box más apropiado (lógica simple por ahora)
+      const boxAsignado = disponibilidad.boxesDisponibles[0];
+
+      // Aquí se podría implementar lógica más sofisticada para seleccionar el box:
+      // - Priorizar boxes más grandes si hay opciones
+      // - Considerar preferencias del psicólogo
+      // - Balancear carga entre boxes
+      // - Considerar accesibilidad
+
+      return {
+        success: true,
+        message: 'Box asignado automáticamente',
+        box: {
+          id: boxAsignado.id,
+          nombre: boxAsignado.nombre,
+          capacidad: boxAsignado.capacidad,
+          sedeId: sedeId, // Usar el sedeId del parámetro
+          estado: boxAsignado.estado
+        },
+        fecha: disponibilidad.fecha,
+        horaInicio,
+        horaFin,
+        sede: {
+          id: sedeId,
+          nombre: (await this.sedesRepository.findOne({ where: { id: sedeId } }))?.nombre
+        }
+      };
+
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Error al asignar box automáticamente: ' + error.message);
     }
   }
 }

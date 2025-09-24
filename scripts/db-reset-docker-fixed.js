@@ -70,7 +70,7 @@ function checkDockerContainer() {
         execCommand('docker', ['start', 'psicoespacios_db']);
       } else {
         // El contenedor no existe, iniciar con docker-compose
-        execCommand('docker-compose', ['up', '-d'], process.cwd());
+        execCommand('docker-compose', ['up', '-d']);
       }
 
       // Esperar a que el contenedor esté listo
@@ -146,7 +146,7 @@ function initializeDatabase() {
       "
     `;
 
-    const extResult = execCommand(command, [], { shell: true });
+    const extResult = execCommand(command, []);
 
     if (!extResult) {
       console.error('Error al crear la extensión uuid-ossp.');

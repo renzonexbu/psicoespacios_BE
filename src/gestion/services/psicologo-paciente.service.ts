@@ -117,6 +117,7 @@ export class PsicologoPacienteService {
           nombre: usuarioPaciente?.nombre || 'N/A',
           email: usuarioPaciente?.email || 'N/A',
           fotoUrl: usuarioPaciente?.fotoUrl || null,
+          tag: paciente.tag,
         },
         psicologo: {
           id: psicologo.id,
@@ -231,6 +232,7 @@ export class PsicologoPacienteService {
           nombre: usuarioPaciente?.nombre || 'N/A',
           email: usuarioPaciente?.email || 'N/A',
           fotoUrl: usuarioPaciente?.fotoUrl || null,
+          tag: paciente.tag,
         },
         psicologo: {
           id: psicologo.id,

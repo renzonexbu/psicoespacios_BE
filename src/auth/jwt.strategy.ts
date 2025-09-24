@@ -23,7 +23,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: any) {
     console.log('[JWT Strategy] Payload recibido:', payload);
     
-    const user = { id: payload.sub, email: payload.email, role: payload.role };
+    const user = { id: payload.sub, email: payload.email, role: payload.role, subrol: payload.subrol };
     
     // Si es psicólogo, agregar el psicologoId
     if (payload.role === 'PSICOLOGO') {

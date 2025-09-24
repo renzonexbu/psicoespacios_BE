@@ -10,6 +10,9 @@ import { PacientesMatchingController } from './controllers/pacientes-matching.co
 import { PsicologoPacienteController } from './controllers/psicologo-paciente.controller';
 import { HistorialPacienteController } from './controllers/historial-paciente.controller';
 import { AcreditacionController } from './controllers/acreditacion.controller';
+import { PacienteTagController } from './controllers/paciente-tag.controller';
+import { ArchivosPacienteController } from './controllers/archivos-paciente.controller';
+import { DebugArchivosController } from './controllers/debug-archivos.controller';
 
 import { PlanesService } from './services/planes.service';
 import { SuscripcionesService } from './services/suscripciones.service';
@@ -19,6 +22,8 @@ import { PacientesMatchingService } from './services/pacientes-matching.service'
 import { PsicologoPacienteService } from './services/psicologo-paciente.service';
 import { HistorialPacienteService } from './services/historial-paciente.service';
 import { AcreditacionService } from './services/acreditacion.service';
+import { PacienteTagService } from './services/paciente-tag.service';
+import { ArchivosPacienteService } from './services/archivos-paciente.service';
 
 import { Plan } from '../common/entities/plan.entity';
 import { Suscripcion } from '../common/entities/suscripcion.entity';
@@ -58,6 +63,9 @@ import { Acreditacion } from '../common/entities/acreditacion.entity';
     PsicologoPacienteController,
     HistorialPacienteController,
     AcreditacionController,
+    PacienteTagController,
+    ArchivosPacienteController,
+    DebugArchivosController,
   ],
   providers: [
     PlanesService,
@@ -68,6 +76,8 @@ import { Acreditacion } from '../common/entities/acreditacion.entity';
     PsicologoPacienteService,
     HistorialPacienteService,
     AcreditacionService,
+    PacienteTagService,
+    ArchivosPacienteService,
   ],
   exports: [
     PlanesService,

@@ -58,4 +58,8 @@ export class Paciente {
 
   @Column({ type: 'timestamp', nullable: true })
   ultima_actualizacion_matching: Date;
+
+  // Sistema de Tags - Asignado por el psicólogo
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  tag: string | null;
 }

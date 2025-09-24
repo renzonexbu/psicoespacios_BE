@@ -1,4 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Box } from './box.entity';
+import { User } from './user.entity';
 
 export enum EstadoReserva {
   PENDIENTE = 'pendiente',
@@ -42,4 +44,13 @@ export class Reserva {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  // Relaciones
+  @ManyToOne(() => Box, { eager: true })
+  @JoinColumn({ name: 'boxId' })
+  box: Box;
+
+  @ManyToOne(() => User, { eager: true })
+  @JoinColumn({ name: 'psicologoId' })
+  psicologo: User;
 }

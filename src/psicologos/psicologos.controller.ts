@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Request } from '@nestjs/common';
 import { PsicologosService } from '../gestion/services/psicologos.service';
 import { CreatePsicologoDto, UpdatePsicologoDto } from '../common/dto/psicologo.dto';
 import { Role } from '../common/enums/role.enum';
@@ -7,12 +7,20 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { AgendaService } from './services/agenda.service';
 import { AgendaDisponibilidadDto, PsicologoDisponibilidadDto, BoxDisponibleDto } from './dto/agenda-disponibilidad.dto';
+import { CrearPacienteService } from './services/crear-paciente.service';
+import { CrearPacienteDto } from './dto/crear-paciente.dto';
+import { CrearPacienteResponseDto } from './dto/crear-paciente-response.dto';
+import { TransferirPacienteService } from './services/transferir-paciente.service';
+import { TransferirPacienteDto } from './dto/transferir-paciente.dto';
+import { TransferirPacienteResponseDto } from './dto/transferir-paciente-response.dto';
 
 @Controller('api/v1/psicologos')
 export class PsicologosController {
   constructor(
     private readonly psicologosService: PsicologosService,
-    private readonly agendaService: AgendaService
+    private readonly agendaService: AgendaService,
+    private readonly crearPacienteService: CrearPacienteService,
+    private readonly transferirPacienteService: TransferirPacienteService
   ) {}
 
   @Post()
@@ -77,6 +85,28 @@ export class PsicologosController {
   @Get('box/:id')
   async getBoxById(@Param('id') id: string) {
     return this.agendaService.getBoxById(id);
+  }
+
+  // IMPORTANTE: Este endpoint debe ir ANTES de @Get(':id') para evitar conflictos
+  @Post('crear-paciente')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PSICOLOGO, Role.ADMIN)
+  async crearPaciente(
+    @Body() crearPacienteDto: CrearPacienteDto,
+    @Request() req
+  ): Promise<CrearPacienteResponseDto> {
+    return this.crearPacienteService.crearPaciente(crearPacienteDto, req.user.id);
+  }
+
+  // Endpoint para transferir un paciente a otro psicólogo
+  @Post('transferir-paciente')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PSICOLOGO, Role.ADMIN)
+  async transferirPaciente(
+    @Body() transferirPacienteDto: TransferirPacienteDto,
+    @Request() req
+  ): Promise<TransferirPacienteResponseDto> {
+    return this.transferirPacienteService.transferirPaciente(transferirPacienteDto, req.user.id);
   }
 
   // Endpoint para obtener un psicólogo específico por ID (debe estar al final)

@@ -410,10 +410,18 @@ export class PagoSesionService {
       const pagoGuardado = await queryRunner.manager.save(Pago, pago);
 
       // 6. Crear la reserva
+      // Corregir problema de timezone: crear fecha en zona horaria local
+      const fechaLocal = new Date(dto.fecha + 'T00:00:00');
+      
+      // Log para debugging de fechas
+      this.logger.log(`📅 [confirmarSesion] Fecha recibida: ${dto.fecha}`);
+      this.logger.log(`📅 [confirmarSesion] Fecha procesada: ${fechaLocal.toISOString()}`);
+      this.logger.log(`📅 [confirmarSesion] Hora inicio: ${dto.horaInicio}, Hora fin: ${dto.horaFin}`);
+      
       const reserva = queryRunner.manager.create(ReservaPsicologo, {
         psicologo: { id: dto.psicologoId },
         paciente: { id: dto.pacienteId },
-        fecha: new Date(dto.fecha),
+        fecha: fechaLocal,
         horaInicio: dto.horaInicio,
         horaFin: dto.horaFin,
         boxId: dto.boxId,

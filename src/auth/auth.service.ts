@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../common/entities/user.entity';
@@ -50,7 +50,12 @@ export class AuthService {
       throw new UnauthorizedException(`Tu cuenta está ${user.estado.toLowerCase()}. Contacta al administrador para más información`);
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    // Verificar que los psicólogos tengan un subrol asignado
+    if (user.role === 'PSICOLOGO' && !user.subrol) {
+      throw new UnauthorizedException('Tu cuenta de psicólogo está pendiente de aprobación. Un administrador debe asignarte un subrol para poder acceder al sistema.');
+    }
+
+    const payload = { sub: user.id, email: user.email, role: user.role, subrol: user.subrol };
     const access_token = await this.jwtService.signAsync(payload);
     // Crear refresh token
     const refresh_token = uuidv4() + uuidv4();
@@ -93,6 +98,7 @@ export class AuthService {
         fotoUrl: user.fotoUrl,
         role: user.role,
         estado: user.estado,
+        subrol: user.subrol, // Subrol para psicólogos
         psicologoId, // Solo para psicólogos
       },
       suscripcion: suscripcionInfo,
@@ -305,6 +311,34 @@ export class AuthService {
     });
   }
 
+  async findAllPsychologists(): Promise<any[]> {
+    const psychologists = await this.userRepository.find({
+      where: { role: 'PSICOLOGO' },
+      order: { createdAt: 'DESC' },
+      select: [
+        'id',
+        'email',
+        'nombre',
+        'apellido',
+        'rut',
+        'telefono',
+        'fechaNacimiento',
+        'fotoUrl',
+        'direccion',
+        'especialidad',
+        'numeroRegistroProfesional',
+        'experiencia',
+        'role',
+        'estado',
+        'subrol',
+        'createdAt',
+        'updatedAt'
+      ]
+    });
+    
+    return psychologists;
+  }
+
   /**
    * Valida la suscripción de un psicólogo
    * @param userId ID del usuario psicólogo
@@ -363,5 +397,68 @@ export class AuthService {
         estado: 'ERROR' as const
       };
     }
+  }
+
+  async assignSubrol(userId: string, subrol: string): Promise<any> {
+    // Verificar que el usuario existe y es psicólogo
+    const user = await this.userRepository.findOne({
+      where: { id: userId, role: 'PSICOLOGO' }
+    });
+
+    if (!user) {
+      throw new BadRequestException('Usuario no encontrado o no es psicólogo');
+    }
+
+    // Actualizar el subrol y cambiar estado a ACTIVO
+    user.subrol = subrol as any;
+    user.estado = 'ACTIVO';
+    
+    await this.userRepository.save(user);
+
+    return {
+      success: true,
+      message: 'Subrol asignado exitosamente',
+      user: {
+        id: user.id,
+        email: user.email,
+        nombre: user.nombre,
+        apellido: user.apellido,
+        role: user.role,
+        estado: user.estado,
+        subrol: user.subrol
+      }
+    };
+  }
+
+  async getPendingPsychologists() {
+    const pendingPsychologists = await this.userRepository.find({
+      where: {
+        role: 'PSICOLOGO',
+        subrol: IsNull()
+      },
+      select: [
+        'id',
+        'email',
+        'nombre',
+        'apellido',
+        'rut',
+        'telefono',
+        'fechaNacimiento',
+        'especialidad',
+        'numeroRegistroProfesional',
+        'experiencia',
+        'estado',
+        'createdAt'
+      ],
+      order: {
+        createdAt: 'DESC'
+      }
+    });
+
+    return {
+      success: true,
+      count: pendingPsychologists.length,
+      psychologists: pendingPsychologists
+    };
   }
 }

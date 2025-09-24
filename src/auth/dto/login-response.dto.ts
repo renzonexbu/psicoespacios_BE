@@ -20,6 +20,7 @@ export class LoginResponseDto {
     fotoUrl: string;
     role: string;
     estado: string;
+    subrol?: string; // Subrol para psicólogos
     psicologoId?: string; // Solo para usuarios con rol PSICOLOGO
   };
 

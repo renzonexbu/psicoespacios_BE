@@ -23,6 +23,7 @@ import { ArriendosModule } from './arriendos/arriendos.module';
 import { NotasModule } from './notas/notas.module';
 import { ReservasPsicologosModule } from './reservas-psicologos/reservas-psicologos.module';
 import { MailModule } from './mail/mail.module';
+import { ConsolidadoModule } from './consolidado/consolidado.module';
 
 @Module({
   imports: [
@@ -99,6 +100,7 @@ import { MailModule } from './mail/mail.module';
     NotasModule,
     ReservasPsicologosModule,
     MailModule,
+    ConsolidadoModule,
   ],
 })
 export class AppModule implements OnModuleInit, NestModule {

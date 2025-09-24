@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
 
 @Entity('historial_paciente')
 export class HistorialPaciente {
@@ -16,4 +16,7 @@ export class HistorialPaciente {
 
   @Column({ type: 'varchar', nullable: true })
   url?: string;
+
+  @CreateDateColumn({ name: 'createdAt' })
+  createdAt: Date;
 } 

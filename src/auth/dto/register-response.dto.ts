@@ -21,3 +21,9 @@ export class RegisterResponseDto {
     estado: string; // Incluye el estado del usuario
   };
 }
+
+
+
+
+
+
