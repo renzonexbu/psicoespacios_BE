@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenEx
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, DataSource, MoreThanOrEqual } from 'typeorm';
 import { ReservaPsicologo, EstadoReservaPsicologo, ModalidadSesion } from '../common/entities/reserva-psicologo.entity';
+import { Reserva, EstadoReserva, EstadoPagoReserva } from '../common/entities/reserva.entity';
 import { User } from '../common/entities/user.entity';
 import { Psicologo } from '../common/entities/psicologo.entity';
 import { Box } from '../common/entities/box.entity';
@@ -43,10 +44,19 @@ export class ReservasPsicologosService {
     return await this.dataSource.transaction(async (manager) => {
       
       // 1. Verificar que el psicólogo existe
-      const psicologo = await manager.findOne(Psicologo, {
+      // El psicologoId puede ser el ID del psicólogo o el ID del usuario psicólogo
+      let psicologo = await manager.findOne(Psicologo, {
         where: { id: createReservaDto.psicologoId },
         relations: ['usuario']
       });
+
+      // Si no se encuentra por ID directo, buscar por usuario.id
+      if (!psicologo) {
+        psicologo = await manager.findOne(Psicologo, {
+          where: { usuario: { id: createReservaDto.psicologoId } },
+          relations: ['usuario']
+        });
+      }
 
       if (!psicologo) {
         throw new NotFoundException('Psicólogo no encontrado');
@@ -173,7 +183,59 @@ export class ReservasPsicologosService {
       const savedReserva = await manager.save(reserva);
       this.logger.log(`Reserva creada con ID: ${savedReserva.id}`);
 
-      // 7. Enviar email de confirmación (fuera de la transacción)
+      // 7. Crear reserva de box automáticamente para sesiones presenciales
+      this.logger.log(`🔍 Verificando condiciones para reserva de box:`);
+      this.logger.log(`   - Modalidad: ${createReservaDto.modalidad}`);
+      this.logger.log(`   - ModalidadSesion.PRESENCIAL: ${ModalidadSesion.PRESENCIAL}`);
+      this.logger.log(`   - boxId: ${createReservaDto.boxId}`);
+      this.logger.log(`   - Condición modalidad: ${createReservaDto.modalidad === ModalidadSesion.PRESENCIAL}`);
+      this.logger.log(`   - Condición boxId: ${!!createReservaDto.boxId}`);
+      
+      if (createReservaDto.modalidad === ModalidadSesion.PRESENCIAL && createReservaDto.boxId) {
+        this.logger.log(`✅ Creando reserva de box automática para sesión presencial`);
+        
+        // Obtener información del box para calcular precio
+        const box = await manager.findOne(Box, {
+          where: { id: createReservaDto.boxId },
+          relations: ['sede']
+        });
+
+        if (box) {
+          // Calcular precio del box (puedes ajustar esta lógica según tu modelo de precios)
+          const precioBox = this.calcularPrecioBox(box, createReservaDto.horaInicio, createReservaDto.horaFin);
+          
+          // Crear reserva de box en la tabla reservas
+          const reservaBox = manager.create(Reserva, {
+            boxId: createReservaDto.boxId,
+            psicologoId: psicologo.usuario.id, // Usar el ID del usuario psicólogo
+            fecha: fechaLocal,
+            horaInicio: createReservaDto.horaInicio,
+            horaFin: createReservaDto.horaFin,
+            precio: precioBox,
+            estado: EstadoReserva.CONFIRMADA,
+            estadoPago: EstadoPagoReserva.PENDIENTE_PAGO // Por defecto pendiente hasta que se confirme el pago
+          });
+
+          const savedReservaBox = await manager.save(reservaBox);
+          this.logger.log(`Reserva de box creada con ID: ${savedReservaBox.id} - Precio: $${precioBox}`);
+          
+          // Actualizar metadatos de la sesión con información del box
+          savedReserva.metadatos = {
+            ...savedReserva.metadatos,
+            reservaBoxId: savedReservaBox.id,
+            precioBox: precioBox,
+            ubicacion: `${box.sede?.nombre || 'Sede'} - Box ${box.numero}`
+          };
+          
+          await manager.save(savedReserva);
+        } else {
+          this.logger.warn(`❌ Box no encontrado con ID: ${createReservaDto.boxId}`);
+        }
+      } else {
+        this.logger.log(`❌ No se creará reserva de box - Modalidad: ${createReservaDto.modalidad}, boxId: ${createReservaDto.boxId}`);
+      }
+
+      // 8. Enviar email de confirmación (fuera de la transacción)
       try {
         await this.mailService.sendReservaConfirmada(
           paciente.email,
@@ -482,24 +544,42 @@ export class ReservasPsicologosService {
   async cancel(id: string): Promise<ReservaPsicologoResponseDto> {
     this.logger.log(`Cancelando reserva: ${id}`);
 
-    const reserva = await this.reservaPsicologoRepository.findOne({
-      where: { id },
-      relations: ['psicologo', 'psicologo.usuario', 'paciente'],
+    return await this.dataSource.transaction(async (manager) => {
+      const reserva = await manager.findOne(ReservaPsicologo, {
+        where: { id },
+        relations: ['psicologo', 'psicologo.usuario', 'paciente'],
+      });
+
+      if (!reserva) {
+        throw new NotFoundException('Reserva no encontrada');
+      }
+
+      if (reserva.estado === EstadoReservaPsicologo.CANCELADA) {
+        throw new BadRequestException('La reserva ya está cancelada');
+      }
+
+      // Cancelar reserva de box si existe (para sesiones presenciales)
+      if (reserva.modalidad === ModalidadSesion.PRESENCIAL && reserva.metadatos?.reservaBoxId) {
+        this.logger.log(`Cancelando reserva de box asociada: ${reserva.metadatos.reservaBoxId}`);
+        
+        const reservaBox = await manager.findOne(Reserva, {
+          where: { id: reserva.metadatos.reservaBoxId }
+        });
+
+        if (reservaBox) {
+          reservaBox.estado = EstadoReserva.CANCELADA;
+          await manager.save(reservaBox);
+          this.logger.log(`Reserva de box cancelada: ${reserva.metadatos.reservaBoxId}`);
+        }
+      }
+
+      // Cancelar la sesión
+      reserva.estado = EstadoReservaPsicologo.CANCELADA;
+      const updatedReserva = await manager.save(reserva);
+
+      this.logger.log(`Reserva cancelada: ${id}`);
+      return this.mapToResponseDto(updatedReserva, reserva.psicologo.usuario, reserva.paciente);
     });
-
-    if (!reserva) {
-      throw new NotFoundException('Reserva no encontrada');
-    }
-
-    if (reserva.estado === EstadoReservaPsicologo.CANCELADA) {
-      throw new BadRequestException('La reserva ya está cancelada');
-    }
-
-    reserva.estado = EstadoReservaPsicologo.CANCELADA;
-    const updatedReserva = await this.reservaPsicologoRepository.save(reserva);
-
-    this.logger.log(`Reserva cancelada: ${id}`);
-    return this.mapToResponseDto(updatedReserva, reserva.psicologo.usuario, reserva.paciente);
   }
 
   /**
@@ -629,6 +709,37 @@ export class ReservasPsicologosService {
       createdAt: reserva.createdAt,
       updatedAt: reserva.updatedAt,
     };
+  }
+
+  /**
+   * Calcular precio del box basado en duración y características del box
+   */
+  private calcularPrecioBox(box: Box, horaInicio: string, horaFin: string): number {
+    // Calcular duración en horas
+    const [horaIni, minIni] = horaInicio.split(':').map(Number);
+    const [horaFinNum, minFin] = horaFin.split(':').map(Number);
+    
+    const inicioMinutos = horaIni * 60 + minIni;
+    const finMinutos = horaFinNum * 60 + minFin;
+    const duracionMinutos = finMinutos - inicioMinutos;
+    const duracionHoras = duracionMinutos / 60;
+
+    // Precio base por hora (puedes ajustar estos valores según tu modelo de negocio)
+    let precioPorHora = 5000; // $5,000 CLP por hora base
+
+    // Ajustar precio según capacidad del box
+    if (box.capacidad >= 6) {
+      precioPorHora = 8000; // Box grande
+    } else if (box.capacidad >= 4) {
+      precioPorHora = 6000; // Box mediano
+    }
+
+    // Calcular precio total
+    const precioTotal = Math.round(precioPorHora * duracionHoras);
+
+    this.logger.log(`Precio calculado para Box ${box.numero}: $${precioTotal} (${duracionHoras}h × $${precioPorHora}/h)`);
+
+    return precioTotal;
   }
 
 } 

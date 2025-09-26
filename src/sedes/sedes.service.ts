@@ -279,6 +279,12 @@ export class SedesService {
       // - Balancear carga entre boxes
       // - Considerar accesibilidad
 
+      // Obtener información completa de la sede
+      const sedeInfo = await this.sedesRepository.findOne({ 
+        where: { id: sedeId },
+        select: ['id', 'nombre', 'direccion', 'ciudad', 'telefono', 'email']
+      });
+
       return {
         success: true,
         message: 'Box asignado automáticamente',
@@ -293,8 +299,12 @@ export class SedesService {
         horaInicio,
         horaFin,
         sede: {
-          id: sedeId,
-          nombre: (await this.sedesRepository.findOne({ where: { id: sedeId } }))?.nombre
+          id: sedeInfo?.id || sedeId,
+          nombre: sedeInfo?.nombre || 'Sede no encontrada',
+          direccion: sedeInfo?.direccion || 'Dirección no disponible',
+          ciudad: sedeInfo?.ciudad || 'Ciudad no disponible',
+          telefono: sedeInfo?.telefono,
+          email: sedeInfo?.email
         }
       };
 

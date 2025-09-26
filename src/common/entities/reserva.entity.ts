@@ -9,6 +9,11 @@ export enum EstadoReserva {
   COMPLETADA = 'completada'
 }
 
+export enum EstadoPagoReserva {
+  PENDIENTE_PAGO = 'pendiente_pago',
+  PAGADO = 'pagado'
+}
+
 @Entity('reservas')
 export class Reserva {
   @PrimaryGeneratedColumn('uuid')
@@ -32,9 +37,16 @@ export class Reserva {
   @Column({
     type: 'enum',
     enum: EstadoReserva,
-    default: EstadoReserva.PENDIENTE
+    default: EstadoReserva.CONFIRMADA
   })
   estado: EstadoReserva;
+
+  @Column({
+    type: 'enum',
+    enum: EstadoPagoReserva,
+    default: EstadoPagoReserva.PENDIENTE_PAGO
+  })
+  estadoPago: EstadoPagoReserva;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   precio: number;

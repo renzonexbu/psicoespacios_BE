@@ -22,6 +22,7 @@ export class LoginResponseDto {
     estado: string;
     subrol?: string; // Subrol para psicólogos
     psicologoId?: string; // Solo para usuarios con rol PSICOLOGO
+    hasOnboarding?: boolean; // Solo para usuarios con subrol CDD
   };
 
   @Expose()

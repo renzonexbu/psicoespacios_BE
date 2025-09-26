@@ -72,6 +72,20 @@ export class AuthController {
   async getPendingPsychologists() {
     return this.authService.getPendingPsychologists();
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('onboarding-status')
+  async checkOnboardingStatus(@Request() req) {
+    const status = await this.authService.checkOnboardingStatus(req.user.id);
+    return {
+      success: true,
+      hasOnboarding: status.hasOnboarding,
+      psicologoId: status.psicologoId,
+      message: status.hasOnboarding 
+        ? 'Onboarding completado' 
+        : 'Onboarding pendiente'
+    };
+  }
 }
 
 // Nuevo controlador para exponer información de usuario por id

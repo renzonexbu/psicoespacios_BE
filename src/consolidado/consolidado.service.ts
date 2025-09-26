@@ -4,7 +4,9 @@ import { Repository, Between, In } from 'typeorm';
 import { Reserva } from '../common/entities/reserva.entity';
 import { Box } from '../common/entities/box.entity';
 import { User } from '../common/entities/user.entity';
-import { ConsolidadoMensualDto, DetalleReservaDto } from './dto/consolidado-mensual.dto';
+import { Suscripcion } from '../common/entities/suscripcion.entity';
+import { Plan } from '../common/entities/plan.entity';
+import { ConsolidadoMensualDto, DetalleReservaDto, DetalleSuscripcionDto } from './dto/consolidado-mensual.dto';
 
 @Injectable()
 export class ConsolidadoService {
@@ -15,6 +17,10 @@ export class ConsolidadoService {
     private boxRepository: Repository<Box>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Suscripcion)
+    private suscripcionRepository: Repository<Suscripcion>,
+    @InjectRepository(Plan)
+    private planRepository: Repository<Plan>,
   ) {}
 
   private parsePrecio(precio: any): number {
@@ -22,6 +28,58 @@ export class ConsolidadoService {
       return parseFloat(precio) || 0;
     }
     return precio || 0;
+  }
+
+  private async obtenerInformacionSuscripcion(psicologoId: string): Promise<DetalleSuscripcionDto | null> {
+    try {
+      const suscripcion = await this.suscripcionRepository.findOne({
+        where: { usuarioId: psicologoId },
+        relations: ['plan'],
+        order: { fechaCreacion: 'DESC' }
+      });
+
+      if (!suscripcion) {
+        return null;
+      }
+
+      // Manejar fechas que pueden ser string o Date
+      const fechaInicio = suscripcion.fechaInicio instanceof Date 
+        ? suscripcion.fechaInicio.toISOString()
+        : new Date(suscripcion.fechaInicio).toISOString();
+      
+      const fechaFin = suscripcion.fechaFin instanceof Date 
+        ? suscripcion.fechaFin.toISOString()
+        : new Date(suscripcion.fechaFin).toISOString();
+
+      const fechaProximaRenovacion = suscripcion.fechaProximaRenovacion 
+        ? (suscripcion.fechaProximaRenovacion instanceof Date 
+            ? suscripcion.fechaProximaRenovacion.toISOString()
+            : new Date(suscripcion.fechaProximaRenovacion).toISOString())
+        : undefined;
+
+      return {
+        id: suscripcion.id,
+        estado: suscripcion.estado,
+        fechaInicio,
+        fechaFin,
+        precioTotal: this.parsePrecio(suscripcion.precioTotal),
+        horasConsumidas: suscripcion.horasConsumidas || 0,
+        horasDisponibles: suscripcion.horasDisponibles || 0,
+        renovacionAutomatica: suscripcion.renovacionAutomatica || false,
+        fechaProximaRenovacion,
+        plan: {
+          id: suscripcion.plan?.id || '',
+          nombre: suscripcion.plan?.nombre || 'Plan no encontrado',
+          descripcion: suscripcion.plan?.descripcion || '',
+          precio: this.parsePrecio(suscripcion.plan?.precio),
+          horasIncluidas: suscripcion.plan?.horasIncluidas || 0,
+          beneficios: suscripcion.plan?.beneficios || []
+        }
+      };
+    } catch (error) {
+      console.error('Error obteniendo información de suscripción:', error);
+      return null;
+    }
   }
 
   async getConsolidadoMensual(
@@ -54,6 +112,9 @@ export class ConsolidadoService {
     if (!psicologo) {
       throw new NotFoundException('Psicólogo no encontrado');
     }
+
+    // Obtener información de suscripción del psicólogo
+    const suscripcion = await this.obtenerInformacionSuscripcion(psicologoId);
 
     // Obtener todas las reservas del psicólogo en el mes
     const reservas = await this.reservaRepository.find({
@@ -97,6 +158,7 @@ export class ConsolidadoService {
         horaFin: reserva.horaFin,
         precio: this.parsePrecio(reserva.precio), // Convertir a número
         estado: reserva.estado,
+        estadoPago: reserva.estadoPago,
         createdAt: fechaCreacion
       };
     });
@@ -130,6 +192,18 @@ export class ConsolidadoService {
         .reduce((sum, r) => sum + this.parsePrecio(r.precio), 0)
     };
 
+    // Calcular resumen por estado de pago
+    const resumenPago = {
+      reservasPagadas: reservas.filter(r => r.estadoPago === 'pagado').length,
+      reservasPendientesPago: reservas.filter(r => r.estadoPago === 'pendiente_pago').length,
+      montoPagadas: reservas
+        .filter(r => r.estadoPago === 'pagado')
+        .reduce((sum, r) => sum + this.parsePrecio(r.precio), 0),
+      montoPendientesPago: reservas
+        .filter(r => r.estadoPago === 'pendiente_pago')
+        .reduce((sum, r) => sum + this.parsePrecio(r.precio), 0)
+    };
+
     // Calcular estadísticas
     const promedioPorReserva = totalReservas > 0 ? totalMonto / totalReservas : 0;
     
@@ -160,7 +234,9 @@ export class ConsolidadoService {
       totalReservas,
       totalMonto: Math.round(totalMonto * 100) / 100,
       detalleReservas,
+      suscripcion,
       resumen,
+      resumenPago,
       estadisticas
     };
   }

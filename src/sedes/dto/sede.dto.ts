@@ -144,8 +144,13 @@ export class SedePublicDto {
 }
 
 export class AsignarBoxDto {
+  @IsString()
   fecha: string; // YYYY-MM-DD
+
+  @IsString()
   horaInicio: string; // HH:MM
+
+  @IsString()
   horaFin: string; // HH:MM
 }
 
@@ -165,5 +170,9 @@ export class BoxAsignadoResponseDto {
   sede: {
     id: string;
     nombre: string;
+    direccion: string;
+    ciudad: string;
+    telefono?: string;
+    email?: string;
   };
 }

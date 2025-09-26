@@ -10,6 +10,7 @@ import { Paciente } from '../../common/entities/paciente.entity';
 import { Box } from '../../common/entities/box.entity';
 import { EstadoReservaPsicologo, ModalidadSesion } from '../../common/entities/reserva-psicologo.entity';
 import { TipoPago, EstadoPago, MetodoPago } from '../../common/entities/pago.entity';
+import { Reserva, EstadoReserva, EstadoPagoReserva } from '../../common/entities/reserva.entity';
 
 export interface ConfirmarSesionDto {
   psicologoId: string;
@@ -382,10 +383,20 @@ export class PagoSesionService {
         await this.validarBoxDisponible(dto.boxId, dto.fecha, dto.horaInicio, dto.horaFin, queryRunner);
       }
 
-      // 4. Crear o actualizar paciente
+      // 4. Obtener información del psicólogo
+      const psicologo = await queryRunner.manager.findOne(Psicologo, {
+        where: { id: dto.psicologoId },
+        relations: ['usuario']
+      });
+
+      if (!psicologo) {
+        throw new NotFoundException('Psicólogo no encontrado');
+      }
+
+      // 5. Crear o actualizar paciente
       await this.crearOActualizarPaciente(dto.pacienteId, dto.psicologoId, queryRunner);
 
-      // 5. Crear el pago
+      // 6. Crear el pago
       const pago = queryRunner.manager.create(Pago, {
         tipo: TipoPago.SESION,
         monto: dto.precio,
@@ -409,7 +420,7 @@ export class PagoSesionService {
 
       const pagoGuardado = await queryRunner.manager.save(Pago, pago);
 
-      // 6. Crear la reserva
+      // 7. Crear la reserva
       // Corregir problema de timezone: crear fecha en zona horaria local
       const fechaLocal = new Date(dto.fecha + 'T00:00:00');
       
@@ -444,7 +455,59 @@ export class PagoSesionService {
 
       const reservaGuardada = await queryRunner.manager.save(ReservaPsicologo, reserva);
 
-      // 7. El uso del cupón ya se incrementó en validarYUsarCupon
+      // 8. Crear reserva de box automáticamente para sesiones presenciales
+      this.logger.log(`🔍 Verificando condiciones para reserva de box:`);
+      this.logger.log(`   - Modalidad: ${dto.modalidad}`);
+      this.logger.log(`   - ModalidadSesion.PRESENCIAL: ${ModalidadSesion.PRESENCIAL}`);
+      this.logger.log(`   - boxId: ${dto.boxId}`);
+      this.logger.log(`   - Condición modalidad: ${dto.modalidad === ModalidadSesion.PRESENCIAL}`);
+      this.logger.log(`   - Condición boxId: ${!!dto.boxId}`);
+      
+      if (dto.modalidad === ModalidadSesion.PRESENCIAL && dto.boxId) {
+        this.logger.log(`✅ Creando reserva de box automática para sesión presencial`);
+        
+        // Obtener información del box para calcular precio
+        const box = await queryRunner.manager.findOne(Box, {
+          where: { id: dto.boxId },
+          relations: ['sede']
+        });
+
+        if (box) {
+          // Calcular precio del box
+          const precioBox = this.calcularPrecioBox(box, dto.horaInicio, dto.horaFin);
+          
+          // Crear reserva de box en la tabla reservas
+          const reservaBox = queryRunner.manager.create(Reserva, {
+            boxId: dto.boxId,
+            psicologoId: psicologo.usuario.id, // Usar el ID del usuario psicólogo
+            fecha: fechaLocal,
+            horaInicio: dto.horaInicio,
+            horaFin: dto.horaFin,
+            precio: precioBox,
+            estado: EstadoReserva.CONFIRMADA,
+            estadoPago: EstadoPagoReserva.PAGADO // Como ya se pagó la sesión, el box también está pagado
+          });
+
+          const savedReservaBox = await queryRunner.manager.save(Reserva, reservaBox);
+          this.logger.log(`Reserva de box creada con ID: ${savedReservaBox.id} - Precio: $${precioBox}`);
+          
+          // Actualizar metadatos de la sesión con información del box
+          reservaGuardada.metadatos = {
+            ...reservaGuardada.metadatos,
+            reservaBoxId: savedReservaBox.id,
+            precioBox: precioBox,
+            ubicacion: `${box.sede?.nombre || 'Sede'} - Box ${box.numero}`
+          };
+          
+          await queryRunner.manager.save(ReservaPsicologo, reservaGuardada);
+        } else {
+          this.logger.warn(`❌ Box no encontrado con ID: ${dto.boxId}`);
+        }
+      } else {
+        this.logger.log(`❌ No se creará reserva de box - Modalidad: ${dto.modalidad}, boxId: ${dto.boxId}`);
+      }
+
+      // 9. El uso del cupón ya se incrementó en validarYUsarCupon
       await queryRunner.commitTransaction();
 
       this.logger.log(`Sesión confirmada: pago ${pagoGuardado.id}, reserva ${reservaGuardada.id}`);
@@ -609,5 +672,30 @@ export class PagoSesionService {
     }
 
     await queryRunner.manager.save(Paciente, pacienteRecord);
+  }
+
+  /**
+   * Calcular precio del box basado en duración y capacidad
+   */
+  private calcularPrecioBox(box: Box, horaInicio: string, horaFin: string): number {
+    const [horaIni, minIni] = horaInicio.split(':').map(Number);
+    const [horaFinNum, minFin] = horaFin.split(':').map(Number);
+    
+    const inicioMinutos = horaIni * 60 + minIni;
+    const finMinutos = horaFinNum * 60 + minFin;
+    const duracionMinutos = finMinutos - inicioMinutos;
+    const duracionHoras = duracionMinutos / 60;
+
+    let precioPorHora = 5000; // $5,000 CLP por hora base
+
+    if (box.capacidad >= 6) {
+      precioPorHora = 8000; // Box grande
+    } else if (box.capacidad >= 4) {
+      precioPorHora = 6000; // Box mediano
+    }
+
+    const precioTotal = Math.round(precioPorHora * duracionHoras);
+    this.logger.log(`Precio calculado para Box ${box.numero}: $${precioTotal} (${duracionHoras}h × $${precioPorHora}/h)`);
+    return precioTotal;
   }
 }

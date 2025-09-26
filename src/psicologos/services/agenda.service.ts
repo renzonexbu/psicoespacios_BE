@@ -233,7 +233,8 @@ export class AgendaService {
             horaInicio,
             horaFin,
             disponible: true,
-            modalidad: modalidadSlot
+            modalidad: modalidadSlot,
+            sedeId: disponibilidadDia.sede_id
           });
         }
       }
@@ -267,17 +268,17 @@ export class AgendaService {
         }
       });
 
-      // También verificar reservas pendientes de boxes
-      const reservasBoxesPendientes = await this.reservaRepository.find({
+      // También verificar reservas confirmadas de boxes
+      const reservasBoxesConfirmadas = await this.reservaRepository.find({
         where: {
           psicologoId,
           fecha: fechaDate,
-          estado: EstadoReserva.PENDIENTE
+          estado: EstadoReserva.CONFIRMADA
         }
       });
 
       // Combinar ambas listas de reservas de boxes
-      const todasLasReservasBoxes = [...reservasBoxes, ...reservasBoxesPendientes];
+      const todasLasReservasBoxes = [...reservasBoxes, ...reservasBoxesConfirmadas];
       console.log(`📦 Reservas de boxes encontradas: ${todasLasReservasBoxes.length}`);
 
       // 2. Verificar reservas de sesiones existentes para este slot del psicólogo
@@ -419,7 +420,8 @@ export class AgendaService {
               horaInicio,
               horaFin,
               disponible: true,
-              modalidad: 'online'
+              modalidad: 'online',
+              sedeId: disponibilidadDia.sede_id
             });
           }
 

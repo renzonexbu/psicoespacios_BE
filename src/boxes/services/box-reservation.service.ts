@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Reserva, EstadoReserva } from '../../common/entities/reserva.entity';
+import { Reserva, EstadoReserva, EstadoPagoReserva } from '../../common/entities/reserva.entity';
 import { Box } from '../../common/entities/box.entity';
 import { User } from '../../common/entities/user.entity';
-import { CreateBoxReservationDto, UpdateBoxReservationDto, BoxReservationResponseDto } from '../dto/box-reservation.dto';
+import { CreateBoxReservationDto, UpdateBoxReservationDto, UpdateBoxReservationPaymentDto, BoxReservationResponseDto } from '../dto/box-reservation.dto';
 
 @Injectable()
 export class BoxReservationService {
@@ -98,7 +98,7 @@ export class BoxReservationService {
       horaInicio: dto.horaInicio,
       horaFin: dto.horaFin,
       precio: dto.precio,
-      estado: EstadoReserva.PENDIENTE
+      estado: EstadoReserva.CONFIRMADA
     });
 
     const savedReserva = await this.reservaRepository.save(reserva);
@@ -112,6 +112,17 @@ export class BoxReservationService {
     }
 
     reserva.estado = dto.estado;
+    const updatedReserva = await this.reservaRepository.save(reserva);
+    return this.mapToResponseDto(updatedReserva);
+  }
+
+  async updateReservationPaymentStatus(id: string, dto: UpdateBoxReservationPaymentDto): Promise<BoxReservationResponseDto> {
+    const reserva = await this.reservaRepository.findOne({ where: { id } });
+    if (!reserva) {
+      throw new NotFoundException('Reserva no encontrada');
+    }
+
+    reserva.estadoPago = dto.estadoPago;
     const updatedReserva = await this.reservaRepository.save(reserva);
     return this.mapToResponseDto(updatedReserva);
   }
@@ -171,6 +182,7 @@ export class BoxReservationService {
       horaInicio: reserva.horaInicio,
       horaFin: reserva.horaFin,
       estado: reserva.estado,
+      estadoPago: reserva.estadoPago,
       precio: reserva.precio,
       createdAt: reserva.createdAt,
       updatedAt: reserva.updatedAt

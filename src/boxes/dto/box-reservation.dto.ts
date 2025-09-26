@@ -1,5 +1,5 @@
 import { IsUUID, IsDateString, IsString, IsNumber, IsEnum, IsNotEmpty } from 'class-validator';
-import { EstadoReserva } from '../../common/entities/reserva.entity';
+import { EstadoReserva, EstadoPagoReserva } from '../../common/entities/reserva.entity';
 
 export class CreateBoxReservationDto {
   @IsUUID()
@@ -33,6 +33,12 @@ export class UpdateBoxReservationDto {
   estado: EstadoReserva;
 }
 
+export class UpdateBoxReservationPaymentDto {
+  @IsEnum(EstadoPagoReserva)
+  @IsNotEmpty()
+  estadoPago: EstadoPagoReserva;
+}
+
 export class BoxReservationResponseDto {
   id: string;
   boxId: string;
@@ -41,6 +47,7 @@ export class BoxReservationResponseDto {
   horaInicio: string;
   horaFin: string;
   estado: EstadoReserva;
+  estadoPago: EstadoPagoReserva;
   precio: number;
   createdAt: Date;
   updatedAt: Date;

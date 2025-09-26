@@ -1,6 +1,6 @@
 import { Controller, Post, Get, Put, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { BoxReservationService } from '../services/box-reservation.service';
-import { CreateBoxReservationDto, UpdateBoxReservationDto, BoxReservationResponseDto } from '../dto/box-reservation.dto';
+import { CreateBoxReservationDto, UpdateBoxReservationDto, UpdateBoxReservationPaymentDto, BoxReservationResponseDto } from '../dto/box-reservation.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -29,6 +29,15 @@ export class BoxReservationController {
     @Body() dto: UpdateBoxReservationDto
   ): Promise<BoxReservationResponseDto> {
     return this.boxReservationService.updateReservationStatus(id, dto);
+  }
+
+  @Put(':id/payment-status')
+  @Roles('PSICOLOGO', 'ADMIN')
+  async updateReservationPaymentStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateBoxReservationPaymentDto
+  ): Promise<BoxReservationResponseDto> {
+    return this.boxReservationService.updateReservationPaymentStatus(id, dto);
   }
 
   @Put(':id/cancel')

@@ -5,10 +5,12 @@ import { ConsolidadoService } from './consolidado.service';
 import { Reserva } from '../common/entities/reserva.entity';
 import { Box } from '../common/entities/box.entity';
 import { User } from '../common/entities/user.entity';
+import { Suscripcion } from '../common/entities/suscripcion.entity';
+import { Plan } from '../common/entities/plan.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Reserva, Box, User])
+    TypeOrmModule.forFeature([Reserva, Box, User, Suscripcion, Plan])
   ],
   controllers: [ConsolidadoController],
   providers: [ConsolidadoService],

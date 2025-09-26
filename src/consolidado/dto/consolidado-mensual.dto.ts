@@ -12,6 +12,26 @@ export class QueryConsolidadoMensualDto {
   psicologoId?: string; // Para admins que quieran ver consolidado de un psicólogo específico
 }
 
+export class DetalleSuscripcionDto {
+  id: string;
+  estado: string;
+  fechaInicio: string;
+  fechaFin: string;
+  precioTotal: number;
+  horasConsumidas: number;
+  horasDisponibles: number;
+  renovacionAutomatica: boolean;
+  fechaProximaRenovacion?: string;
+  plan: {
+    id: string;
+    nombre: string;
+    descripcion: string;
+    precio: number;
+    horasIncluidas: number;
+    beneficios: string[];
+  };
+}
+
 export class DetalleReservaDto {
   id: string;
   boxId: string;
@@ -21,6 +41,7 @@ export class DetalleReservaDto {
   horaFin: string;
   precio: number;
   estado: string;
+  estadoPago: string;
   createdAt: string;
 }
 
@@ -34,6 +55,7 @@ export class ConsolidadoMensualDto {
   totalReservas: number;
   totalMonto: number;
   detalleReservas: DetalleReservaDto[];
+  suscripcion: DetalleSuscripcionDto | null;
   resumen: {
     reservasCompletadas: number;
     reservasCanceladas: number;
@@ -42,12 +64,19 @@ export class ConsolidadoMensualDto {
     montoCanceladas: number;
     montoPendientes: number;
   };
+  resumenPago: {
+    reservasPagadas: number;
+    reservasPendientesPago: number;
+    montoPagadas: number;
+    montoPendientesPago: number;
+  };
   estadisticas: {
     promedioPorReserva: number;
     reservasPorSemana: number[];
     diasConReservas: number;
   };
 }
+
 
 
 

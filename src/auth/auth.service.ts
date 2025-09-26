@@ -55,6 +55,17 @@ export class AuthService {
       throw new UnauthorizedException('Tu cuenta de psicólogo está pendiente de aprobación. Un administrador debe asignarte un subrol para poder acceder al sistema.');
     }
 
+    // Verificar onboarding para usuarios con subrol CDD
+    if (user.role === 'PSICOLOGO' && user.subrol === 'CDD') {
+      const psicologo = await this.psicologoRepository.findOne({
+        where: { usuario: { id: user.id } }
+      });
+      
+      if (!psicologo) {
+        throw new UnauthorizedException('Debes completar tu perfil de psicólogo antes de acceder al sistema. Por favor, completa el proceso de onboarding.');
+      }
+    }
+
     const payload = { sub: user.id, email: user.email, role: user.role, subrol: user.subrol };
     const access_token = await this.jwtService.signAsync(payload);
     // Crear refresh token
@@ -84,6 +95,12 @@ export class AuthService {
       }
     }
 
+    // Verificar estado de onboarding para usuarios CDD
+    let hasOnboarding: boolean | undefined = undefined;
+    if (user.role === 'PSICOLOGO' && user.subrol === 'CDD') {
+      hasOnboarding = !!psicologoId;
+    }
+
     return {
       access_token,
       refresh_token,
@@ -100,6 +117,7 @@ export class AuthService {
         estado: user.estado,
         subrol: user.subrol, // Subrol para psicólogos
         psicologoId, // Solo para psicólogos
+        hasOnboarding, // Solo para usuarios con subrol CDD
       },
       suscripcion: suscripcionInfo,
     };
@@ -459,6 +477,17 @@ export class AuthService {
       success: true,
       count: pendingPsychologists.length,
       psychologists: pendingPsychologists
+    };
+  }
+
+  async checkOnboardingStatus(userId: string): Promise<{ hasOnboarding: boolean; psicologoId?: string }> {
+    const psicologo = await this.psicologoRepository.findOne({
+      where: { usuario: { id: userId } }
+    });
+
+    return {
+      hasOnboarding: !!psicologo,
+      psicologoId: psicologo?.id
     };
   }
 }

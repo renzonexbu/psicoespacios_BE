@@ -20,7 +20,7 @@ export class ReservasService {
   async create(createReservaDto: CreateReservaDto) {
     const reserva = this.reservaRepository.create({
       ...createReservaDto,
-      estado: createReservaDto.estado || EstadoReserva.PENDIENTE,
+      estado: createReservaDto.estado || EstadoReserva.CONFIRMADA,
     });
     return await this.reservaRepository.save(reserva);
   }

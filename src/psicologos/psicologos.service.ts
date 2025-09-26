@@ -291,7 +291,7 @@ export class PsicologosService {
       // Verificar si tiene reservas activas
       const tieneReservasActivas = this.reservas.some(
         r => r.psicologoId === id && 
-        [EstadoReserva.CONFIRMADA, EstadoReserva.PENDIENTE].includes(r.estado)
+        [EstadoReserva.CONFIRMADA].includes(r.estado)
       );
       
       if (tieneReservasActivas) {
