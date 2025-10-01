@@ -234,3 +234,6 @@ console.log(`Días con reservas: ${consolidado.estadisticas.diasConReservas}`);
 
 
 
+
+
+

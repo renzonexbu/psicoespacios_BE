@@ -55,8 +55,8 @@ export class AuthService {
       throw new UnauthorizedException('Tu cuenta de psicólogo está pendiente de aprobación. Un administrador debe asignarte un subrol para poder acceder al sistema.');
     }
 
-    // Verificar onboarding para usuarios con subrol CDD
-    if (user.role === 'PSICOLOGO' && user.subrol === 'CDD') {
+    // Verificar onboarding para usuarios con subrol CDD o AMBOS
+    if (user.role === 'PSICOLOGO' && (user.subrol === 'CDD' || user.subrol === 'AMBOS')) {
       const psicologo = await this.psicologoRepository.findOne({
         where: { usuario: { id: user.id } }
       });
@@ -95,9 +95,9 @@ export class AuthService {
       }
     }
 
-    // Verificar estado de onboarding para usuarios CDD
+    // Verificar estado de onboarding para usuarios CDD o AMBOS
     let hasOnboarding: boolean | undefined = undefined;
-    if (user.role === 'PSICOLOGO' && user.subrol === 'CDD') {
+    if (user.role === 'PSICOLOGO' && (user.subrol === 'CDD' || user.subrol === 'AMBOS')) {
       hasOnboarding = !!psicologoId;
     }
 
@@ -117,7 +117,7 @@ export class AuthService {
         estado: user.estado,
         subrol: user.subrol, // Subrol para psicólogos
         psicologoId, // Solo para psicólogos
-        hasOnboarding, // Solo para usuarios con subrol CDD
+        hasOnboarding, // Solo para usuarios con subrol CDD o AMBOS
       },
       suscripcion: suscripcionInfo,
     };

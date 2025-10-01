@@ -45,6 +45,23 @@ export class DetalleReservaDto {
   createdAt: string;
 }
 
+export class DetallePackDto {
+  packId: string;
+  packNombre: string;
+  asignacionId: string;
+  precioTotal: number;
+  precioProporcional: number;
+  totalReservas: number;
+  reservasCompletadas: number;
+  reservasCanceladas: number;
+  reservasPendientes: number;
+  precioPorReserva: number;
+  estadoPago: string;
+  montoPagado: number;
+  montoReembolsado: number;
+  estadoAsignacion: string;
+}
+
 export class ConsolidadoMensualDto {
   psicologoId: string;
   nombrePsicologo: string;
@@ -74,6 +91,12 @@ export class ConsolidadoMensualDto {
     promedioPorReserva: number;
     reservasPorSemana: number[];
     diasConReservas: number;
+  };
+  packsDelMes: DetallePackDto[];
+  resumenPacks: {
+    totalPacks: number;
+    totalMontoPacks: number;
+    totalMontoIndividuales: number;
   };
 }
 

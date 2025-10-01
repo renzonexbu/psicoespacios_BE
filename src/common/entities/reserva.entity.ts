@@ -51,6 +51,10 @@ export class Reserva {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   precio: number;
 
+  // Identificador de la asignación de pack (si la reserva proviene de un pack). Puede ser null
+  @Column({ type: 'uuid', nullable: true })
+  packAsignacionId: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

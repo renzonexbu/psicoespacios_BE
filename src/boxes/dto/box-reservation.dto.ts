@@ -49,6 +49,13 @@ export class BoxReservationResponseDto {
   estado: EstadoReserva;
   estadoPago: EstadoPagoReserva;
   precio: number;
+  packAsignacionId: string | null;
+  packInfo: {
+    id: string;
+    nombre: string;
+    horas: number;
+    precio: number;
+  } | null;
   createdAt: Date;
   updatedAt: Date;
 } 
