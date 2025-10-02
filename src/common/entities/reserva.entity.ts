@@ -69,4 +69,9 @@ export class Reserva {
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'psicologoId' })
   psicologo: User;
+
+  // Relación con PackAsignacion (opcional)
+  @ManyToOne('PackAsignacion', { eager: false })
+  @JoinColumn({ name: 'packAsignacionId' })
+  packAsignacion?: any; // Usamos any para evitar problemas de importación circular
 }

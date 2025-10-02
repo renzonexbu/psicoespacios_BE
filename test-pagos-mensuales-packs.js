@@ -287,6 +287,83 @@ async function testConsolidadoConPagosMensuales() {
   }
 }
 
+async function testConsolidadoConReservasCanceladas() {
+  try {
+    console.log('\n🧪 Probando consolidado con reservas canceladas...\n');
+
+    const psicologoId = 'psicologo-id-aqui';
+    const mes = '2024-10';
+
+    const response = await axios.get(`${BASE_URL}/consolidado/mensual`, {
+      params: { psicologoId, mes },
+      headers
+    });
+
+    console.log('✅ Consolidado obtenido (verificando cálculo con reservas canceladas):');
+    console.log('=' .repeat(60));
+    
+    if (response.data.packsDelMes && response.data.packsDelMes.length > 0) {
+      console.log('📋 VERIFICACIÓN DE CÁLCULO PROPORCIONAL:');
+      
+      response.data.packsDelMes.forEach((pack, index) => {
+        console.log(`\n   ${index + 1}. ${pack.packNombre}:`);
+        console.log(`      Precio total del pack: $${pack.precioTotal} (después de cancelaciones)`);
+        console.log(`      Total reservas en el mes: ${pack.totalReservas}`);
+        console.log(`      Reservas confirmadas: ${pack.reservasConfirmadas}`);
+        console.log(`      Reservas canceladas: ${pack.reservasCanceladas}`);
+        console.log(`      Precio por reserva: $${pack.precioPorReserva}`);
+        console.log(`      Precio proporcional: $${pack.precioProporcional}`);
+        console.log(`      Box asignado: ${pack.nombreBox}`);
+        console.log(`      Estado asignación: ${pack.estadoAsignacion}`);
+        
+        // Mostrar detalles de la asignación
+        if (pack.detallesAsignacion) {
+          console.log(`      Días asignados: ${pack.detallesAsignacion.dias.join(', ')}`);
+          console.log(`      Horarios:`);
+          pack.detallesAsignacion.horarios.forEach((horario, idx) => {
+            const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            console.log(`         ${idx + 1}. ${diasSemana[horario.diaSemana]} ${horario.horaInicio}-${horario.horaFin} (${horario.nombreBox})`);
+          });
+        }
+        
+        // Verificar que precioTotal = precioProporcional
+        console.log(`      ✅ Precio total = Precio proporcional: ${Math.abs(pack.precioTotal - pack.precioProporcional) < 0.01 ? 'SÍ' : 'NO'}`);
+        
+        // Calcular precio original del pack
+        const precioOriginalPack = pack.totalReservas > 0 
+          ? pack.precioPorReserva * pack.totalReservas 
+          : pack.precioTotal;
+        
+        console.log(`      Precio original del pack: $${precioOriginalPack}`);
+        
+        // Mostrar descuento por cancelaciones
+        if (pack.reservasCanceladas > 0) {
+          const descuentoCancelaciones = precioOriginalPack - pack.precioTotal;
+          console.log(`      💰 Descuento por cancelaciones: $${descuentoCancelaciones}`);
+          console.log(`      📉 Porcentaje descontado: ${((descuentoCancelaciones / precioOriginalPack) * 100).toFixed(1)}%`);
+        } else {
+          console.log(`      ✅ Sin cancelaciones - Precio completo`);
+        }
+      });
+      
+      console.log('\n💰 RESUMEN:');
+      console.log('   - El precioTotal ahora refleja el precio real después de cancelaciones');
+      console.log('   - precioTotal = precioProporcional (ambos consideran cancelaciones)');
+      console.log('   - El precio original se puede calcular: precioPorReserva × totalReservas');
+      console.log('   - Las reservas canceladas reducen automáticamente el cobro');
+      
+    } else {
+      console.log('ℹ️  No hay packs para este mes');
+    }
+
+    return response.data;
+
+  } catch (error) {
+    console.error('❌ Error al obtener consolidado:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
 async function testConsolidadoConPacksCancelados() {
   try {
     console.log('\n🧪 Probando consolidado con packs cancelados...\n');
@@ -473,6 +550,7 @@ async function runAllTests() {
     await testConsolidadoConPagosMensuales();
     await testConsolidadoConPacksPendientes();
     await testConsolidadoConPacksCancelados();
+    await testConsolidadoConReservasCanceladas();
     await testValidacionesPagosMensuales();
     
   } catch (error) {
@@ -498,6 +576,7 @@ module.exports = {
   testConsolidadoConPagosMensuales,
   testConsolidadoConPacksPendientes,
   testConsolidadoConPacksCancelados,
+  testConsolidadoConReservasCanceladas,
   testValidacionesPagosMensuales,
   runAllTests
 };

@@ -48,14 +48,41 @@ export class ConsolidadoService {
       precioTotal: number;
       precioProporcional: number;
       totalReservas: number;
-      reservasCompletadas: number;
+      reservasConfirmadas: number;
       reservasCanceladas: number;
-      reservasPendientes: number;
       reservas: Reserva[];
       estadoPago: string;
       montoPagado: number;
       montoReembolsado: number;
       estadoAsignacion: string;
+      precioPorReserva: number;
+      nombreBox: string;
+      detallesAsignacion: {
+        dias: number[];
+        horarios: {
+          diaSemana: number;
+          horaInicio: string;
+          horaFin: string;
+          nombreBox: string;
+        }[];
+      };
+      // Información completa del pago mensual
+      pagoMensual: {
+        id: string;
+        mes: number;
+        año: number;
+        monto: number;
+        montoPagado: number;
+        montoReembolsado: number;
+        estado: string;
+        fechaPago: Date | null;
+        fechaVencimiento: Date | null;
+        observaciones: string | null;
+        metodoPago: string | null;
+        referenciaPago: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+      } | null;
     }
 
     // Obtener asignaciones de packs del psicólogo (activas y canceladas)
@@ -64,7 +91,7 @@ export class ConsolidadoService {
         usuarioId: psicologoId,
         estado: In([EstadoPackAsignacion.ACTIVA, EstadoPackAsignacion.CANCELADA])
       },
-      relations: ['pack']
+      relations: ['pack', 'horarios', 'horarios.box']
     });
 
     const packsDelMes: PackDelMes[] = [];
@@ -97,35 +124,78 @@ export class ConsolidadoService {
           });
 
           // Calcular precio proporcional del pack
-          const precioPack = this.parsePrecio(asignacion.pack.precio);
-          const reservasCompletadas = reservasPack.filter(r => r.estado === 'completada').length;
+          const precioPackOriginal = this.parsePrecio(asignacion.pack.precio);
+          const reservasConfirmadas = reservasPack.filter(r => r.estado === 'confirmada').length;
           const reservasCanceladas = reservasPack.filter(r => r.estado === 'cancelada').length;
           const totalReservas = reservasPack.length;
 
           // Calcular precio proporcional
           let precioProporcional = 0;
+          let precioTotalReal = precioPackOriginal; // Precio real después de cancelaciones
+          let precioPorReserva = 0;
+          
           if (totalReservas > 0) {
             // Precio por reserva = precio del pack / total de reservas del mes
-            const precioPorReserva = precioPack / totalReservas;
-            precioProporcional = precioPorReserva * reservasCompletadas;
+            precioPorReserva = precioPackOriginal / totalReservas;
+            
+            // Calcular precio proporcional basado solo en reservas confirmadas
+            precioProporcional = precioPorReserva * reservasConfirmadas;
+            
+            // El precio total real es el precio proporcional (ya considera cancelaciones)
+            precioTotalReal = precioProporcional;
           }
+
+          // Obtener información del box y detalles de la asignación
+          const nombreBox = asignacion.horarios && asignacion.horarios.length > 0 
+            ? asignacion.horarios[0].box?.nombre || 'Box no encontrado'
+            : 'Sin box asignado';
+
+          // Construir detalles de la asignación
+          const detallesAsignacion = {
+            dias: [...new Set(asignacion.horarios?.map(h => h.diaSemana) || [])],
+            horarios: asignacion.horarios?.map(h => ({
+              diaSemana: h.diaSemana,
+              horaInicio: h.horaInicio,
+              horaFin: h.horaFin,
+              nombreBox: h.box?.nombre || 'Box no encontrado'
+            })) || []
+          };
 
           // Incluir pack con información de pago (si existe) o valores por defecto
           packsDelMes.push({
             packId: asignacion.pack.id,
             packNombre: asignacion.pack.nombre,
             asignacionId: asignacion.id,
-            precioTotal: precioPack,
+            precioTotal: precioTotalReal, // Precio real después de cancelaciones
             precioProporcional,
             totalReservas,
-            reservasCompletadas,
+            reservasConfirmadas,
             reservasCanceladas,
-            reservasPendientes: reservasPack.filter(r => r.estado === 'pendiente').length,
             reservas: reservasPack,
             estadoPago: pagoMensual ? pagoMensual.estado : 'pendiente_pago',
             montoPagado: pagoMensual ? this.parsePrecio(pagoMensual.montoPagado) : 0,
             montoReembolsado: pagoMensual ? this.parsePrecio(pagoMensual.montoReembolsado) : 0,
-            estadoAsignacion: asignacion.estado
+            estadoAsignacion: asignacion.estado,
+            precioPorReserva,
+            nombreBox,
+            detallesAsignacion,
+            // Información completa del pago mensual
+            pagoMensual: pagoMensual ? {
+              id: pagoMensual.id,
+              mes: pagoMensual.mes,
+              año: pagoMensual.año,
+              monto: this.parsePrecio(pagoMensual.monto),
+              montoPagado: this.parsePrecio(pagoMensual.montoPagado),
+              montoReembolsado: this.parsePrecio(pagoMensual.montoReembolsado),
+              estado: pagoMensual.estado,
+              fechaPago: pagoMensual.fechaPago,
+              fechaVencimiento: pagoMensual.fechaVencimiento,
+              observaciones: pagoMensual.observaciones,
+              metodoPago: pagoMensual.metodoPago,
+              referenciaPago: pagoMensual.referenciaPago,
+              createdAt: pagoMensual.createdAt,
+              updatedAt: pagoMensual.updatedAt
+            } : null
           });
         }
       }
@@ -274,18 +344,30 @@ export class ConsolidadoService {
       };
     });
 
-    // Calcular totales incluyendo packs
-    const totalReservasIndividuales = reservasIndividuales.length;
-    const totalMontoIndividuales = reservasIndividuales.reduce((sum, r) => {
+    // Calcular totales incluyendo packs (SOLO ACTIVOS Y VÁLIDOS)
+    
+    // Reservas individuales válidas (solo confirmadas/completadas)
+    const reservasIndividualesValidas = reservasIndividuales.filter(r => 
+      r.estado === 'confirmada' || r.estado === 'completada'
+    );
+    const totalReservasIndividuales = reservasIndividualesValidas.length;
+    const totalMontoIndividuales = reservasIndividualesValidas.reduce((sum, r) => {
       return sum + this.parsePrecio(r.precio);
     }, 0);
 
-    // Calcular totales de packs
-    const totalMontoPacks = packsDelMes.reduce((sum, pack) => {
+    // Calcular totales de packs (SOLO ACTIVOS)
+    const packsActivos = packsDelMes.filter(pack => pack.estadoAsignacion === 'ACTIVA');
+    const totalMontoPacks = packsActivos.reduce((sum, pack) => {
       return sum + pack.precioProporcional;
     }, 0);
 
-    const totalReservas = totalReservasIndividuales + reservasDePacks.length;
+    // Reservas de packs válidas (solo de packs activos y solo confirmadas/completadas)
+    const reservasDePacksValidas = reservasDePacks.filter(r => {
+      const packAsociado = packsActivos.find(p => p.asignacionId === r.packAsignacionId);
+      return packAsociado && (r.estado === 'confirmada' || r.estado === 'completada');
+    });
+
+    const totalReservas = totalReservasIndividuales + reservasDePacksValidas.length;
     const totalMonto = totalMontoIndividuales + totalMontoPacks;
 
     // Debug: verificar precios
@@ -341,14 +423,17 @@ export class ConsolidadoService {
         .reduce((sum, r) => sum + this.parsePrecio(r.precio), 0)
     };
 
-    // Calcular estadísticas
+    // Calcular estadísticas (SOLO RESERVAS VÁLIDAS)
     const promedioPorReserva = totalReservas > 0 ? totalMonto / totalReservas : 0;
     
-    // Calcular reservas por semana
-    const reservasPorSemana = this.calcularReservasPorSemana(reservas, fechaInicio);
+    // Combinar reservas válidas para estadísticas
+    const reservasValidasParaEstadisticas = [...reservasIndividualesValidas, ...reservasDePacksValidas];
     
-    // Calcular días con reservas
-    const diasConReservas = new Set(reservas.map(r => {
+    // Calcular reservas por semana (solo válidas)
+    const reservasPorSemana = this.calcularReservasPorSemana(reservasValidasParaEstadisticas, fechaInicio);
+    
+    // Calcular días con reservas (solo válidas)
+    const diasConReservas = new Set(reservasValidasParaEstadisticas.map(r => {
       const fechaReserva = r.fecha instanceof Date 
         ? r.fecha.toISOString().split('T')[0]
         : new Date(r.fecha).toISOString().split('T')[0];
@@ -382,21 +467,69 @@ export class ConsolidadoService {
         precioTotal: pack.precioTotal,
         precioProporcional: Math.round(pack.precioProporcional * 100) / 100,
         totalReservas: pack.totalReservas,
-        reservasCompletadas: pack.reservasCompletadas,
+        reservasConfirmadas: pack.reservasConfirmadas,
         reservasCanceladas: pack.reservasCanceladas,
-        reservasPendientes: pack.reservasPendientes,
-        precioPorReserva: pack.totalReservas > 0 ? Math.round((pack.precioTotal / pack.totalReservas) * 100) / 100 : 0,
+        precioPorReserva: Math.round(pack.precioPorReserva * 100) / 100,
         estadoPago: pack.estadoPago,
         montoPagado: Math.round(pack.montoPagado * 100) / 100,
         montoReembolsado: Math.round(pack.montoReembolsado * 100) / 100,
-        estadoAsignacion: pack.estadoAsignacion
+        estadoAsignacion: pack.estadoAsignacion,
+        nombreBox: pack.nombreBox,
+        detallesAsignacion: pack.detallesAsignacion,
+        pagoMensual: pack.pagoMensual
       })),
       resumenPacks: {
-        totalPacks: packsDelMes.length,
+        totalPacks: packsActivos.length,
         totalMontoPacks: Math.round(totalMontoPacks * 100) / 100,
         totalMontoIndividuales: Math.round(totalMontoIndividuales * 100) / 100
       }
     };
+  }
+
+  async getUsuariosParaConsolidado(): Promise<any[]> {
+    // Definir interfaz para el usuario con actividad
+    interface UsuarioConActividad {
+      id: string;
+      nombre: string;
+      email: string;
+      tieneReservas: boolean;
+      tienePacks: boolean;
+    }
+
+    // Obtener todos los psicólogos que tienen actividad (reservas o packs)
+    const psicologos = await this.userRepository.find({
+      where: { role: 'PSICOLOGO' },
+      select: ['id', 'nombre', 'apellido', 'email'],
+      order: { nombre: 'ASC' }
+    });
+
+    // Para cada psicólogo, verificar si tiene actividad
+    const psicologosConActividad: UsuarioConActividad[] = [];
+    
+    for (const psicologo of psicologos) {
+      // Verificar si tiene reservas
+      const tieneReservas = await this.reservaRepository.findOne({
+        where: { psicologoId: psicologo.id }
+      });
+
+      // Verificar si tiene packs asignados
+      const tienePacks = await this.packAsignacionRepository.findOne({
+        where: { usuarioId: psicologo.id }
+      });
+
+      // Solo incluir si tiene actividad
+      if (tieneReservas || tienePacks) {
+        psicologosConActividad.push({
+          id: psicologo.id,
+          nombre: `${psicologo.nombre} ${psicologo.apellido}`,
+          email: psicologo.email,
+          tieneReservas: !!tieneReservas,
+          tienePacks: !!tienePacks
+        });
+      }
+    }
+
+    return psicologosConActividad;
   }
 
   private calcularReservasPorSemana(reservas: Reserva[], fechaInicio: Date): number[] {

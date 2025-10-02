@@ -52,14 +52,40 @@ export class DetallePackDto {
   precioTotal: number;
   precioProporcional: number;
   totalReservas: number;
-  reservasCompletadas: number;
+  reservasConfirmadas: number;
   reservasCanceladas: number;
-  reservasPendientes: number;
   precioPorReserva: number;
   estadoPago: string;
   montoPagado: number;
   montoReembolsado: number;
   estadoAsignacion: string;
+  nombreBox: string;
+  detallesAsignacion: {
+    dias: number[];
+    horarios: {
+      diaSemana: number;
+      horaInicio: string;
+      horaFin: string;
+      nombreBox: string;
+    }[];
+  };
+  // Información completa del pago mensual
+  pagoMensual: {
+    id: string;
+    mes: number;
+    año: number;
+    monto: number;
+    montoPagado: number;
+    montoReembolsado: number;
+    estado: string;
+    fechaPago: Date | null;
+    fechaVencimiento: Date | null;
+    observaciones: string | null;
+    metodoPago: string | null;
+    referenciaPago: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null;
 }
 
 export class ConsolidadoMensualDto {

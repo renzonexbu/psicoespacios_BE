@@ -521,7 +521,7 @@ export class PacksService {
     metodoPago?: string;
     referenciaPago?: string;
     observaciones?: string;
-  }): Promise<PackPagoMensual> {
+  }): Promise<any> {
     return this.dataSource.transaction(async (manager) => {
       const pago = await manager.findOne(PackPagoMensual, { 
         where: { id: pagoId },
@@ -544,7 +544,54 @@ export class PacksService {
       pago.referenciaPago = datosPago.referenciaPago || null;
       pago.observaciones = datosPago.observaciones || null;
 
-      return await manager.save(pago);
+      const pagoActualizado = await manager.save(pago);
+
+      // 🎯 NUEVA FUNCIONALIDAD: Actualizar automáticamente las reservas del pack
+      const fechaInicio = new Date(pago.año, pago.mes - 1, 1); // Mes en 0-indexed
+      const fechaFin = new Date(pago.año, pago.mes, 0, 23, 59, 59); // Último día del mes
+
+      // Buscar todas las reservas del pack para ese mes
+      const reservasDelPack = await manager.find(Reserva, {
+        where: {
+          packAsignacionId: pago.asignacionId,
+          fecha: Between(fechaInicio, fechaFin)
+        }
+      });
+
+      // Actualizar estado de pago de todas las reservas del pack
+      let reservasActualizadas = 0;
+      if (reservasDelPack.length > 0) {
+        await manager.update(Reserva, 
+          { 
+            packAsignacionId: pago.asignacionId,
+            fecha: Between(fechaInicio, fechaFin)
+          },
+          { 
+            estadoPago: EstadoPagoReserva.PAGADO,
+            updatedAt: new Date()
+          }
+        );
+        reservasActualizadas = reservasDelPack.length;
+      }
+
+      return {
+        message: 'Pago mensual marcado como pagado correctamente',
+        pago: pagoActualizado,
+        asignacion: {
+          id: pago.asignacion.id,
+          estado: pago.asignacion.estado,
+        pack: {
+          id: pago.asignacion.pack?.id,
+          nombre: pago.asignacion.pack?.nombre,
+          precio: pago.asignacion.pack?.precio
+        }
+        },
+        reservasAfectadas: {
+          total: reservasActualizadas,
+          mes: `${pago.año}-${pago.mes.toString().padStart(2, '0')}`,
+          estado: 'Todas las reservas del pack de este mes ahora se consideran pagadas'
+        }
+      };
     });
   }
 

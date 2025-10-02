@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards, Request, Param } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Request, Param, BadRequestException } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -22,7 +22,7 @@ export class ConsolidadoController {
       : query.psicologoId;
 
     if (!psicologoId) {
-      throw new Error('Psicólogo ID es requerido');
+      throw new BadRequestException('Psicólogo ID es requerido');
     }
 
     return this.consolidadoService.getConsolidadoMensual(psicologoId, query.mes);
@@ -35,9 +35,27 @@ export class ConsolidadoController {
     @Param('psicologoId') psicologoId: string,
     @Query('mes') mes: string
   ): Promise<ConsolidadoMensualDto> {
+    // Validar que el mes esté en el formato correcto
+    if (!mes || !/^\d{4}-\d{2}$/.test(mes)) {
+      throw new BadRequestException('El mes debe tener el formato YYYY-MM (ej: 2024-01)');
+    }
+
+    // Validar que el psicologoId sea un UUID válido
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(psicologoId)) {
+      throw new BadRequestException('ID de psicólogo inválido');
+    }
+
     return this.consolidadoService.getConsolidadoMensual(psicologoId, mes);
   }
+
+  @Get('admin/usuarios')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async getUsuariosParaConsolidado() {
+    return this.consolidadoService.getUsuariosParaConsolidado();
+  }
 }
+
 
 
 
