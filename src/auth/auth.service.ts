@@ -55,16 +55,9 @@ export class AuthService {
       throw new UnauthorizedException('Tu cuenta de psicólogo está pendiente de aprobación. Un administrador debe asignarte un subrol para poder acceder al sistema.');
     }
 
-    // Verificar onboarding para usuarios con subrol CDD o AMBOS
-    if (user.role === 'PSICOLOGO' && (user.subrol === 'CDD' || user.subrol === 'AMBOS')) {
-      const psicologo = await this.psicologoRepository.findOne({
-        where: { usuario: { id: user.id } }
-      });
-      
-      if (!psicologo) {
-        throw new UnauthorizedException('Debes completar tu perfil de psicólogo antes de acceder al sistema. Por favor, completa el proceso de onboarding.');
-      }
-    }
+    // No bloquear el login por onboarding: si es PSICOLOGO con subrol CDD o AMBOS
+    // permitimos iniciar sesión y reportamos hasOnboarding en la respuesta.
+    // La verificación de onboarding se hará en el frontend usando el flag devuelto.
 
     const payload = { sub: user.id, email: user.email, role: user.role, subrol: user.subrol };
     const access_token = await this.jwtService.signAsync(payload);

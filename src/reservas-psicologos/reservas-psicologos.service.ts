@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, DataSource, MoreThanOrEqual } from 'typeorm';
+import { Repository, Between, DataSource, MoreThanOrEqual, In } from 'typeorm';
 import { ReservaPsicologo, EstadoReservaPsicologo, ModalidadSesion } from '../common/entities/reserva-psicologo.entity';
 import { Reserva, EstadoReserva, EstadoPagoReserva } from '../common/entities/reserva.entity';
 import { User } from '../common/entities/user.entity';
@@ -252,7 +252,17 @@ export class ReservasPsicologosService {
       }
 
       // 8. Retornar respuesta completa
-      return this.mapToResponseDto(savedReserva, psicologo.usuario, paciente);
+      // Obtener información del box si existe
+      let box: Box | undefined;
+      if (savedReserva.boxId) {
+        const foundBox = await manager.findOne(Box, {
+          where: { id: savedReserva.boxId },
+          relations: ['sede']
+        });
+        box = foundBox || undefined;
+      }
+
+      return this.mapToResponseDto(savedReserva, psicologo.usuario, paciente, box);
     });
   }
 
@@ -267,6 +277,8 @@ export class ReservasPsicologosService {
       .leftJoinAndSelect('reserva.psicologo', 'psicologo')
       .leftJoinAndSelect('psicologo.usuario', 'psicologoUsuario')
       .leftJoinAndSelect('reserva.paciente', 'paciente')
+      .leftJoinAndSelect('Box', 'box', 'box.id = reserva.boxId')
+      .leftJoinAndSelect('box.sede', 'sede')
       .orderBy('reserva.fecha', 'DESC')
       .addOrderBy('reserva.horaInicio', 'ASC');
 
@@ -295,7 +307,25 @@ export class ReservasPsicologosService {
     }
 
     const reservas = await queryBuilder.getMany();
-    return reservas.map(reserva => this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente));
+    
+    // Obtener información de boxes para las reservas que tienen boxId
+    const boxIds = reservas
+      .filter(reserva => reserva.boxId)
+      .map(reserva => reserva.boxId);
+    
+    let boxesMap = new Map();
+    if (boxIds.length > 0) {
+      const boxes = await this.boxRepository.find({
+        where: boxIds.length === 1 ? { id: boxIds[0] } : { id: In(boxIds) },
+        relations: ['sede']
+      });
+      boxesMap = new Map(boxes.map(box => [box.id, box]));
+    }
+    
+    return reservas.map(reserva => {
+      const box = reserva.boxId ? boxesMap.get(reserva.boxId) : undefined;
+      return this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente, box);
+    });
   }
 
   /**
@@ -342,7 +372,25 @@ export class ReservasPsicologosService {
     }
 
     const reservas = await queryBuilder.getMany();
-    return reservas.map(reserva => this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente));
+    
+    // Obtener información de boxes para las reservas que tienen boxId
+    const boxIds = reservas
+      .filter(reserva => reserva.boxId)
+      .map(reserva => reserva.boxId);
+    
+    let boxesMap = new Map();
+    if (boxIds.length > 0) {
+      const boxes = await this.boxRepository.find({
+        where: boxIds.length === 1 ? { id: boxIds[0] } : { id: In(boxIds) },
+        relations: ['sede']
+      });
+      boxesMap = new Map(boxes.map(box => [box.id, box]));
+    }
+    
+    return reservas.map(reserva => {
+      const box = reserva.boxId ? boxesMap.get(reserva.boxId) : undefined;
+      return this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente, box);
+    });
   }
 
   /**
@@ -360,7 +408,17 @@ export class ReservasPsicologosService {
       throw new NotFoundException('Reserva no encontrada');
     }
 
-    return this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente);
+    // Obtener información del box si existe
+    let box: Box | undefined;
+    if (reserva.boxId) {
+      const foundBox = await this.boxRepository.findOne({
+        where: { id: reserva.boxId },
+        relations: ['sede']
+      });
+      box = foundBox || undefined;
+    }
+
+    return this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente, box);
   }
 
   /**
@@ -375,7 +433,24 @@ export class ReservasPsicologosService {
       order: { fecha: 'DESC', horaInicio: 'ASC' },
     });
 
-    return reservas.map(reserva => this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente));
+    // Obtener información de boxes para las reservas que tienen boxId
+    const boxIds = reservas
+      .filter(reserva => reserva.boxId)
+      .map(reserva => reserva.boxId);
+    
+    let boxesMap = new Map();
+    if (boxIds.length > 0) {
+      const boxes = await this.boxRepository.find({
+        where: boxIds.length === 1 ? { id: boxIds[0] } : { id: In(boxIds) },
+        relations: ['sede']
+      });
+      boxesMap = new Map(boxes.map(box => [box.id, box]));
+    }
+
+    return reservas.map(reserva => {
+      const box = reserva.boxId ? boxesMap.get(reserva.boxId) : undefined;
+      return this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente, box);
+    });
   }
 
   /**
@@ -390,7 +465,24 @@ export class ReservasPsicologosService {
       order: { fecha: 'DESC', horaInicio: 'ASC' },
     });
 
-    return reservas.map(reserva => this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente));
+    // Obtener información de boxes para las reservas que tienen boxId
+    const boxIds = reservas
+      .filter(reserva => reserva.boxId)
+      .map(reserva => reserva.boxId);
+    
+    let boxesMap = new Map();
+    if (boxIds.length > 0) {
+      const boxes = await this.boxRepository.find({
+        where: boxIds.length === 1 ? { id: boxIds[0] } : { id: In(boxIds) },
+        relations: ['sede']
+      });
+      boxesMap = new Map(boxes.map(box => [box.id, box]));
+    }
+
+    return reservas.map(reserva => {
+      const box = reserva.boxId ? boxesMap.get(reserva.boxId) : undefined;
+      return this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente, box);
+    });
   }
 
   /**
@@ -408,7 +500,24 @@ export class ReservasPsicologosService {
 
     this.logger.log(`Reservas encontradas para usuario ${usuarioId}: ${reservas.length}`);
 
-    return reservas.map(reserva => this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente));
+    // Obtener información de boxes para las reservas que tienen boxId
+    const boxIds = reservas
+      .filter(reserva => reserva.boxId)
+      .map(reserva => reserva.boxId);
+    
+    let boxesMap = new Map();
+    if (boxIds.length > 0) {
+      const boxes = await this.boxRepository.find({
+        where: boxIds.length === 1 ? { id: boxIds[0] } : { id: In(boxIds) },
+        relations: ['sede']
+      });
+      boxesMap = new Map(boxes.map(box => [box.id, box]));
+    }
+
+    return reservas.map(reserva => {
+      const box = reserva.boxId ? boxesMap.get(reserva.boxId) : undefined;
+      return this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente, box);
+    });
   }
 
   /**
@@ -446,7 +555,25 @@ export class ReservasPsicologosService {
     });
 
     this.logger.log(`Reservas encontradas: ${reservas.length}`);
-    return reservas.map(reserva => this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente));
+    
+    // Obtener información de boxes para las reservas que tienen boxId
+    const boxIds = reservas
+      .filter(reserva => reserva.boxId)
+      .map(reserva => reserva.boxId);
+    
+    let boxesMap = new Map();
+    if (boxIds.length > 0) {
+      const boxes = await this.boxRepository.find({
+        where: boxIds.length === 1 ? { id: boxIds[0] } : { id: In(boxIds) },
+        relations: ['sede']
+      });
+      boxesMap = new Map(boxes.map(box => [box.id, box]));
+    }
+
+    return reservas.map(reserva => {
+      const box = reserva.boxId ? boxesMap.get(reserva.boxId) : undefined;
+      return this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente, box);
+    });
   }
 
   /**
@@ -535,7 +662,17 @@ export class ReservasPsicologosService {
     const updatedReserva = await this.reservaPsicologoRepository.save(reserva);
     this.logger.log(`Reserva actualizada: ${id}`);
 
-    return this.mapToResponseDto(updatedReserva, reserva.psicologo.usuario, reserva.paciente);
+    // Obtener información del box si existe
+    let box: Box | undefined;
+    if (updatedReserva.boxId) {
+      const foundBox = await this.boxRepository.findOne({
+        where: { id: updatedReserva.boxId },
+        relations: ['sede']
+      });
+      box = foundBox || undefined;
+    }
+
+    return this.mapToResponseDto(updatedReserva, reserva.psicologo.usuario, reserva.paciente, box);
   }
 
   /**
@@ -578,7 +715,18 @@ export class ReservasPsicologosService {
       const updatedReserva = await manager.save(reserva);
 
       this.logger.log(`Reserva cancelada: ${id}`);
-      return this.mapToResponseDto(updatedReserva, reserva.psicologo.usuario, reserva.paciente);
+      
+      // Obtener información del box si existe
+      let box: Box | undefined;
+      if (updatedReserva.boxId) {
+        const foundBox = await this.boxRepository.findOne({
+          where: { id: updatedReserva.boxId },
+          relations: ['sede']
+        });
+        box = foundBox || undefined;
+      }
+
+      return this.mapToResponseDto(updatedReserva, reserva.psicologo.usuario, reserva.paciente, box);
     });
   }
 
@@ -606,7 +754,17 @@ export class ReservasPsicologosService {
 
     this.logger.log(`PagoId actualizado para reserva: ${id}`);
 
-    return this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente);
+    // Obtener información del box si existe
+    let box: Box | undefined;
+    if (reserva.boxId) {
+      const foundBox = await this.boxRepository.findOne({
+        where: { id: reserva.boxId },
+        relations: ['sede']
+      });
+      box = foundBox || undefined;
+    }
+
+    return this.mapToResponseDto(reserva, reserva.psicologo.usuario, reserva.paciente, box);
   }
 
   /**
@@ -687,7 +845,8 @@ export class ReservasPsicologosService {
   private mapToResponseDto(
     reserva: ReservaPsicologo, 
     psicologoUsuario: User, 
-    paciente: User
+    paciente: User,
+    box?: Box
   ): ReservaPsicologoResponseDto {
     return {
       id: reserva.id,
@@ -696,10 +855,14 @@ export class ReservasPsicologosService {
       pacienteId: reserva.paciente.id,
       pacienteNombre: `${paciente.nombre} ${paciente.apellido}`,
       pacienteFotoUrl: paciente.fotoUrl, // URL de la foto del paciente
+      pacienteEmail: paciente.email,
+      pacienteTelefono: paciente.telefono,
       fecha: reserva.fecha,
       horaInicio: reserva.horaInicio,
       horaFin: reserva.horaFin,
       boxId: reserva.boxId,
+      boxNombre: box?.nombre || box?.numero,
+      boxSede: box?.sede?.nombre,
       modalidad: reserva.modalidad,
       estado: reserva.estado,
       observaciones: reserva.observaciones,

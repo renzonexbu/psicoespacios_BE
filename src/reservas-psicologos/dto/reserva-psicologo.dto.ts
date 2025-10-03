@@ -132,10 +132,14 @@ export class ReservaPsicologoResponseDto {
   pacienteId: string;
   pacienteNombre: string;
   pacienteFotoUrl?: string; // URL de la foto del paciente
+  pacienteEmail?: string; // Email del paciente
+  pacienteTelefono?: string; // Teléfono del paciente
   fecha: Date;
   horaInicio: string;
   horaFin: string;
   boxId?: string;
+  boxNombre?: string; // Nombre del box
+  boxSede?: string; // Nombre de la sede del box
   modalidad: ModalidadSesion;
   estado: EstadoReservaPsicologo;
   observaciones?: string;
