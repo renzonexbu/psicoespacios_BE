@@ -233,7 +233,8 @@ export class BoxReservationService {
     const getHorarioDia = (fecha: Date): { inicio: string; fin: string; cerrado: boolean } | null => {
       if (!box.sede?.horarioAtencion) return null;
       
-      const diasSemana = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
+      // Mapeo de días de la semana (índice 0-6) a los nombres en español con acentos
+      const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
       const diaSemana = diasSemana[fecha.getDay()];
       
       // Manejar ambos formatos posibles: array directo o objeto con diasHabiles
@@ -382,7 +383,8 @@ export class BoxReservationService {
   private getHorarioDiaFromSede(sede: any, fecha: Date): { inicio: string; fin: string; cerrado: boolean } | null {
     if (!sede?.horarioAtencion) return null;
     
-    const diasSemana = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
+    // Mapeo de días de la semana (índice 0-6) a los nombres en español con acentos
+    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     const diaSemana = diasSemana[fecha.getDay()];
     
     // Manejar ambos formatos posibles: array directo o objeto con diasHabiles
