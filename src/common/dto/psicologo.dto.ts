@@ -121,6 +121,7 @@ export class PsicologoPublicDto {
     apellido: string;
     fotoUrl?: string;
     especialidad?: string;
+    experiencia?: string;
     estado: string;
   };
   // NO incluir: password, rut, telefono, fechaNacimiento, direccion, timestamps

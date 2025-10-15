@@ -11,6 +11,7 @@ import { Role } from '../../common/enums/role.enum';
 export class PsicologosController {
   constructor(private readonly psicologosService: PsicologosService) {}
 
+  // Endpoints públicos (sin autenticación)
   @Get('public')
   async findAllPublic() {
     return this.psicologosService.findAllPublic();
@@ -21,20 +22,7 @@ export class PsicologosController {
     return this.psicologosService.findOnePublic(id);
   }
 
-  @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
-  create(@Body() createPsicologoDto: CreatePsicologoDto) {
-    return this.psicologosService.create(createPsicologoDto);
-  }
-
-  @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
-  findAll() {
-    return this.psicologosService.findAll();
-  }
-
+  // Endpoints con autenticación - rutas específicas primero
   @Get('usuario/:usuarioId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
@@ -143,6 +131,28 @@ export class PsicologosController {
     return this.psicologosService.getPacientesAsignados(psicologoId);
   }
 
+  // Endpoints CRUD básicos
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  create(@Body() createPsicologoDto: CreatePsicologoDto) {
+    return this.psicologosService.create(createPsicologoDto);
+  }
+
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
+  findAll() {
+    return this.psicologosService.findAll();
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PACIENTE)
+  findOne(@Param('id') id: string) {
+    return this.psicologosService.findOne(id);
+  }
+
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.TERAPEUTA)
@@ -165,13 +175,6 @@ export class PsicologosController {
     }
     const psicologo = await this.psicologosService.findByUserId(usuarioId);
     return this.psicologosService.update(psicologo.id, updatePsicologoDto);
-  }
-
-  @Get(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PACIENTE)
-  findOne(@Param('id') id: string) {
-    return this.psicologosService.findOne(id);
   }
 
   @Delete(':id')

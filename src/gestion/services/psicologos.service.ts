@@ -82,6 +82,7 @@ export class PsicologosService {
         apellido: psicologo.usuario.apellido,
         fotoUrl: psicologo.usuario.fotoUrl,
         especialidad: psicologo.usuario.especialidad,
+        experiencia: psicologo.usuario.experiencia,
         estado: psicologo.usuario.estado,
       },
     }));
@@ -129,6 +130,7 @@ export class PsicologosService {
         apellido: psicologo.usuario.apellido,
         fotoUrl: psicologo.usuario.fotoUrl,
         especialidad: psicologo.usuario.especialidad,
+        experiencia: psicologo.usuario.experiencia,
         estado: psicologo.usuario.estado,
       },
     };
