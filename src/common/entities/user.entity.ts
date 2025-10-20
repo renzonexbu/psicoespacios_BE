@@ -35,6 +35,22 @@ export class User {
   @Column({ nullable: true })
   direccion: string;
 
+  // Campos específicos de dirección
+  @Column({ nullable: true })
+  calleNumero: string;
+
+  @Column({ nullable: true })
+  observacionDireccion: string;
+
+  @Column({ nullable: true })
+  region: string;
+
+  @Column({ nullable: true })
+  comuna: string;
+
+  @Column({ nullable: true })
+  compania: string;
+
   @Column({ nullable: true })
   especialidad: string;
 

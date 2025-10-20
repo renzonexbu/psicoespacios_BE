@@ -1,4 +1,5 @@
 import { IsArray, IsString, IsOptional, IsEnum, IsBoolean, IsDateString } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { 
   DiagnosticoPaciente, 
   TemaPaciente, 
@@ -42,6 +43,25 @@ export class CrearPerfilMatchingDto {
   genero?: Genero;
 
   @IsArray()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map(v => {
+        if (typeof v === 'string') {
+          // Normalizar valores de modalidad
+          const normalized = v.toLowerCase();
+          switch (normalized) {
+            case 'indiferente': return 'Indiferente';
+            case 'online': return 'Online';
+            case 'presencial': return 'Presencial';
+            case 'ambas': return 'Ambas';
+            default: return v; // Mantener valor original si no coincide
+          }
+        }
+        return v;
+      });
+    }
+    return value;
+  })
   @IsEnum(ModalidadAtencion, { each: true })
   @IsOptional()
   modalidad_preferida?: ModalidadAtencion[];
@@ -88,6 +108,25 @@ export class CrearPerfilMatchingPsicologoDto {
   genero?: Genero;
 
   @IsArray()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map(v => {
+        if (typeof v === 'string') {
+          // Normalizar valores de modalidad
+          const normalized = v.toLowerCase();
+          switch (normalized) {
+            case 'indiferente': return 'Indiferente';
+            case 'online': return 'Online';
+            case 'presencial': return 'Presencial';
+            case 'ambas': return 'Ambas';
+            default: return v; // Mantener valor original si no coincide
+          }
+        }
+        return v;
+      });
+    }
+    return value;
+  })
   @IsEnum(ModalidadAtencion, { each: true })
   @IsOptional()
   modalidad_atencion?: ModalidadAtencion[];
@@ -187,6 +226,25 @@ export class FormularioMatchingPacienteDto {
   genero: Genero;
 
   @IsArray()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map(v => {
+        if (typeof v === 'string') {
+          // Normalizar valores de modalidad
+          const normalized = v.toLowerCase();
+          switch (normalized) {
+            case 'indiferente': return 'Indiferente';
+            case 'online': return 'Online';
+            case 'presencial': return 'Presencial';
+            case 'ambas': return 'Ambas';
+            default: return v; // Mantener valor original si no coincide
+          }
+        }
+        return v;
+      });
+    }
+    return value;
+  })
   @IsEnum(ModalidadAtencion, { each: true })
   modalidad_preferida: ModalidadAtencion[];
 
@@ -227,6 +285,25 @@ export class FormularioMatchingPsicologoDto {
   genero: Genero;
 
   @IsArray()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map(v => {
+        if (typeof v === 'string') {
+          // Normalizar valores de modalidad
+          const normalized = v.toLowerCase();
+          switch (normalized) {
+            case 'indiferente': return 'Indiferente';
+            case 'online': return 'Online';
+            case 'presencial': return 'Presencial';
+            case 'ambas': return 'Ambas';
+            default: return v; // Mantener valor original si no coincide
+          }
+        }
+        return v;
+      });
+    }
+    return value;
+  })
   @IsEnum(ModalidadAtencion, { each: true })
   modalidad_atencion: ModalidadAtencion[];
 }

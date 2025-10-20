@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsDateString, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsEmail, IsDateString, IsNotEmpty, MinLength, MaxLength, IsOptional } from 'class-validator';
 
 export class CrearPacienteDto {
   @IsString()
@@ -26,4 +26,25 @@ export class CrearPacienteDto {
   @IsDateString()
   @IsNotEmpty()
   fechaNacimiento: string; // YYYY-MM-DD
+
+  // Campos de dirección
+  @IsString()
+  @IsNotEmpty()
+  calleNumero: string;
+
+  @IsString()
+  @IsOptional()
+  observacionDireccion?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  region: string;
+
+  @IsString()
+  @IsNotEmpty()
+  comuna: string;
+
+  @IsString()
+  @IsOptional()
+  compania?: string;
 }

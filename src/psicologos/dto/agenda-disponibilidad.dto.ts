@@ -103,7 +103,7 @@ export class BoxInfoResponseDto {
   id: string;
   numero: string;
   estado: string;
-  urlImage?: string;
+  fotos?: string[];
   sedeId: string;
   sedeNombre: string;
   sedeDireccion?: string;

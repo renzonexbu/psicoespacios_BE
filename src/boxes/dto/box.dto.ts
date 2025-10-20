@@ -20,10 +20,10 @@ export class CreateBoxDto {
   @IsOptional()
   equipamiento?: string[];
 
-  @IsString()
-  @IsUrl()
+  @IsArray()
+  @IsUrl({}, { each: true })
   @IsOptional()
-  urlImage?: string;
+  fotos?: string[];
 
   @IsString()
   @IsIn(['DISPONIBLE', 'OCUPADO', 'MANTENIMIENTO', 'INACTIVO'])
@@ -57,10 +57,10 @@ export class UpdateBoxDto {
   @IsOptional()
   equipamiento?: string[];
 
-  @IsString()
-  @IsUrl()
+  @IsArray()
+  @IsUrl({}, { each: true })
   @IsOptional()
-  urlImage?: string;
+  fotos?: string[];
 
   @IsString()
   @IsIn(['DISPONIBLE', 'OCUPADO', 'MANTENIMIENTO', 'INACTIVO'])

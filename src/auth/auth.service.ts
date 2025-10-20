@@ -144,6 +144,17 @@ export class AuthService {
     if (!registerDto.role) {
       throw new BadRequestException('El rol es obligatorio y debe ser PSICOLOGO, PACIENTE o ADMIN.');
     }
+    
+    // Validaciones de campos de dirección
+    if (!registerDto.calleNumero) {
+      throw new BadRequestException('La calle y número son obligatorios.');
+    }
+    if (!registerDto.region) {
+      throw new BadRequestException('La región es obligatoria.');
+    }
+    if (!registerDto.comuna) {
+      throw new BadRequestException('La comuna es obligatoria.');
+    }
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
     const user = this.userRepository.create({
@@ -155,6 +166,11 @@ export class AuthService {
       telefono: registerDto.telefono,
       fechaNacimiento: registerDto.fechaNacimiento,
       fotoUrl: registerDto.fotoUrl,
+      calleNumero: registerDto.calleNumero,
+      observacionDireccion: registerDto.observacionDireccion,
+      region: registerDto.region,
+      comuna: registerDto.comuna,
+      compania: registerDto.compania,
       role: registerDto.role,
       estado: 'PENDIENTE' // Usuarios nuevos comienzan como PENDIENTES
     });

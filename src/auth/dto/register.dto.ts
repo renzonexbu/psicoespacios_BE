@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum, IsOptional, IsDateString, Matches, IsUrl } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum, IsOptional, IsDateString, Matches, IsUrl, ValidateIf } from 'class-validator';
 
 export class RegisterDto {
   @IsEmail()
@@ -55,9 +55,31 @@ export class RegisterDto {
   })
   fechaNacimiento: string;
 
-  @IsUrl()
+  @ValidateIf((o) => o.fotoUrl && o.fotoUrl.trim() !== '')
+  @IsUrl({}, { message: 'fotoUrl debe ser una URL válida' })
   @IsOptional()
   fotoUrl?: string;
+
+  // Campos de dirección
+  @IsString()
+  @IsNotEmpty()
+  calleNumero: string;
+
+  @IsString()
+  @IsOptional()
+  observacionDireccion?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  region: string;
+
+  @IsString()
+  @IsNotEmpty()
+  comuna: string;
+
+  @IsString()
+  @IsOptional()
+  compania?: string;
 
   @IsEnum(['PSICOLOGO', 'PACIENTE', 'ADMIN'])
   role: string;

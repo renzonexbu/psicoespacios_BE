@@ -155,9 +155,15 @@ export class MatchingService {
       throw new Error('Paciente no encontrado');
     }
 
-    // Obtener todos los psicólogos activos
+    // Obtener solo psicólogos que tengan cuenta activa en users
     const psicologos = await this.psicologoRepository.find({
-      relations: ['usuario']
+      relations: ['usuario'],
+      where: {
+        usuario: {
+          estado: 'ACTIVO',
+          role: 'PSICOLOGO'
+        }
+      }
     });
 
     const resultados: ResultadoMatching[] = [];
@@ -175,9 +181,15 @@ export class MatchingService {
    * Calcula el matching directamente con las respuestas del formulario (sin persistir paciente)
    */
   async calcularMatchingConRespuestas(respuestasFormulario: any): Promise<ResultadoMatching[]> {
-    // Obtener todos los psicólogos activos
+    // Obtener solo psicólogos que tengan cuenta activa en users
     const psicologos = await this.psicologoRepository.find({
-      relations: ['usuario']
+      relations: ['usuario'],
+      where: {
+        usuario: {
+          estado: 'ACTIVO',
+          role: 'PSICOLOGO'
+        }
+      }
     });
 
     const resultados: ResultadoMatching[] = [];
@@ -548,9 +560,13 @@ export class MatchingService {
    * Verifica si hay coincidencia de modalidad
    */
   private hayCoincidenciaModalidad(preferencias: string[], ofrecidas: string[]): boolean {
-    return preferencias.some(pref => 
-      ofrecidas.includes(pref) || pref === 'Indiferente'
-    );
+    // Si el usuario es indiferente a la modalidad, siempre hay coincidencia
+    if (preferencias.includes('Indiferente')) {
+      return true;
+    }
+    
+    // Si no es indiferente, verificar si hay coincidencias específicas
+    return preferencias.some(pref => ofrecidas.includes(pref));
   }
 
   /**

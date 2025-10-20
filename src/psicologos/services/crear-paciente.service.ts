@@ -74,6 +74,11 @@ export class CrearPacienteService {
         rut: crearPacienteDto.rut,
         telefono: '', // Se puede agregar después
         fechaNacimiento: new Date(crearPacienteDto.fechaNacimiento),
+        calleNumero: crearPacienteDto.calleNumero,
+        observacionDireccion: crearPacienteDto.observacionDireccion,
+        region: crearPacienteDto.region,
+        comuna: crearPacienteDto.comuna,
+        compania: crearPacienteDto.compania,
         password: hashedPassword,
         role: 'PACIENTE',
         estado: 'ACTIVO'

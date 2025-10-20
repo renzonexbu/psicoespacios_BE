@@ -29,8 +29,8 @@ export class Box {
   @Column({ type: 'text', array: true, nullable: true })
   equipamiento: string[];
 
-  @Column({ nullable: true })
-  urlImage: string;
+  @Column({ type: 'text', array: true, nullable: true })
+  fotos: string[];
 
   @Column({ default: 'DISPONIBLE' })
   estado: string;
