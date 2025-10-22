@@ -3,13 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In } from 'typeorm';
 import { Reserva } from '../common/entities/reserva.entity';
 import { Box } from '../common/entities/box.entity';
+import { Sede } from '../common/entities/sede.entity';
 import { User } from '../common/entities/user.entity';
 import { Suscripcion } from '../common/entities/suscripcion.entity';
 import { Plan } from '../common/entities/plan.entity';
 import { PackHora } from '../packs/entities/pack-hora.entity';
 import { PackAsignacion, EstadoPackAsignacion } from '../packs/entities/pack-asignacion.entity';
 import { PackPagoMensual, EstadoPagoPackMensual } from '../packs/entities/pack-pago-mensual.entity';
-import { ConsolidadoMensualDto, DetalleReservaDto, DetalleSuscripcionDto } from './dto/consolidado-mensual.dto';
+import { ConsolidadoMensualDto, DetalleReservaDto, DetalleSuscripcionDto, DetalleSedeDto } from './dto/consolidado-mensual.dto';
 
 @Injectable()
 export class ConsolidadoService {
@@ -18,6 +19,8 @@ export class ConsolidadoService {
     private reservaRepository: Repository<Reserva>,
     @InjectRepository(Box)
     private boxRepository: Repository<Box>,
+    @InjectRepository(Sede)
+    private sedeRepository: Repository<Sede>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
     @InjectRepository(Suscripcion)
@@ -37,6 +40,25 @@ export class ConsolidadoService {
       return parseFloat(precio) || 0;
     }
     return precio || 0;
+  }
+
+  private convertirSedeADto(sede: any): DetalleSedeDto {
+    return {
+      id: sede.id,
+      nombre: sede.nombre,
+      description: sede.description,
+      direccion: sede.direccion,
+      ciudad: sede.ciudad,
+      telefono: sede.telefono,
+      email: sede.email,
+      imageUrl: sede.imageUrl,
+      thumbnailUrl: sede.thumbnailUrl,
+      features: sede.features,
+      coordenadas: sede.coordenadas,
+      horarioAtencion: sede.horarioAtencion,
+      serviciosDisponibles: sede.serviciosDisponibles,
+      estado: sede.estado
+    };
   }
 
   private async obtenerPacksDelMes(psicologoId: string, fechaInicio: Date, fechaFin: Date): Promise<any[]> {
@@ -309,21 +331,48 @@ export class ConsolidadoService {
     const reservasIndividuales = reservas.filter(r => !r.packAsignacionId);
     const reservasDePacks = reservas.filter(r => r.packAsignacionId);
 
-    // Obtener información de los boxes
+    // Obtener información de los boxes con sus sedes
     const boxIds = [...new Set(reservas.map(r => r.boxId))];
     const boxes = await this.boxRepository.find({
-      where: { id: In(boxIds) }
+      where: { id: In(boxIds) },
+      relations: ['sede']
     });
     const boxMap = new Map(boxes.map(box => [box.id, box]));
+    
+    // Crear mapa de sedes para acceso rápido
+    const sedesMap = new Map();
+    boxes.forEach(box => {
+      if (box.sede && !sedesMap.has(box.sede.id)) {
+        sedesMap.set(box.sede.id, box.sede);
+      }
+    });
 
     // Procesar reservas individuales para crear el detalle
     const detalleReservas: DetalleReservaDto[] = reservasIndividuales.map(reserva => {
       const box = boxMap.get(reserva.boxId);
       
-      // Manejar fecha que puede ser string o Date
-      const fechaReserva = reserva.fecha instanceof Date 
-        ? reserva.fecha.toISOString().split('T')[0]
-        : new Date(reserva.fecha).toISOString().split('T')[0];
+      // Debug: Log de la fecha original
+      console.log(`🔍 Debug fecha reserva ${reserva.id}:`, {
+        fechaOriginal: reserva.fecha,
+        tipo: typeof reserva.fecha,
+        fechaComoDate: new Date(reserva.fecha),
+        fechaISO: new Date(reserva.fecha).toISOString(),
+        fechaLocal: new Date(reserva.fecha).toLocaleDateString('en-CA'),
+        fechaManual: `${new Date(reserva.fecha).getFullYear()}-${String(new Date(reserva.fecha).getMonth() + 1).padStart(2, '0')}-${String(new Date(reserva.fecha).getDate()).padStart(2, '0')}`
+      });
+      
+      // Manejar fecha - método específico para PostgreSQL date
+      let fechaReserva: string;
+      
+      // Para PostgreSQL date, usar UTC para evitar problemas de zona horaria
+      if (reserva.fecha instanceof Date) {
+        // Usar UTC para evitar problemas de zona horaria con PostgreSQL date
+        fechaReserva = `${reserva.fecha.getUTCFullYear()}-${String(reserva.fecha.getUTCMonth() + 1).padStart(2, '0')}-${String(reserva.fecha.getUTCDate()).padStart(2, '0')}`;
+      } else {
+        // Si es string, crear Date y usar UTC
+        const fechaDate = new Date(reserva.fecha);
+        fechaReserva = `${fechaDate.getUTCFullYear()}-${String(fechaDate.getUTCMonth() + 1).padStart(2, '0')}-${String(fechaDate.getUTCDate()).padStart(2, '0')}`;
+      }
       
       // Manejar createdAt que puede ser string o Date
       const fechaCreacion = reserva.createdAt instanceof Date
@@ -334,6 +383,14 @@ export class ConsolidadoService {
         id: reserva.id,
         boxId: reserva.boxId,
         nombreBox: box?.nombre || 'Box no encontrado',
+        sede: box?.sede ? this.convertirSedeADto(box.sede) : {
+          id: '',
+          nombre: 'Sede no encontrada',
+          description: '',
+          direccion: '',
+          ciudad: '',
+          estado: 'INACTIVA'
+        },
         fecha: fechaReserva,
         horaInicio: reserva.horaInicio,
         horaFin: reserva.horaFin,
@@ -432,11 +489,17 @@ export class ConsolidadoService {
     // Calcular reservas por semana (solo válidas)
     const reservasPorSemana = this.calcularReservasPorSemana(reservasValidasParaEstadisticas, fechaInicio);
     
-    // Calcular días con reservas (solo válidas)
+    // Calcular días con reservas (solo válidas) - usar UTC para PostgreSQL date
     const diasConReservas = new Set(reservasValidasParaEstadisticas.map(r => {
-      const fechaReserva = r.fecha instanceof Date 
-        ? r.fecha.toISOString().split('T')[0]
-        : new Date(r.fecha).toISOString().split('T')[0];
+      let fechaReserva: string;
+      if (r.fecha instanceof Date) {
+        // Usar UTC para evitar problemas de zona horaria con PostgreSQL date
+        fechaReserva = `${r.fecha.getUTCFullYear()}-${String(r.fecha.getUTCMonth() + 1).padStart(2, '0')}-${String(r.fecha.getUTCDate()).padStart(2, '0')}`;
+      } else {
+        // Si es string, crear Date y usar UTC
+        const fechaDate = new Date(r.fecha);
+        fechaReserva = `${fechaDate.getUTCFullYear()}-${String(fechaDate.getUTCMonth() + 1).padStart(2, '0')}-${String(fechaDate.getUTCDate()).padStart(2, '0')}`;
+      }
       return fechaReserva;
     })).size;
 

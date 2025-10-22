@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between, In } from 'typeorm';
 import { Disponibilidad } from '../entities/disponibilidad.entity';
 import { Box } from '../../common/entities/box.entity';
 import { Reserva, EstadoReserva } from '../../common/entities/reserva.entity';
@@ -203,6 +203,18 @@ export class AgendaService {
     console.log('Días disponibles en la base de datos:', disponibilidad.map(d => d.day));
     console.log('Rango de fechas:', query.fechaInicio, 'a', query.fechaFin);
 
+    // Obtener información de sedes para validación de horarios
+    const sedesMap = new Map<string, Sede>();
+    const sedeIds = [...new Set(disponibilidad.map(d => d.sede_id).filter(id => id && id !== 'online'))];
+    
+    if (sedeIds.length > 0) {
+      const sedes = await this.sedeRepository.find({
+        where: { id: In(sedeIds) }
+      });
+      sedes.forEach(sede => sedesMap.set(sede.id, sede));
+      console.log(`📋 Sedes cargadas para validación: ${sedes.map(s => s.nombre).join(', ')}`);
+    }
+
     // Corregir el bucle para evitar mutación del objeto Date
     for (let fecha = new Date(fechaInicio); fecha <= fechaFin; fecha = new Date(fecha.getTime() + 24 * 60 * 60 * 1000)) {
       const diaSemana = diasSemana[fecha.getDay()];
@@ -227,6 +239,20 @@ export class AgendaService {
 
           // Determinar modalidad basada en sede_id
           const modalidadSlot = disponibilidadDia.sede_id === 'online' ? 'online' : 'presencial';
+          
+          // Para modalidad presencial, validar horarios de sede
+          if (modalidadSlot === 'presencial' && disponibilidadDia.sede_id && disponibilidadDia.sede_id !== 'online') {
+            const sede = sedesMap.get(disponibilidadDia.sede_id);
+            if (sede) {
+              const esHorarioValido = this.esHorarioValidoParaSede(horaInicio, horaFin, sede, diaSemana);
+              if (!esHorarioValido) {
+                console.log(`⏰ Slot ${horaInicio}-${horaFin} filtrado: fuera del horario de atención de ${sede.nombre}`);
+                continue; // Saltar este slot
+              }
+            } else {
+              console.log(`⚠️ Sede ${disponibilidadDia.sede_id} no encontrada para validación de horarios`);
+            }
+          }
           
           slots.push({
             fecha: fechaString,
@@ -430,6 +456,15 @@ export class AgendaService {
             if (boxes.length > 0) {
               // Crear un slot por cada box disponible
               for (const box of boxes) {
+                // Validar horarios de sede para cada box
+                if (box.sede) {
+                  const esHorarioValido = this.esHorarioValidoParaSede(horaInicio, horaFin, box.sede, diaSemana);
+                  if (!esHorarioValido) {
+                    console.log(`⏰ Slot ${horaInicio}-${horaFin} filtrado para box ${box.numero}: fuera del horario de atención de ${box.sede.nombre}`);
+                    continue; // Saltar este slot
+                  }
+                }
+
                 slots.push({
                   fecha: fechaString,
                   horaInicio,
@@ -449,6 +484,13 @@ export class AgendaService {
               });
               
               if (sede) {
+                // Validar horarios de sede antes de buscar boxes
+                const esHorarioValido = this.esHorarioValidoParaSede(horaInicio, horaFin, sede, diaSemana);
+                if (!esHorarioValido) {
+                  console.log(`⏰ Slot ${horaInicio}-${horaFin} filtrado: fuera del horario de atención de ${sede.nombre}`);
+                  continue; // Saltar este slot
+                }
+
                 const boxesSede = await this.boxRepository.find({
                   where: { 
                     sede: { id: disponibilidadDia.sede_id },
@@ -578,6 +620,51 @@ export class AgendaService {
     const horaFin = new Date();
     horaFin.setHours(hora + 1, minuto, 0, 0);
     return `${horaFin.getHours().toString().padStart(2, '0')}:${horaFin.getMinutes().toString().padStart(2, '0')}`;
+  }
+
+  private esHorarioValidoParaSede(
+    horaInicio: string, 
+    horaFin: string, 
+    sede: Sede, 
+    diaSemana: string
+  ): boolean {
+    // Si no hay horario de atención configurado, permitir cualquier horario
+    if (!sede.horarioAtencion || !sede.horarioAtencion.diasHabiles) {
+      console.log(`⚠️ Sede ${sede.nombre} no tiene horario de atención configurado`);
+      return true;
+    }
+
+    // Buscar el día de la semana en el horario de atención
+    const diaHorario = sede.horarioAtencion.diasHabiles.find(dia => 
+      this.normalizarDia(dia.dia) === this.normalizarDia(diaSemana)
+    );
+
+    // Si no se encuentra el día o está cerrado, no es válido
+    if (!diaHorario || diaHorario.cerrado) {
+      console.log(`❌ Sede ${sede.nombre} está cerrada el ${diaSemana}`);
+      return false;
+    }
+
+    // Convertir horarios a minutos para comparación
+    const horaInicioMinutos = this.convertirHoraAMinutos(horaInicio);
+    const horaFinMinutos = this.convertirHoraAMinutos(horaFin);
+    const sedeInicioMinutos = this.convertirHoraAMinutos(diaHorario.inicio);
+    const sedeFinMinutos = this.convertirHoraAMinutos(diaHorario.fin);
+
+    // Verificar si el horario del slot está dentro del horario de atención
+    const esValido = horaInicioMinutos >= sedeInicioMinutos && horaFinMinutos <= sedeFinMinutos;
+    
+    console.log(`🔍 Validación horario sede ${sede.nombre} (${diaSemana}):`);
+    console.log(`   Slot: ${horaInicio}-${horaFin} (${horaInicioMinutos}-${horaFinMinutos} min)`);
+    console.log(`   Sede: ${diaHorario.inicio}-${diaHorario.fin} (${sedeInicioMinutos}-${sedeFinMinutos} min)`);
+    console.log(`   Resultado: ${esValido ? '✅ Válido' : '❌ Fuera de horario'}`);
+
+    return esValido;
+  }
+
+  private convertirHoraAMinutos(hora: string): number {
+    const [horas, minutos] = hora.split(':').map(Number);
+    return horas * 60 + minutos;
   }
 
   // Método para obtener box disponible

@@ -485,7 +485,7 @@ export class PagoSesionService {
             horaFin: dto.horaFin,
             precio: precioBox,
             estado: EstadoReserva.CONFIRMADA,
-            estadoPago: EstadoPagoReserva.PAGADO // Como ya se pagó la sesión, el box también está pagado
+            estadoPago: EstadoPagoReserva.PENDIENTE_PAGO // El box debe estar pendiente de pago por separado
           });
 
           const savedReservaBox = await queryRunner.manager.save(Reserva, reservaBox);

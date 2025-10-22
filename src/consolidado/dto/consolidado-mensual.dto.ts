@@ -32,10 +32,38 @@ export class DetalleSuscripcionDto {
   };
 }
 
+export class DetalleSedeDto {
+  id: string;
+  nombre: string;
+  description: string;
+  direccion: string;
+  ciudad: string;
+  telefono?: string;
+  email?: string;
+  imageUrl?: string;
+  thumbnailUrl?: string;
+  features?: string[];
+  coordenadas?: {
+    lat: number;
+    lng: number;
+  };
+  horarioAtencion?: {
+    diasHabiles: {
+      dia: string;
+      inicio: string;
+      fin: string;
+      cerrado: boolean;
+    }[];
+  };
+  serviciosDisponibles?: string[];
+  estado: string;
+}
+
 export class DetalleReservaDto {
   id: string;
   boxId: string;
   nombreBox: string;
+  sede: DetalleSedeDto;
   fecha: string;
   horaInicio: string;
   horaFin: string;
