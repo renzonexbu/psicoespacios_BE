@@ -4,7 +4,7 @@ import { Repository, Not, LessThanOrEqual } from 'typeorm';
 import { Suscripcion, EstadoSuscripcion } from '../../common/entities/suscripcion.entity';
 import { User } from '../../common/entities/user.entity';
 import { Plan } from '../../common/entities/plan.entity';
-import { CreateSuscripcionDto, UpdateSuscripcionDto, ConfigurarRenovacionDto, RenovarSuscripcionDto } from '../dto/suscripcion.dto';
+import { CreateSuscripcionDto, UpdateSuscripcionDto, ConfigurarRenovacionDto, RenovarSuscripcionDto, AsignarSuscripcionGratuitaDto } from '../dto/suscripcion.dto';
 
 @Injectable()
 export class SuscripcionesService {
@@ -380,5 +380,192 @@ export class SuscripcionesService {
       suscripcion.updatedAt = new Date();
       await this.suscripcionRepository.save(suscripcion);
     }
+  }
+
+  /**
+   * Asignar suscripción gratuita indefinida a un usuario (solo para administradores)
+   */
+  async asignarSuscripcionGratuita(asignarDto: AsignarSuscripcionGratuitaDto, adminId: string): Promise<any> {
+    // Verificar que el usuario existe y es psicólogo
+    const usuario = await this.userRepository.findOne({
+      where: { id: asignarDto.usuarioId, role: 'PSICOLOGO' }
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado o no es psicólogo');
+    }
+
+    // Verificar que el plan existe y está activo
+    const plan = await this.planRepository.findOne({
+      where: { id: asignarDto.planId, activo: true }
+    });
+
+    if (!plan) {
+      throw new NotFoundException('Plan no encontrado o inactivo');
+    }
+
+    // Verificar si ya tiene una suscripción activa
+    const suscripcionActiva = await this.suscripcionRepository.findOne({
+      where: { usuarioId: asignarDto.usuarioId, estado: EstadoSuscripcion.ACTIVA }
+    });
+
+    if (suscripcionActiva) {
+      throw new BadRequestException('El usuario ya tiene una suscripción activa');
+    }
+
+    // Crear fecha de inicio (ahora)
+    const fechaInicio = new Date();
+    
+    // Crear fecha de fin muy lejana (100 años en el futuro para simular "indefinida")
+    const fechaFin = new Date();
+    fechaFin.setFullYear(fechaFin.getFullYear() + 100);
+
+    // Crear la suscripción gratuita
+    const suscripcion = this.suscripcionRepository.create({
+      usuarioId: asignarDto.usuarioId,
+      planId: asignarDto.planId,
+      fechaInicio,
+      fechaFin,
+      estado: EstadoSuscripcion.ACTIVA, // Activa inmediatamente
+      precioTotal: 0, // Gratuita
+      horasConsumidas: 0,
+      horasDisponibles: plan.horasIncluidas,
+      renovacionAutomatica: false, // No se renueva automáticamente
+      notificacionesHabilitadas: true,
+      historialPagos: [{
+        fecha: new Date(),
+        monto: 0,
+        metodo: 'ASIGNACION_ADMIN',
+        referencia: `ADMIN-${adminId}`,
+        estado: 'GRATUITO'
+      }],
+      datosPago: {
+        metodo: 'ASIGNACION_ADMIN',
+        referencia: `ADMIN-${adminId}`,
+        metadatos: {
+          asignadoPor: adminId,
+          motivo: asignarDto.motivoAsignacion || 'Asignación gratuita por administrador',
+          observaciones: asignarDto.observaciones,
+          tipo: 'GRATUITA_INDEFINIDA',
+          fechaAsignacion: new Date()
+        }
+      }
+    });
+
+    const suscripcionGuardada = await this.suscripcionRepository.save(suscripcion);
+
+    // Preparar respuesta con información completa
+    return {
+      message: 'Suscripción gratuita asignada exitosamente',
+      suscripcion: {
+        id: suscripcionGuardada.id,
+        usuarioId: suscripcionGuardada.usuarioId,
+        planId: suscripcionGuardada.planId,
+        fechaInicio: suscripcionGuardada.fechaInicio,
+        fechaFin: suscripcionGuardada.fechaFin,
+        estado: suscripcionGuardada.estado,
+        precioTotal: suscripcionGuardada.precioTotal,
+        horasConsumidas: suscripcionGuardada.horasConsumidas,
+        horasDisponibles: suscripcionGuardada.horasDisponibles,
+        renovacionAutomatica: suscripcionGuardada.renovacionAutomatica,
+        createdAt: suscripcionGuardada.createdAt,
+        updatedAt: suscripcionGuardada.updatedAt
+      },
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        apellido: usuario.apellido,
+        email: usuario.email,
+        role: usuario.role
+      },
+      plan: {
+        id: plan.id,
+        nombre: plan.nombre,
+        descripcion: plan.descripcion,
+        precio: plan.precio,
+        horasIncluidas: plan.horasIncluidas,
+        beneficios: plan.beneficios
+      },
+      asignacion: {
+        asignadoPor: adminId,
+        motivo: asignarDto.motivoAsignacion || 'Asignación gratuita por administrador',
+        observaciones: asignarDto.observaciones,
+        tipo: 'GRATUITA_INDEFINIDA',
+        fechaAsignacion: new Date()
+      }
+    };
+  }
+
+  /**
+   * Obtener psicólogos con suscripción activa (solo para administradores)
+   */
+  async getPsicologosConSuscripcionActiva(): Promise<any[]> {
+    const suscripcionesActivas = await this.suscripcionRepository
+      .createQueryBuilder('suscripcion')
+      .leftJoinAndSelect('suscripcion.psicologo', 'psicologo')
+      .leftJoinAndSelect('suscripcion.plan', 'plan')
+      .where('suscripcion.estado = :estado', { estado: EstadoSuscripcion.ACTIVA })
+      .andWhere('psicologo.role = :role', { role: 'PSICOLOGO' })
+      .orderBy('suscripcion.fechaInicio', 'DESC')
+      .getMany();
+
+    return suscripcionesActivas.map(suscripcion => ({
+      suscripcion: {
+        id: suscripcion.id,
+        fechaInicio: suscripcion.fechaInicio,
+        fechaFin: suscripcion.fechaFin,
+        estado: suscripcion.estado,
+        precioTotal: suscripcion.precioTotal,
+        horasConsumidas: suscripcion.horasConsumidas,
+        horasDisponibles: suscripcion.horasDisponibles,
+        renovacionAutomatica: suscripcion.renovacionAutomatica,
+        createdAt: suscripcion.createdAt,
+        updatedAt: suscripcion.updatedAt
+      },
+      psicologo: {
+        id: suscripcion.psicologo?.id,
+        nombre: suscripcion.psicologo?.nombre,
+        apellido: suscripcion.psicologo?.apellido,
+        email: suscripcion.psicologo?.email,
+        telefono: suscripcion.psicologo?.telefono,
+        rut: suscripcion.psicologo?.rut,
+        fechaNacimiento: suscripcion.psicologo?.fechaNacimiento,
+        fotoUrl: suscripcion.psicologo?.fotoUrl,
+        direccion: suscripcion.psicologo?.direccion,
+        especialidad: suscripcion.psicologo?.especialidad,
+        numeroRegistroProfesional: suscripcion.psicologo?.numeroRegistroProfesional,
+        experiencia: suscripcion.psicologo?.experiencia,
+        role: suscripcion.psicologo?.role,
+        estado: suscripcion.psicologo?.estado,
+        subrol: suscripcion.psicologo?.subrol,
+        createdAt: suscripcion.psicologo?.createdAt,
+        updatedAt: suscripcion.psicologo?.updatedAt
+      },
+      plan: {
+        id: suscripcion.plan?.id,
+        nombre: suscripcion.plan?.nombre,
+        descripcion: suscripcion.plan?.descripcion,
+        precio: suscripcion.plan?.precio,
+        horasIncluidas: suscripcion.plan?.horasIncluidas,
+        beneficios: suscripcion.plan?.beneficios,
+        activo: suscripcion.plan?.activo
+      },
+      // Información adicional de la suscripción
+      diasRestantes: this.calcularDiasRestantes(suscripcion.fechaFin),
+      esGratuita: suscripcion.precioTotal === 0,
+      porcentajeHorasUsadas: suscripcion.horasDisponibles > 0 
+        ? Math.round((suscripcion.horasConsumidas / suscripcion.horasDisponibles) * 100)
+        : 0
+    }));
+  }
+
+  /**
+   * Calcular días restantes hasta el vencimiento de la suscripción
+   */
+  private calcularDiasRestantes(fechaFin: Date): number {
+    const ahora = new Date();
+    const diferencia = fechaFin.getTime() - ahora.getTime();
+    const diasRestantes = Math.ceil(diferencia / (1000 * 60 * 60 * 24));
+    return Math.max(0, diasRestantes); // No retornar números negativos
   }
 }

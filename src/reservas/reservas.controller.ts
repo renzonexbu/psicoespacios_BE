@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param, Delete, Query, UseGuards, Request, Put } from '@nestjs/common';
 import { ReservasService } from './reservas.service';
-import { CreateReservaDto, UpdateReservaDto, UpdateEstadoPagoDto } from './dto/reserva.dto';
+import { CreateReservaDto, UpdateReservaDto, UpdateEstadoPagoDto, BulkUpdateEstadoPagoDto } from './dto/reserva.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -54,6 +54,16 @@ export class ReservasController {
   }
 
   /**
+   * Obtener todas las reservas de un usuario específico (solo para administradores)
+   */
+  @Get('admin/usuario/:usuarioId')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  async findByUsuario(@Param('usuarioId') usuarioId: string) {
+    return this.reservasService.findByUsuario(usuarioId);
+  }
+
+  /**
    * Actualizar el estado de pago de una reserva (solo para administradores)
    */
   @Put(':id/estado-pago')
@@ -64,6 +74,18 @@ export class ReservasController {
     @Body() updateEstadoPagoDto: UpdateEstadoPagoDto
   ) {
     return this.reservasService.updateEstadoPago(id, updateEstadoPagoDto);
+  }
+
+  /**
+   * Actualizar múltiples estados de pago de reservas (solo para administradores)
+   */
+  @Put('admin/bulk-estado-pago')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  async bulkUpdateEstadoPago(
+    @Body() bulkUpdateDto: BulkUpdateEstadoPagoDto
+  ) {
+    return this.reservasService.bulkUpdateEstadoPago(bulkUpdateDto);
   }
 
   /**

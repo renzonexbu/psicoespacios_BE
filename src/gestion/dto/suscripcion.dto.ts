@@ -105,3 +105,21 @@ export class ActivarSuscripcionDto {
     metadatos?: Record<string, any>;
   };
 }
+
+export class AsignarSuscripcionGratuitaDto {
+  @IsUUID()
+  @IsNotEmpty()
+  usuarioId: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  planId: string;
+
+  @IsOptional()
+  @IsString()
+  observaciones?: string;
+
+  @IsOptional()
+  @IsString()
+  motivoAsignacion?: string;
+}

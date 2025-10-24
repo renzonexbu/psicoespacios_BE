@@ -3,7 +3,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { SuscripcionesService } from '../services/suscripciones.service';
-import { CreateSuscripcionDto, UpdateSuscripcionDto, ConfigurarRenovacionDto, RenovarSuscripcionDto, ActivarSuscripcionDto } from '../dto/suscripcion.dto';
+import { CreateSuscripcionDto, UpdateSuscripcionDto, ConfigurarRenovacionDto, RenovarSuscripcionDto, ActivarSuscripcionDto, AsignarSuscripcionGratuitaDto } from '../dto/suscripcion.dto';
 
 @Controller('api/v1/gestion/suscripciones')
 export class SuscripcionesController {
@@ -104,5 +104,24 @@ export class SuscripcionesController {
     @Req() req: any,
   ) {
     return this.suscripcionesService.activarSuscripcion(id, activarDto.datosPago);
+  }
+
+  // Asignar suscripción gratuita indefinida (solo para administradores)
+  @Post('admin/asignar-gratuita')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async asignarSuscripcionGratuita(
+    @Body() asignarDto: AsignarSuscripcionGratuitaDto,
+    @Req() req: any,
+  ) {
+    return this.suscripcionesService.asignarSuscripcionGratuita(asignarDto, req.user.id);
+  }
+
+  // Obtener psicólogos con suscripción activa (solo para administradores)
+  @Get('admin/psicologos-con-suscripcion-activa')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async getPsicologosConSuscripcionActiva() {
+    return this.suscripcionesService.getPsicologosConSuscripcionActiva();
   }
 }
