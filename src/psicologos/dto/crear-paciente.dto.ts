@@ -27,22 +27,22 @@ export class CrearPacienteDto {
   @IsNotEmpty()
   fechaNacimiento: string; // YYYY-MM-DD
 
-  // Campos de dirección
+  // Campos de dirección (opcionales)
   @IsString()
-  @IsNotEmpty()
-  calleNumero: string;
+  @IsOptional()
+  calleNumero?: string;
 
   @IsString()
   @IsOptional()
   observacionDireccion?: string;
 
   @IsString()
-  @IsNotEmpty()
-  region: string;
+  @IsOptional()
+  region?: string;
 
   @IsString()
-  @IsNotEmpty()
-  comuna: string;
+  @IsOptional()
+  comuna?: string;
 
   @IsString()
   @IsOptional()

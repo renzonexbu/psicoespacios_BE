@@ -1,7 +1,11 @@
-import { Controller, Get, Post, Body, Param, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { PacientesService } from '../services/pacientes.service';
 import { CreatePacienteDto, UpdatePacienteDto } from '../dto/paciente.dto';
 import { PsicologosService } from '../services/psicologos.service';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { Role } from '../../common/enums/role.enum';
 
 @Controller('api/v1/gestion/pacientes')
 export class PacientesController {
@@ -16,8 +20,28 @@ export class PacientesController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.pacientesService.findOne(id);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.PSICOLOGO)
+  async findOne(@Param('id') id: string, @Request() req: any) {
+    // Obtener datos del paciente (incluye idUsuarioPsicologo)
+    const paciente = await this.pacientesService.findOne(id);
+
+    // Si es ADMIN, puede ver cualquier paciente
+    if (req.user?.role === Role.ADMIN) {
+      return paciente;
+    }
+
+    // Si es PSICOLOGO, validar que sea el asignado al paciente
+    if (req.user?.role === Role.PSICOLOGO) {
+      const psicologo = await this.psicologosService.findByUserId(req.user.id);
+      if (!psicologo || paciente.idUsuarioPsicologo !== psicologo.id) {
+        throw new ForbiddenException('No tienes permisos para ver esta información');
+      }
+      return paciente;
+    }
+
+    // Cualquier otro rol no permitido
+    throw new ForbiddenException('No tienes permisos para ver esta información');
   }
 
   @Get(':id/psicologo')
