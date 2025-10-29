@@ -22,6 +22,8 @@ export class MailService {
   private transporter: nodemailer.Transporter;
   private readonly headerImage = 'https://s3.us-east-005.backblazeb2.com/psicoespacios/images/54bc1a52-a895-4cd9-9358-f684717c389b.png';
   private readonly footerImage = 'https://s3.us-east-005.backblazeb2.com/psicoespacios/images/3df56d51-de7d-496d-9eab-4c8f89d44793.png';
+  private readonly telefonoPsicologos = '+56950553501';
+  private readonly telefonoPacientes = '+56939488058';
 
   constructor(private configService: ConfigService) {
     this.initializeTransporter();
@@ -61,20 +63,26 @@ export class MailService {
       const templateContent = fs.readFileSync(templatePath, 'utf8');
       const compiledTemplate = handlebars.compile(templateContent);
       
-      // Agregar header y footer a todos los templates
+      // Resolver audiencia y teléfono de contacto
+      const audiencia = this.resolveAudiencia(templateName, context);
+      const telefonoContacto = audiencia === 'psicologo' ? this.telefonoPsicologos : this.telefonoPacientes;
+
+      // Agregar header, footer y datos comunes a todos los templates
       const fullContext = {
         ...context,
         headerImage: this.headerImage,
         footerImage: this.footerImage,
         currentYear: new Date().getFullYear(),
         FRONT_URL: this.configService.get<string>('FRONT_URL', 'http://localhost:3001'),
+        telefonoContacto,
+        audiencia,
       };
       
       const html = compiledTemplate(fullContext);
       
       return {
         subject: this.getSubjectForTemplate(templateName, context),
-        html: this.wrapWithLayout(html),
+        html: this.wrapWithLayout(html, telefonoContacto),
       };
     } catch (error) {
       this.logger.error(`Error al cargar template ${templateName}:`, error);
@@ -99,7 +107,7 @@ export class MailService {
     return subjects[templateName] || 'PsicoEspacios';
   }
 
-  private wrapWithLayout(content: string): string {
+  private wrapWithLayout(content: string, telefonoContacto?: string): string {
     return `
       <!DOCTYPE html>
       <html lang="es">
@@ -204,12 +212,32 @@ export class MailService {
             <div class="footer-text">
               © ${new Date().getFullYear()} PsicoEspacios. Todos los derechos reservados.<br>
               Este es un email automático, por favor no respondas a este mensaje.
+              ${telefonoContacto ? `<br>Contacto: ${telefonoContacto}` : ''}
             </div>
           </div>
         </div>
       </body>
       </html>
     `;
+  }
+
+  /**
+   * Determina la audiencia del email (paciente o psicologo) en base al template o un override en el contexto.
+   */
+  private resolveAudiencia(templateName: string, context: Record<string, any>): 'paciente' | 'psicologo' {
+    // Permitir override explícito desde el contexto
+    if (context && typeof context.audiencia === 'string') {
+      const val = String(context.audiencia).toLowerCase();
+      if (val === 'psicologo') return 'psicologo';
+      return 'paciente';
+    }
+
+    // Mapear por nombre de template (por defecto, son emails dirigidos a pacientes)
+    const templatesParaPsicologos = new Set<string>([
+      // agregar aquí templates que vayan a psicólogos cuando existan
+    ]);
+
+    return templatesParaPsicologos.has(templateName) ? 'psicologo' : 'paciente';
   }
 
   async sendEmail(emailData: EmailData): Promise<boolean> {

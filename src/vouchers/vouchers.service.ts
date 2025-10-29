@@ -16,25 +16,34 @@ export class VouchersService {
   ) {}
 
   async create(createVoucherDto: CreateVoucherDto): Promise<Voucher> {
-    // Buscar el psicólogo por su userId
-    const psicologo = await this.psicologoRepository.findOne({
-      where: { usuario: { id: createVoucherDto.psicologoUserId } },
-      relations: ['usuario']
-    });
-    
-    if (!psicologo) {
-      throw new NotFoundException('Psicólogo no encontrado para este usuario');
+    const esGlobal = !!createVoucherDto.esGlobal;
+
+    let psicologo: Psicologo | null = null;
+    let psicologoId: string | null = null;
+
+    if (!esGlobal) {
+      // Buscar el psicólogo por su userId
+      psicologo = await this.psicologoRepository.findOne({
+        where: { usuario: { id: createVoucherDto.psicologoUserId } },
+        relations: ['usuario']
+      });
+      
+      if (!psicologo) {
+        throw new NotFoundException('Psicólogo no encontrado para este usuario');
+      }
+      psicologoId = psicologo.id;
     }
 
-    // Crear el voucher usando el ID del psicólogo (no del usuario)
+    // Crear el voucher (global o asociado a psicólogo)
     const voucher = this.voucherRepository.create({
       nombre: createVoucherDto.nombre,
       porcentaje: createVoucherDto.porcentaje,
       vencimiento: createVoucherDto.vencimiento,
       modalidad: createVoucherDto.modalidad,
-      psicologoId: psicologo.id, // Usar el ID del psicólogo, no del usuario
       limiteUsos: createVoucherDto.limiteUsos,
-      psicologo
+      esGlobal,
+      psicologoId,
+      psicologo: psicologo || undefined
     });
     
     return this.voucherRepository.save(voucher);
@@ -43,7 +52,7 @@ export class VouchersService {
   async findAll(): Promise<Voucher[]> {
     return this.voucherRepository.find({ 
       where: { deletedAt: IsNull() }, // Solo vouchers no eliminados
-      relations: ['psicologo'] 
+      relations: ['psicologo', 'psicologo.usuario'] 
     });
   }
 
@@ -147,7 +156,9 @@ export class VouchersService {
         id: voucher.id, // ID del cupón para usar en el pago
         descuento: voucher.porcentaje,
         modalidad: voucher.modalidad,
-        psicologoNombre: `${voucher.psicologo.usuario.nombre} ${voucher.psicologo.usuario.apellido}`
+        psicologoNombre: voucher.psicologo?.usuario
+          ? `${voucher.psicologo.usuario.nombre} ${voucher.psicologo.usuario.apellido}`
+          : 'PsicoEspacios (Global)'
       };
 
     } catch (error) {

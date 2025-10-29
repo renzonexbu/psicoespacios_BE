@@ -1,4 +1,4 @@
-import { IsUUID, IsString, IsNumber, IsDateString, IsInt, Min, Max, IsNotEmpty } from 'class-validator';
+import { IsUUID, IsString, IsNumber, IsDateString, IsInt, Min, Max, IsNotEmpty, IsBoolean, ValidateIf, IsOptional } from 'class-validator';
 
 export class CreateVoucherDto {
   @IsString()
@@ -16,8 +16,13 @@ export class CreateVoucherDto {
   @IsString()
   modalidad: string;
 
+  @IsBoolean()
+  @IsOptional()
+  esGlobal?: boolean; // Si es true, el cupón aplica a todos los psicólogos
+
+  @ValidateIf((o) => !o.esGlobal)
   @IsUUID()
-  psicologoUserId: string; // Cambiado de psicologoId a psicologoUserId para mayor claridad
+  psicologoUserId?: string; // Requerido solo si no es global
 
   @IsInt()
   @Min(1)
@@ -38,6 +43,9 @@ export class UpdateVoucherDto {
 
   @IsString()
   modalidad?: string;
+
+  @IsBoolean()
+  esGlobal?: boolean;
 
   @IsInt()
   @Min(1)

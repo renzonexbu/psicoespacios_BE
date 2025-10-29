@@ -18,12 +18,15 @@ export class Voucher {
   @Column({ type: 'varchar', length: 50 })
   modalidad: string;
 
-  @ManyToOne(() => Psicologo, { nullable: false })
+  @ManyToOne(() => Psicologo, { nullable: true })
   @JoinColumn({ name: 'psicologoId' })
   psicologo: Psicologo;
 
-  @Column({ type: 'uuid' })
-  psicologoId: string;
+  @Column({ type: 'uuid', nullable: true })
+  psicologoId: string | null;
+
+  @Column({ type: 'boolean', default: false })
+  esGlobal: boolean;
 
   @Column({ type: 'int' })
   limiteUsos: number;

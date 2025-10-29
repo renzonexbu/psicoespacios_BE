@@ -128,7 +128,7 @@ export class PagoSesionService {
       let descuentoAplicado = 0;
 
       if (dto.cuponId) {
-        cupon = await this.validarYUsarCupon(dto.cuponId, queryRunner);
+        cupon = await this.validarYUsarCupon(dto.cuponId, queryRunner, dto.modalidad);
         descuentoAplicado = this.calcularDescuento(dto.precio, cupon.porcentaje);
       }
 
@@ -360,7 +360,7 @@ export class PagoSesionService {
       let descuentoAplicado = 0;
 
       if (dto.cuponId) {
-        cupon = await this.validarYUsarCupon(dto.cuponId, queryRunner);
+        cupon = await this.validarYUsarCupon(dto.cuponId, queryRunner, dto.modalidad);
         descuentoAplicado = this.calcularDescuento(dto.precio, cupon.porcentaje);
       }
 
@@ -546,7 +546,11 @@ export class PagoSesionService {
     }
   }
 
-  private async validarYUsarCupon(cuponId: string, queryRunner: any): Promise<Voucher> {
+  private async validarYUsarCupon(
+    cuponId: string,
+    queryRunner: any,
+    modalidadSesion?: ModalidadSesion
+  ): Promise<Voucher> {
     const cupon = await queryRunner.manager.findOne(Voucher, {
       where: { id: cuponId },
       relations: ['psicologo', 'psicologo.usuario']
@@ -562,6 +566,16 @@ export class PagoSesionService {
 
     if (cupon.usosActuales >= cupon.limiteUsos) {
       throw new BadRequestException('Cupón agotado');
+    }
+
+    // Validar modalidad: permite 'ambas' o coincidencia exacta con la modalidad de la sesión
+    if (modalidadSesion) {
+      const modalidadCupon = (cupon.modalidad || '').toLowerCase();
+      const modalidadSesionStr = String(modalidadSesion).toLowerCase();
+      const aplica = modalidadCupon === 'ambas' || modalidadCupon === modalidadSesionStr;
+      if (!aplica) {
+        throw new BadRequestException(`El cupón no aplica para la modalidad ${modalidadSesionStr}`);
+      }
     }
 
     // Incrementar uso del cupón ANTES de retornarlo
