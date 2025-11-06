@@ -43,7 +43,19 @@ export class DisponibilidadService {
     return !!sede;
   }
 
+  private isLegacyDay(day: WeeklyDayDto): boolean {
+    return Array.isArray(day.hours) && !!day.sede;
+  }
 
+  private buildStoredHours(day: WeeklyDayDto): any {
+    if (this.isLegacyDay(day)) {
+      return day.hours || [];
+    }
+    return {
+      online: day.hoursOnline || [],
+      presenciales: (day.presenciales || []).map(p => ({ sedeId: p.sedeId, horas: p.horas }))
+    };
+  }
 
   async saveAvailability(userId: string, data: AvailabilityDataDto): Promise<AvailabilityResponseDto> {
     // 1. Validar que el usuario existe y es psicólogo
@@ -55,22 +67,32 @@ export class DisponibilidadService {
       throw new BadRequestException('El usuario debe ser un psicólogo');
     }
 
-    // 2. Validar disponibilidad semanal
+    // 2. Validar disponibilidad semanal (nuevo formato y legado)
     for (const day of data.weeklySchedule) {
-      if (day.active && day.hours && day.hours.length > 0) {
-        // Validar horas
-        if (!this.validateHours(day.hours)) {
+      if (!day.active) continue;
+      if (this.isLegacyDay(day)) {
+        if (day.hours && day.hours.length > 0 && !this.validateHours(day.hours)) {
           throw new BadRequestException(`Horas inválidas para ${day.day}. Deben estar entre 08:00 y 20:00`);
         }
-        
-        // Validar sede
-        if (!(await this.validateSede(day.sede))) {
+        if (day.sede && !(await this.validateSede(day.sede))) {
           throw new BadRequestException(`Sede no encontrada: ${day.sede}`);
+        }
+      } else {
+        if (day.hoursOnline && day.hoursOnline.length > 0 && !this.validateHours(day.hoursOnline)) {
+          throw new BadRequestException(`Horas online inválidas para ${day.day}. Deben estar entre 08:00 y 20:00`);
+        }
+        if (day.presenciales) {
+          for (const blk of day.presenciales) {
+            if (!this.validateHours(blk.horas)) {
+              throw new BadRequestException(`Horas presenciales inválidas para ${day.day} (sede ${blk.sedeId}).`);
+            }
+            if (!(await this.validateSede(blk.sedeId))) {
+              throw new BadRequestException(`Sede no encontrada: ${blk.sedeId}`);
+            }
+          }
         }
       }
     }
-
-
 
     // 4. Guardar disponibilidad semanal (upsert por día)
     for (const day of data.weeklySchedule) {
@@ -79,15 +101,13 @@ export class DisponibilidadService {
           psicologo: { id: userId },
           day: day.day,
           active: day.active,
-          hours: day.active ? day.hours : [],
-          sede_id: day.sede,
+          hours: day.active ? this.buildStoredHours(day) : [],
+          sede_id: this.isLegacyDay(day) ? day.sede : undefined,
           works_on_holidays: data.worksOnHolidays,
         },
         ['psicologo', 'day']
       );
     }
-
-
 
     // 6. Retornar confirmación
     return this.getAvailability(userId);
@@ -109,19 +129,23 @@ export class DisponibilidadService {
       order: { day: 'ASC' }
     });
 
-
-
-    // 4. Formatear respuesta
-    const weeklySchedule: WeeklyDayDto[] = disponibilidades.map(d => ({
-      day: d.day,
-      active: d.active,
-      hours: d.hours || [],
-      sede: d.sede_id || 'online'
-    }));
+    // 4. Formatear respuesta (nuevo y legado)
+    const weeklySchedule: WeeklyDayDto[] = disponibilidades.map(d => {
+      const result: any = { day: d.day, active: d.active };
+      if (Array.isArray(d.hours)) {
+        result.hours = d.hours || [];
+        result.sede = d.sede_id || 'online';
+      } else if (d.hours && typeof d.hours === 'object') {
+        result.hoursOnline = Array.isArray((d as any).hours.online) ? (d as any).hours.online : [];
+        result.presenciales = Array.isArray((d as any).hours.presenciales) ? (d as any).hours.presenciales : [];
+      } else {
+        result.hours = [];
+        result.sede = d.sede_id || 'online';
+      }
+      return result as WeeklyDayDto;
+    });
 
     const worksOnHolidays = disponibilidades.length > 0 ? disponibilidades[0].works_on_holidays : false;
-
-
 
     // 5. Retornar datos
     return {

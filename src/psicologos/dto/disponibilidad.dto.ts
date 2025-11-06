@@ -1,6 +1,15 @@
 import { IsString, IsBoolean, IsArray, IsOptional, ValidateNested, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
 
+export class DiaPresencialBlockDto {
+  @IsString()
+  sedeId: string; // UUID de sede
+
+  @IsArray()
+  @IsString({ each: true })
+  horas: string[];
+}
+
 export class WeeklyDayDto {
   @IsString()
   @IsIn(['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
@@ -9,13 +18,27 @@ export class WeeklyDayDto {
   @IsBoolean()
   active: boolean;
 
+  // Nuevo formato (recomendado): definir ambos tipos de horas por día
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  hoursOnline?: string[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DiaPresencialBlockDto)
+  @IsOptional()
+  presenciales?: DiaPresencialBlockDto[];
+
+  // Formato legado (compatibilidad): una sola modalidad por día
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
   hours?: string[];
 
   @IsString()
-  sede: string; // "online" o "sede-id"
+  @IsOptional()
+  sede?: string; // "online" o "sede-id"
 }
 
 export class AvailabilityDataDto {

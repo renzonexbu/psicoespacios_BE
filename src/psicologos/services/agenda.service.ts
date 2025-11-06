@@ -55,13 +55,11 @@ export class AgendaService {
       }
     });
 
-    console.log('Disponibilidad encontrada:', disponibilidad.map(d => ({ day: d.day, hours: d.hours, sede_id: d.sede_id })));
-
     if (disponibilidad.length === 0) {
       throw new BadRequestException('El psicólogo no tiene disponibilidad configurada');
     }
 
-    // 3. Obtener boxes disponibles según la sede
+    // 3. Obtener boxes disponibles según la sede solicitada (opcional)
     let boxes: Box[] = [];
     if (query.sedeId && query.sedeId !== 'online') {
       boxes = await this.boxRepository.find({
@@ -97,7 +95,6 @@ export class AgendaService {
 
   // Nuevo método para disponibilidad del psicólogo (sin boxes)
   async getPsicologoDisponibilidad(query: PsicologoDisponibilidadDto): Promise<PsicologoDisponibilidadResponseDto> {
-    // 1. Verificar que el psicólogo existe
     const psicologo = await this.psicologoRepository.findOne({
       where: { id: query.psicologoId },
       relations: ['usuario']
@@ -107,7 +104,6 @@ export class AgendaService {
       throw new NotFoundException('Psicólogo no encontrado');
     }
 
-    // 2. Obtener la disponibilidad del psicólogo
     const disponibilidad = await this.disponibilidadRepository.find({
       where: { 
         psicologo: { id: psicologo.usuario.id },
@@ -115,35 +111,18 @@ export class AgendaService {
       }
     });
 
-    console.log('Disponibilidad psicólogo encontrada:', disponibilidad.map(d => ({ day: d.day, hours: d.hours, sede_id: d.sede_id })));
-
     if (disponibilidad.length === 0) {
       throw new BadRequestException('El psicólogo no tiene disponibilidad configurada');
     }
 
-    // 3. Filtrar disponibilidad por modalidad si se especifica
-    let disponibilidadFiltrada = disponibilidad;
-    if (query.modalidad) {
-      if (query.modalidad === 'online') {
-        // Para online, solo incluir disponibilidad donde sede_id sea 'online'
-        disponibilidadFiltrada = disponibilidad.filter(d => d.sede_id === 'online');
-        console.log(`Filtrado para modalidad ONLINE: ${disponibilidadFiltrada.length} días disponibles`);
-      } else if (query.modalidad === 'presencial') {
-        // Para presencial, solo incluir disponibilidad donde sede_id sea un UUID (no 'online')
-        disponibilidadFiltrada = disponibilidad.filter(d => d.sede_id && d.sede_id !== 'online');
-        console.log(`Filtrado para modalidad PRESENCIAL: ${disponibilidadFiltrada.length} días disponibles`);
-      }
-    }
-
-    // 4. Generar slots solo del psicólogo (sin boxes)
     const slots = await this.generatePsicologoSlots(
       query,
-      disponibilidadFiltrada,
+      disponibilidad,
       psicologo
     );
 
-    // 5. Verificar reservas existentes del psicólogo
-    const slotsConReservas = await this.checkReservasPsicologo(slots, query.psicologoId);
+    // Usar el verificador común de reservas
+    const slotsConReservas = await this.checkReservasExistentes(slots, query.psicologoId);
 
     return {
       psicologoId: query.psicologoId,
@@ -177,17 +156,14 @@ export class AgendaService {
       'SABADO': 'Sábado',
       'DOMINGO': 'Domingo'
     };
-    
     return normalizaciones[dia.toLowerCase()] || dia;
   }
 
   private crearFechaLocal(fechaString: string): Date {
-    // Crear fecha en zona horaria local para evitar desplazamientos
     const [year, month, day] = fechaString.split('-').map(Number);
-    return new Date(year, month - 1, day); // month - 1 porque los meses van de 0-11
+    return new Date(year, month - 1, day);
   }
 
-  // Método para generar slots solo del psicólogo (sin boxes)
   private async generatePsicologoSlots(
     query: PsicologoDisponibilidadDto,
     disponibilidad: Disponibilidad[],
@@ -196,207 +172,48 @@ export class AgendaService {
     const slots: DisponibilidadSlotDto[] = [];
     const fechaInicio = this.crearFechaLocal(query.fechaInicio);
     const fechaFin = this.crearFechaLocal(query.fechaFin);
-
-    // Mapeo correcto de días de la semana (getDay() devuelve 0=Domingo, 1=Lunes, etc.)
     const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-    console.log('Días disponibles en la base de datos:', disponibilidad.map(d => d.day));
-    console.log('Rango de fechas:', query.fechaInicio, 'a', query.fechaFin);
-
-    // Obtener información de sedes para validación de horarios
-    const sedesMap = new Map<string, Sede>();
-    const sedeIds = [...new Set(disponibilidad.map(d => d.sede_id).filter(id => id && id !== 'online'))];
-    
-    if (sedeIds.length > 0) {
-      const sedes = await this.sedeRepository.find({
-        where: { id: In(sedeIds) }
-      });
-      sedes.forEach(sede => sedesMap.set(sede.id, sede));
-      console.log(`📋 Sedes cargadas para validación: ${sedes.map(s => s.nombre).join(', ')}`);
-    }
-
-    // Corregir el bucle para evitar mutación del objeto Date
     for (let fecha = new Date(fechaInicio); fecha <= fechaFin; fecha = new Date(fecha.getTime() + 24 * 60 * 60 * 1000)) {
       const diaSemana = diasSemana[fecha.getDay()];
       const fechaString = fecha.toISOString().split('T')[0];
-      console.log(`Fecha: ${fechaString}, Día: ${diaSemana}, getDay(): ${fecha.getDay()}`);
-      
-      // Buscar disponibilidad con normalización
+
       const disponibilidadDia = disponibilidad.find(d => 
         this.normalizarDia(d.day) === diaSemana || d.day === diaSemana
       );
-      
-      if (disponibilidadDia) {
-        console.log(`✅ Encontrada disponibilidad para ${diaSemana}:`, disponibilidadDia.hours);
-      } else {
-        console.log(`❌ No hay disponibilidad para ${diaSemana}`);
-      }
+      if (!disponibilidadDia || !disponibilidadDia.hours) continue;
 
-      if (disponibilidadDia && disponibilidadDia.hours) {
-        for (const hora of disponibilidadDia.hours) {
-          const horaInicio = hora;
+      const hoursValue: any = disponibilidadDia.hours as any;
+      if (Array.isArray(hoursValue)) {
+        for (const hora of hoursValue) {
           const horaFin = this.calcularHoraFin(hora);
-
-          // Determinar modalidad basada en sede_id
           const modalidadSlot = disponibilidadDia.sede_id === 'online' ? 'online' : 'presencial';
-          
-          // Para modalidad presencial, validar horarios de sede
-          if (modalidadSlot === 'presencial' && disponibilidadDia.sede_id && disponibilidadDia.sede_id !== 'online') {
-            const sede = sedesMap.get(disponibilidadDia.sede_id);
-            if (sede) {
-              const esHorarioValido = this.esHorarioValidoParaSede(horaInicio, horaFin, sede, diaSemana);
-              if (!esHorarioValido) {
-                console.log(`⏰ Slot ${horaInicio}-${horaFin} filtrado: fuera del horario de atención de ${sede.nombre}`);
-                continue; // Saltar este slot
-              }
-            } else {
-              console.log(`⚠️ Sede ${disponibilidadDia.sede_id} no encontrada para validación de horarios`);
+          if (!query.modalidad || query.modalidad === modalidadSlot) {
+            slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: modalidadSlot, sedeId: disponibilidadDia.sede_id });
+          }
+        }
+      } else if (typeof hoursValue === 'object') {
+        const online: string[] = Array.isArray(hoursValue.online) ? hoursValue.online : [];
+        const presenciales: Array<{ sedeId: string; horas: string[] }> = Array.isArray(hoursValue.presenciales) ? hoursValue.presenciales : [];
+
+        if (!query.modalidad || query.modalidad === 'online') {
+          for (const hora of online) {
+            const horaFin = this.calcularHoraFin(hora);
+            slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: 'online' });
+          }
+        }
+        if (!query.modalidad || query.modalidad === 'presencial') {
+          for (const blk of presenciales) {
+            for (const hora of blk.horas) {
+              const horaFin = this.calcularHoraFin(hora);
+              slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: 'presencial', sedeId: blk.sedeId });
             }
           }
-          
-          slots.push({
-            fecha: fechaString,
-            horaInicio,
-            horaFin,
-            disponible: true,
-            modalidad: modalidadSlot,
-            sedeId: disponibilidadDia.sede_id
-          });
         }
       }
     }
 
-    console.log('Total de slots del psicólogo generados:', slots.length);
     return slots;
-  }
-
-  // Método para verificar reservas solo del psicólogo
-  private async checkReservasPsicologo(
-    slots: DisponibilidadSlotDto[],
-    psicologoId: string
-  ): Promise<DisponibilidadSlotDto[]> {
-    const slotsActualizados = [...slots];
-    console.log(`🔍 Verificando reservas para psicólogo: ${psicologoId}`);
-    console.log(`📅 Total de slots a verificar: ${slotsActualizados.length}`);
-
-    for (const slot of slotsActualizados) {
-      // Convertir string de fecha a Date usando la función local
-      const fechaDate = this.crearFechaLocal(slot.fecha);
-      console.log(`\n📋 Verificando slot: ${slot.fecha} ${slot.horaInicio}-${slot.horaFin}`);
-      console.log(`📅 Fecha convertida: ${fechaDate.toISOString()}`);
-      
-      // 1. Verificar reservas de boxes existentes para este slot del psicólogo
-      const reservasBoxes = await this.reservaRepository.find({
-        where: {
-          psicologoId,
-          fecha: fechaDate,
-          estado: EstadoReserva.CONFIRMADA
-        }
-      });
-
-      // También verificar reservas confirmadas de boxes
-      const reservasBoxesConfirmadas = await this.reservaRepository.find({
-        where: {
-          psicologoId,
-          fecha: fechaDate,
-          estado: EstadoReserva.CONFIRMADA
-        }
-      });
-
-      // Combinar ambas listas de reservas de boxes
-      const todasLasReservasBoxes = [...reservasBoxes, ...reservasBoxesConfirmadas];
-      console.log(`📦 Reservas de boxes encontradas: ${todasLasReservasBoxes.length}`);
-
-      // 2. Verificar reservas de sesiones existentes para este slot del psicólogo
-      console.log(`🔍 Buscando reservas de sesiones para fecha: ${fechaDate.toISOString()}, psicólogo: ${psicologoId}`);
-      
-      // Usar query builder para más control y debugging
-      const reservasSesionesQuery = this.reservaPsicologoRepository
-        .createQueryBuilder('reserva')
-        .where('reserva.psicologo_id = :psicologoId', { psicologoId })
-        .andWhere('reserva.fecha = :fecha', { fecha: fechaDate })
-        .andWhere('reserva.estado = :estado', { estado: 'confirmada' });
-
-      console.log(`🔍 Query SQL generada: ${reservasSesionesQuery.getSql()}`);
-      console.log(`🔍 Parámetros: ${JSON.stringify(reservasSesionesQuery.getParameters())}`);
-
-      const reservasSesiones = await reservasSesionesQuery.getMany();
-
-      // También verificar reservas pendientes (que ya están agendadas)
-      const reservasPendientesQuery = this.reservaPsicologoRepository
-        .createQueryBuilder('reserva')
-        .where('reserva.psicologo_id = :psicologoId', { psicologoId })
-        .andWhere('reserva.fecha = :fecha', { fecha: fechaDate })
-        .andWhere('reserva.estado = :estado', { estado: 'pendiente' });
-
-      const reservasPendientes = await reservasPendientesQuery.getMany();
-      
-      // Debug: Mostrar query SQL generado
-      console.log(`🔍 Query SQL para reservas confirmadas: ${reservasSesionesQuery.getSql()}`);
-      console.log(`🔍 Query SQL para reservas pendientes: ${reservasPendientesQuery.getSql()}`);
-
-      // Combinar ambas listas de reservas
-      const todasLasReservasSesiones = [...reservasSesiones, ...reservasPendientes];
-      console.log(`💼 Reservas de sesiones encontradas: ${todasLasReservasSesiones.length}`);
-      
-      if (todasLasReservasSesiones.length > 0) {
-        console.log(`📝 Detalles de reservas de sesiones:`);
-        todasLasReservasSesiones.forEach((reserva, index) => {
-          // Manejar tanto Date como string
-          const fechaReserva = reserva.fecha instanceof Date ? reserva.fecha : new Date(reserva.fecha);
-          console.log(`   ${index + 1}. Fecha: ${reserva.fecha} (tipo: ${typeof reserva.fecha}), Hora: ${reserva.horaInicio}-${reserva.horaFin}, Estado: ${reserva.estado}`);
-          console.log(`      📅 Fecha ISO: ${fechaReserva.toISOString()}, Fecha local: ${fechaReserva.toLocaleDateString()}`);
-        });
-      } else {
-        console.log(`📝 No se encontraron reservas para esta fecha`);
-      }
-
-      // Marcar como no disponible si hay conflicto de horarios con reservas de boxes
-      const hayConflictoBoxes = todasLasReservasBoxes.some(reserva => {
-        const hayConflicto = this.hayConflictoHorarios(
-          reserva.horaInicio, 
-          reserva.horaFin, 
-          slot.horaInicio, 
-          slot.horaFin
-        );
-        if (hayConflicto) {
-          console.log(`   🔴 Conflicto con reserva de box: ${reserva.horaInicio}-${reserva.horaFin} vs ${slot.horaInicio}-${slot.horaFin}`);
-        }
-        return hayConflicto;
-      });
-
-      // Marcar como no disponible si hay conflicto de horarios con reservas de sesiones
-      const hayConflictoSesiones = todasLasReservasSesiones.some(reserva => {
-        const hayConflicto = this.hayConflictoHorarios(
-          reserva.horaInicio, 
-          reserva.horaFin, 
-          slot.horaInicio, 
-          slot.horaFin
-        );
-        if (hayConflicto) {
-          console.log(`   🔴 Conflicto con reserva de sesión: ${reserva.horaInicio}-${reserva.horaFin} vs ${slot.horaInicio}-${slot.horaFin}`);
-        }
-        return hayConflicto;
-      });
-
-      console.log(`🔍 Conflicto con boxes: ${hayConflictoBoxes}, Conflicto con sesiones: ${hayConflictoSesiones}`);
-
-      if (hayConflictoBoxes || hayConflictoSesiones) {
-        slot.disponible = false;
-        const tipoConflicto = hayConflictoBoxes ? 'reserva de box' : 'reserva de sesión';
-        console.log(`❌ Slot no disponible: ${slot.fecha} ${slot.horaInicio}-${slot.horaFin} (conflicto con ${tipoConflicto} existente)`);
-      } else {
-        console.log(`✅ Slot disponible: ${slot.fecha} ${slot.horaInicio}-${slot.horaFin}`);
-      }
-    }
-
-    console.log(`\n📊 Resumen final:`);
-    const slotsDisponibles = slotsActualizados.filter(slot => slot.disponible).length;
-    const slotsNoDisponibles = slotsActualizados.filter(slot => !slot.disponible).length;
-    console.log(`   ✅ Slots disponibles: ${slotsDisponibles}`);
-    console.log(`   ❌ Slots no disponibles: ${slotsNoDisponibles}`);
-
-    return slotsActualizados;
   }
 
   private async generateDisponibilidadSlots(
@@ -408,108 +225,78 @@ export class AgendaService {
     const slots: DisponibilidadSlotDto[] = [];
     const fechaInicio = this.crearFechaLocal(query.fechaInicio);
     const fechaFin = this.crearFechaLocal(query.fechaFin);
-
-    // Mapeo correcto de días de la semana (getDay() devuelve 0=Domingo, 1=Lunes, etc.)
     const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-    console.log('Días disponibles en la base de datos:', disponibilidad.map(d => d.day));
-    console.log('Rango de fechas:', query.fechaInicio, 'a', query.fechaFin);
-    console.log('Fecha inicio (Date):', fechaInicio.toISOString());
-    console.log('Fecha fin (Date):', fechaFin.toISOString());
+    const boxesPorSede = new Map<string, Box[]>();
+    if (boxes && boxes.length > 0) {
+      for (const box of boxes) {
+        const sid = box.sede?.id;
+        if (sid) {
+          boxesPorSede.set(sid, [...(boxesPorSede.get(sid) || []), box]);
+        }
+      }
+    }
 
-    // Corregir el bucle para evitar mutación del objeto Date
     for (let fecha = new Date(fechaInicio); fecha <= fechaFin; fecha = new Date(fecha.getTime() + 24 * 60 * 60 * 1000)) {
       const diaSemana = diasSemana[fecha.getDay()];
       const fechaString = fecha.toISOString().split('T')[0];
-      console.log(`Fecha: ${fechaString}, Día: ${diaSemana}, getDay(): ${fecha.getDay()}`);
-      
-      // Buscar disponibilidad con normalización
+
       const disponibilidadDia = disponibilidad.find(d => 
         this.normalizarDia(d.day) === diaSemana || d.day === diaSemana
       );
-      
-      if (disponibilidadDia) {
-        console.log(`✅ Encontrada disponibilidad para ${diaSemana}:`, disponibilidadDia.hours);
-      } else {
-        console.log(`❌ No hay disponibilidad para ${diaSemana}`);
-      }
+      if (!disponibilidadDia || !disponibilidadDia.hours) continue;
 
-      if (disponibilidadDia && disponibilidadDia.hours) {
-        for (const hora of disponibilidadDia.hours) {
-          const horaInicio = hora;
+      const hoursValue: any = disponibilidadDia.hours as any;
+      if (Array.isArray(hoursValue)) {
+        for (const hora of hoursValue) {
           const horaFin = this.calcularHoraFin(hora);
-
-          // Para modalidad online
-          if (query.modalidad === 'online' || disponibilidadDia.sede_id === 'online') {
-            slots.push({
-              fecha: fechaString,
-              horaInicio,
-              horaFin,
-              disponible: true,
-              modalidad: 'online',
-              sedeId: disponibilidadDia.sede_id
-            });
+          if (query.modalidad === 'online' || (!query.modalidad && disponibilidadDia.sede_id === 'online')) {
+            if (disponibilidadDia.sede_id === 'online') {
+              slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: 'online', sedeId: 'online' });
+            }
           }
-
-          // Para modalidad presencial
-          if (query.modalidad === 'presencial' || (!query.modalidad && disponibilidadDia.sede_id !== 'online')) {
-            if (boxes.length > 0) {
-              // Crear un slot por cada box disponible
-              for (const box of boxes) {
-                // Validar horarios de sede para cada box
-                if (box.sede) {
-                  const esHorarioValido = this.esHorarioValidoParaSede(horaInicio, horaFin, box.sede, diaSemana);
-                  if (!esHorarioValido) {
-                    console.log(`⏰ Slot ${horaInicio}-${horaFin} filtrado para box ${box.numero}: fuera del horario de atención de ${box.sede.nombre}`);
-                    continue; // Saltar este slot
+          if (query.modalidad === 'presencial' || (!query.modalidad && disponibilidadDia.sede_id && disponibilidadDia.sede_id !== 'online')) {
+            if (!boxes || boxes.length === 0) {
+              if (disponibilidadDia.sede_id) {
+                const sede = await this.sedeRepository.findOne({ where: { id: disponibilidadDia.sede_id } });
+                if (sede && this.esHorarioValidoParaSede(hora, horaFin, sede, diaSemana)) {
+                  const boxesSede = await this.boxRepository.find({ where: { sede: { id: disponibilidadDia.sede_id }, estado: 'DISPONIBLE' }, relations: ['sede'] });
+                  for (const box of boxesSede) {
+                    slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: 'presencial', boxId: box.id, boxNumero: box.numero, sedeId: box.sede?.id, sedeNombre: box.sede?.nombre });
                   }
                 }
-
-                slots.push({
-                  fecha: fechaString,
-                  horaInicio,
-                  horaFin,
-                  disponible: true,
-                  boxId: box.id,
-                  boxNumero: box.numero,
-                  sedeId: box.sede?.id,
-                  sedeNombre: box.sede?.nombre,
-                  modalidad: 'presencial'
-                });
               }
-            } else if (disponibilidadDia.sede_id && disponibilidadDia.sede_id !== 'online') {
-              // Si no se especificó sede pero el psicólogo tiene una configurada
-              const sede = await this.sedeRepository.findOne({
-                where: { id: disponibilidadDia.sede_id }
-              });
-              
-              if (sede) {
-                // Validar horarios de sede antes de buscar boxes
-                const esHorarioValido = this.esHorarioValidoParaSede(horaInicio, horaFin, sede, diaSemana);
-                if (!esHorarioValido) {
-                  console.log(`⏰ Slot ${horaInicio}-${horaFin} filtrado: fuera del horario de atención de ${sede.nombre}`);
-                  continue; // Saltar este slot
+            } else {
+              for (const box of boxes) {
+                if (box.sede && this.esHorarioValidoParaSede(hora, horaFin, box.sede, diaSemana)) {
+                  slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: 'presencial', boxId: box.id, boxNumero: box.numero, sedeId: box.sede.id, sedeNombre: box.sede.nombre });
                 }
+              }
+            }
+          }
+        }
+      } else if (typeof hoursValue === 'object') {
+        const online: string[] = Array.isArray(hoursValue.online) ? hoursValue.online : [];
+        const presenciales: Array<{ sedeId: string; horas: string[] }> = Array.isArray(hoursValue.presenciales) ? hoursValue.presenciales : [];
 
-                const boxesSede = await this.boxRepository.find({
-                  where: { 
-                    sede: { id: disponibilidadDia.sede_id },
-                    estado: 'DISPONIBLE'
-                  }
-                });
+        if (!query.modalidad || query.modalidad === 'online') {
+          for (const hora of online) {
+            const horaFin = this.calcularHoraFin(hora);
+            slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: 'online', sedeId: 'online' });
+          }
+        }
 
-                for (const box of boxesSede) {
-                  slots.push({
-                    fecha: fechaString,
-                    horaInicio,
-                    horaFin,
-                    disponible: true,
-                    boxId: box.id,
-                    boxNumero: box.numero,
-                    sedeId: sede.id,
-                    sedeNombre: sede.nombre,
-                    modalidad: 'presencial'
-                  });
+        if (!query.modalidad || query.modalidad === 'presencial') {
+          for (const blk of presenciales) {
+            for (const hora of blk.horas) {
+              const horaFin = this.calcularHoraFin(hora);
+              let boxesDeSede = boxesPorSede.get(blk.sedeId) || [];
+              if ((!boxesDeSede || boxesDeSede.length === 0)) {
+                boxesDeSede = await this.boxRepository.find({ where: { sede: { id: blk.sedeId }, estado: 'DISPONIBLE' }, relations: ['sede'] });
+              }
+              for (const box of boxesDeSede) {
+                if (box.sede && this.esHorarioValidoParaSede(hora, horaFin, box.sede, diaSemana)) {
+                  slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: 'presencial', boxId: box.id, boxNumero: box.numero, sedeId: box.sede.id, sedeNombre: box.sede.nombre });
                 }
               }
             }
@@ -518,7 +305,6 @@ export class AgendaService {
       }
     }
 
-    console.log('Total de slots generados:', slots.length);
     return slots;
   }
 
@@ -529,10 +315,7 @@ export class AgendaService {
     const slotsActualizados = [...slots];
 
     for (const slot of slotsActualizados) {
-      // Convertir string de fecha a Date usando la función local
       const fechaDate = this.crearFechaLocal(slot.fecha);
-      
-      // Verificar si hay reservas existentes para este slot
       const reservasExistentes = await this.reservaRepository.find({
         where: {
           psicologoId,
@@ -541,7 +324,6 @@ export class AgendaService {
         }
       });
 
-      // Verificar si hay reservas para el box específico
       if (slot.boxId) {
         const reservasBox = await this.reservaRepository.find({
           where: {
@@ -551,7 +333,6 @@ export class AgendaService {
           }
         });
 
-        // Marcar como no disponible si hay conflicto de horarios
         const hayConflicto = reservasExistentes.some(reserva => 
           this.hayConflictoHorarios(
             reserva.horaInicio, 
@@ -572,7 +353,6 @@ export class AgendaService {
           slot.disponible = false;
         }
       } else {
-        // Para modalidad online, solo verificar reservas del psicólogo
         const hayConflicto = reservasExistentes.some(reserva => 
           this.hayConflictoHorarios(
             reserva.horaInicio, 
@@ -628,38 +408,18 @@ export class AgendaService {
     sede: Sede, 
     diaSemana: string
   ): boolean {
-    // Si no hay horario de atención configurado, permitir cualquier horario
     if (!sede.horarioAtencion || !sede.horarioAtencion.diasHabiles) {
-      console.log(`⚠️ Sede ${sede.nombre} no tiene horario de atención configurado`);
       return true;
     }
-
-    // Buscar el día de la semana en el horario de atención
-    const diaHorario = sede.horarioAtencion.diasHabiles.find(dia => 
-      this.normalizarDia(dia.dia) === this.normalizarDia(diaSemana)
-    );
-
-    // Si no se encuentra el día o está cerrado, no es válido
+    const diaHorario = sede.horarioAtencion.diasHabiles.find(dia => this.normalizarDia(dia.dia) === this.normalizarDia(diaSemana));
     if (!diaHorario || diaHorario.cerrado) {
-      console.log(`❌ Sede ${sede.nombre} está cerrada el ${diaSemana}`);
       return false;
     }
-
-    // Convertir horarios a minutos para comparación
     const horaInicioMinutos = this.convertirHoraAMinutos(horaInicio);
     const horaFinMinutos = this.convertirHoraAMinutos(horaFin);
     const sedeInicioMinutos = this.convertirHoraAMinutos(diaHorario.inicio);
     const sedeFinMinutos = this.convertirHoraAMinutos(diaHorario.fin);
-
-    // Verificar si el horario del slot está dentro del horario de atención
-    const esValido = horaInicioMinutos >= sedeInicioMinutos && horaFinMinutos <= sedeFinMinutos;
-    
-    console.log(`🔍 Validación horario sede ${sede.nombre} (${diaSemana}):`);
-    console.log(`   Slot: ${horaInicio}-${horaFin} (${horaInicioMinutos}-${horaFinMinutos} min)`);
-    console.log(`   Sede: ${diaHorario.inicio}-${diaHorario.fin} (${sedeInicioMinutos}-${sedeFinMinutos} min)`);
-    console.log(`   Resultado: ${esValido ? '✅ Válido' : '❌ Fuera de horario'}`);
-
-    return esValido;
+    return horaInicioMinutos >= sedeInicioMinutos && horaFinMinutos <= sedeFinMinutos;
   }
 
   private convertirHoraAMinutos(hora: string): number {
@@ -667,95 +427,32 @@ export class AgendaService {
     return horas * 60 + minutos;
   }
 
-  // Método para obtener box disponible
   async getBoxDisponible(query: any): Promise<any> {
-    // Implementación básica - puedes personalizarla según tus necesidades
     const { sedeId, fecha, horaInicio, horaFin } = query;
-    
     if (!sedeId || sedeId === 'online') {
       return null;
     }
-
-    // Buscar boxes disponibles en la sede
-    const boxes = await this.boxRepository.find({
-      where: { 
-        sede: { id: sedeId },
-        estado: 'DISPONIBLE'
-      }
-    });
-
+    const boxes = await this.boxRepository.find({ where: { sede: { id: sedeId }, estado: 'DISPONIBLE' } });
     if (boxes.length === 0) {
       return null;
     }
-
-    // Verificar disponibilidad para la fecha y hora específicas
     const fechaDate = this.crearFechaLocal(fecha);
-    
     for (const box of boxes) {
-      // Verificar si el box está libre en ese horario
-      const reservasExistentes = await this.reservaRepository.find({
-        where: {
-          boxId: box.id,
-          fecha: fechaDate,
-          estado: EstadoReserva.CONFIRMADA
-        }
-      });
-
-      // Verificar también reservas de sesiones
-      const reservasSesiones = await this.reservaPsicologoRepository.find({
-        where: {
-          boxId: box.id,
-          fecha: fechaDate,
-          estado: EstadoReservaPsicologo.CONFIRMADA
-        }
-      });
-
-      const hayConflicto = reservasExistentes.some(reserva => 
-        this.hayConflictoHorarios(
-          reserva.horaInicio, 
-          reserva.horaFin, 
-          horaInicio, 
-          horaFin
-        )
-      ) || reservasSesiones.some(reserva => 
-        this.hayConflictoHorarios(
-          reserva.horaInicio, 
-          reserva.horaFin, 
-          horaInicio, 
-          horaFin
-        )
-      );
-
+      const reservasExistentes = await this.reservaRepository.find({ where: { boxId: box.id, fecha: fechaDate, estado: EstadoReserva.CONFIRMADA } });
+      const reservasSesiones = await this.reservaPsicologoRepository.find({ where: { boxId: box.id, fecha: fechaDate, estado: EstadoReservaPsicologo.CONFIRMADA } });
+      const hayConflicto = reservasExistentes.some(reserva => this.hayConflictoHorarios(reserva.horaInicio, reserva.horaFin, horaInicio, horaFin)) || reservasSesiones.some(reserva => this.hayConflictoHorarios(reserva.horaInicio, reserva.horaFin, horaInicio, horaFin));
       if (!hayConflicto) {
-        return {
-          id: box.id,
-          numero: box.numero,
-          sedeId: box.sede?.id,
-          sedeNombre: box.sede?.nombre
-        };
+        return { id: box.id, numero: box.numero, sedeId: box.sede?.id, sedeNombre: box.sede?.nombre };
       }
     }
-
     return null;
   }
 
-  // Método para obtener box por ID
   async getBoxById(id: string): Promise<any> {
-    const box = await this.boxRepository.findOne({
-      where: { id },
-      relations: ['sede']
-    });
-
+    const box = await this.boxRepository.findOne({ where: { id }, relations: ['sede'] });
     if (!box) {
       throw new NotFoundException('Box no encontrado');
     }
-
-    return {
-      id: box.id,
-      numero: box.numero,
-      estado: box.estado,
-      sedeId: box.sede?.id,
-      sedeNombre: box.sede?.nombre
-    };
+    return { id: box.id, numero: box.numero, estado: box.estado, sedeId: box.sede?.id, sedeNombre: box.sede?.nombre };
   }
 } 
