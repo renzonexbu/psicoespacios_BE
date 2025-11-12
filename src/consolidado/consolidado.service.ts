@@ -11,6 +11,7 @@ import { PackHora } from '../packs/entities/pack-hora.entity';
 import { PackAsignacion, EstadoPackAsignacion } from '../packs/entities/pack-asignacion.entity';
 import { PackPagoMensual, EstadoPagoPackMensual } from '../packs/entities/pack-pago-mensual.entity';
 import { ConsolidadoMensualDto, DetalleReservaDto, DetalleSuscripcionDto, DetalleSedeDto } from './dto/consolidado-mensual.dto';
+import { ConsolidadoMensualGlobalDto, DetalleReservaGlobalDto } from './dto/consolidado-mensual.dto';
 
 @Injectable()
 export class ConsolidadoService {
@@ -547,6 +548,163 @@ export class ConsolidadoService {
         totalMontoIndividuales: Math.round(totalMontoIndividuales * 100) / 100
       }
     };
+  }
+
+  async getConsolidadoMensualGlobal(mes: string): Promise<ConsolidadoMensualGlobalDto> {
+    const mesRegex = /^\d{4}-\d{2}$/;
+    if (!mesRegex.test(mes)) {
+      throw new BadRequestException('El mes debe tener el formato YYYY-MM (ej: 2024-01)');
+    }
+
+    const [año, mesNumero] = mes.split('-').map(Number);
+    if (mesNumero < 1 || mesNumero > 12) {
+      throw new BadRequestException('El mes debe estar entre 01 y 12');
+    }
+
+    const fechaInicio = new Date(año, mesNumero - 1, 1);
+    const fechaFin = new Date(año, mesNumero, 0, 23, 59, 59);
+
+    // Traer todas las reservas del mes con sus boxes (y sedes)
+    const reservas = await this.reservaRepository.find({
+      where: { fecha: Between(fechaInicio, fechaFin) },
+      order: { fecha: 'ASC', horaInicio: 'ASC' }
+    });
+
+    const boxIds = [...new Set(reservas.map(r => r.boxId))];
+    const boxes = await this.boxRepository.find({ where: { id: In(boxIds) }, relations: ['sede'] });
+    const boxMap = new Map(boxes.map(b => [b.id, b]));
+
+    // Cargar psicólogos
+    const psicologoIds = [...new Set(reservas.map(r => r.psicologoId))];
+    const psicologos = await this.userRepository.find({ where: { id: In(psicologoIds) } });
+    const psicMap = new Map(psicologos.map(p => [p.id, p]));
+
+    // Preparar info de packs para reservas con packAsignacionId
+    const asignacionIds = [...new Set(reservas.map(r => r.packAsignacionId).filter(Boolean) as string[])];
+    const asignaciones = asignacionIds.length > 0 
+      ? await this.packAsignacionRepository.find({ where: { id: In(asignacionIds) }, relations: ['pack'] })
+      : [];
+    const asignacionMap = new Map(asignaciones.map(a => [a.id, a]));
+
+    // Contar reservas por asignación en el mes para prorrateo
+    const reservasPorAsignacion = new Map<string, number>();
+    for (const r of reservas) {
+      if (r.packAsignacionId) {
+        reservasPorAsignacion.set(r.packAsignacionId, (reservasPorAsignacion.get(r.packAsignacionId) || 0) + 1);
+      }
+    }
+
+    // Obtener pagos mensuales para esas asignaciones
+    const pagosMensuales = asignacionIds.length > 0
+      ? await this.packPagoMensualRepository.find({ where: { asignacionId: In(asignacionIds), mes: mesNumero, año } })
+      : [];
+    const pagoMensualMap = new Map(pagosMensuales.map(p => [p.asignacionId, p]));
+
+    const detalle: DetalleReservaGlobalDto[] = reservas.map(r => {
+      const box = boxMap.get(r.boxId);
+      const psic = psicMap.get(r.psicologoId);
+      // Fecha en UTC para consistencia con PostgreSQL date
+      let fechaReserva: string;
+      if (r.fecha instanceof Date) {
+        fechaReserva = `${r.fecha.getUTCFullYear()}-${String(r.fecha.getUTCMonth() + 1).padStart(2, '0')}-${String(r.fecha.getUTCDate()).padStart(2, '0')}`;
+      } else {
+        const f = new Date(r.fecha);
+        fechaReserva = `${f.getUTCFullYear()}-${String(f.getUTCMonth() + 1).padStart(2, '0')}-${String(f.getUTCDate()).padStart(2, '0')}`;
+      }
+
+      // Anotar info de pack si aplica
+      let esDePack = false;
+      let packAsignacionId: string | null | undefined = r.packAsignacionId as any;
+      let packNombre: string | undefined;
+      let packPrecioTotal: number | undefined;
+      let precioPorReservaPack: number | undefined;
+      let packEstadoPago: string | undefined;
+
+      if (packAsignacionId) {
+        esDePack = true;
+        const asignacion = asignacionMap.get(packAsignacionId);
+        if (asignacion) {
+          packNombre = asignacion.pack?.nombre;
+          packPrecioTotal = this.parsePrecio(asignacion.pack?.precio);
+          const totalResMes = reservasPorAsignacion.get(packAsignacionId) || 0;
+          precioPorReservaPack = totalResMes > 0 ? (packPrecioTotal / totalResMes) : 0;
+        }
+        const pago = pagoMensualMap.get(packAsignacionId);
+        if (pago) {
+          packEstadoPago = pago.estado;
+        }
+      }
+
+      return {
+        psicologoId: r.psicologoId,
+        nombrePsicologo: psic ? `${psic.nombre} ${psic.apellido}` : 'Psicólogo no encontrado',
+        emailPsicologo: psic?.email || '',
+        id: r.id,
+        boxId: r.boxId,
+        nombreBox: box?.nombre || 'Box',
+        sede: box?.sede ? this.convertirSedeADto(box.sede) : {
+          id: '', nombre: 'Sede no encontrada', description: '', direccion: '', ciudad: '', estado: 'INACTIVA'
+        } as any,
+        fecha: fechaReserva,
+        horaInicio: r.horaInicio,
+        horaFin: r.horaFin,
+        precio: this.parsePrecio(r.precio),
+        estado: r.estado,
+        estadoPago: r.estadoPago,
+        createdAt: (r.createdAt instanceof Date ? r.createdAt : new Date(r.createdAt)).toISOString(),
+        esDePack,
+        packAsignacionId: packAsignacionId || undefined,
+        packNombre,
+        packPrecioTotal,
+        precioPorReservaPack: precioPorReservaPack !== undefined ? Math.round(precioPorReservaPack * 100) / 100 : undefined,
+        packEstadoPago,
+      };
+    });
+
+    const totalReservas = detalle.length;
+    const totalMonto = detalle.reduce((sum, d) => sum + (d.precio || 0), 0);
+
+    return {
+      mes,
+      año,
+      mesNumero,
+      totalReservas,
+      totalMonto: Math.round(totalMonto * 100) / 100,
+      detalle,
+    };
+  }
+
+  generarCsvConsolidadoGlobal(data: ConsolidadoMensualGlobalDto): string {
+    const headers = [
+      'Mes','Año','PsicologoId','NombrePsicologo','EmailPsicologo','ReservaId','Fecha','HoraInicio','HoraFin','PrecioReserva','Estado','EstadoPago','Box','Sede','EsDePack','PackAsignacionId','PackNombre','PackPrecioTotal','PrecioPorReservaPack','PackEstadoPago'
+    ];
+    const lines = [headers.join(',')];
+    for (const d of data.detalle) {
+      const row = [
+        data.mes,
+        String(data.año),
+        d.psicologoId,
+        d.nombrePsicologo?.replace(/,/g, ' '),
+        d.emailPsicologo || '',
+        d.id,
+        d.fecha,
+        d.horaInicio,
+        d.horaFin,
+        String(d.precio ?? 0),
+        d.estado,
+        d.estadoPago,
+        (d.nombreBox || '').replace(/,/g, ' '),
+        (d.sede?.nombre || '').replace(/,/g, ' '),
+        d.esDePack ? 'true' : 'false',
+        d.packAsignacionId || '',
+        (d.packNombre || '').replace(/,/g, ' '),
+        d.packPrecioTotal !== undefined ? String(d.packPrecioTotal) : '',
+        d.precioPorReservaPack !== undefined ? String(d.precioPorReservaPack) : '',
+        d.packEstadoPago || ''
+      ];
+      lines.push(row.join(','));
+    }
+    return lines.join('\n');
   }
 
   async getUsuariosParaConsolidado(): Promise<any[]> {

@@ -1,9 +1,10 @@
-import { Controller, Get, Query, UseGuards, Request, Param, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Request, Param, BadRequestException, Res } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { ConsolidadoService } from './consolidado.service';
-import { QueryConsolidadoMensualDto, ConsolidadoMensualDto } from './dto/consolidado-mensual.dto';
+import { QueryConsolidadoMensualDto, ConsolidadoMensualDto, QueryConsolidadoMensualGlobalDto } from './dto/consolidado-mensual.dto';
+import { Response } from 'express';
 
 @Controller('api/v1/consolidado')
 export class ConsolidadoController {
@@ -46,6 +47,25 @@ export class ConsolidadoController {
     }
 
     return this.consolidadoService.getConsolidadoMensual(psicologoId, mes);
+  }
+
+  @Get('mensual-global')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async getConsolidadoMensualGlobal(
+    @Query() query: QueryConsolidadoMensualGlobalDto,
+    @Request() _req,
+    @Res() res: Response,
+  ) {
+    const data = await this.consolidadoService.getConsolidadoMensualGlobal(query.mes);
+    const formato = (query.formato || 'json').toLowerCase();
+    if (formato === 'csv') {
+      const csv = this.consolidadoService.generarCsvConsolidadoGlobal(data);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename=consolidado_global_${query.mes}.csv`);
+      return res.status(200).send(csv);
+    }
+    return res.status(200).json(data);
   }
 
   @Get('admin/usuarios')

@@ -104,12 +104,21 @@ export class ReservasPsicologosController {
   }
 
   /**
-   * Cancelar una reserva
+   * Cancelar una reserva (psicólogo/admin)
    */
   @Post(':id/cancel')
-  @Roles(Role.PSICOLOGO, Role.ADMIN, Role.PACIENTE)
+  @Roles(Role.PSICOLOGO, Role.ADMIN)
   async cancel(@Param('id') id: string) {
     return this.reservasPsicologosService.cancel(id);
+  }
+
+  /**
+   * Cancelar una reserva siendo PACIENTE (enforce ownership)
+   */
+  @Post(':id/cancelar-paciente')
+  @Roles(Role.PACIENTE)
+  async cancelByPaciente(@Param('id') id: string, @Request() req) {
+    return this.reservasPsicologosService.cancelByPaciente(id, req.user.id);
   }
 
   /**

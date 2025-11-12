@@ -12,6 +12,18 @@ export class QueryConsolidadoMensualDto {
   psicologoId?: string; // Para admins que quieran ver consolidado de un psicólogo específico
 }
 
+export class QueryConsolidadoMensualGlobalDto {
+  @IsString()
+  @Matches(/^\d{4}-\d{2}$/, {
+    message: 'El mes debe tener el formato YYYY-MM (ej: 2024-01)'
+  })
+  mes: string; // Formato YYYY-MM
+
+  @IsOptional()
+  @IsString()
+  formato?: 'json' | 'csv';
+}
+
 export class DetalleSuscripcionDto {
   id: string;
   estado: string;
@@ -71,6 +83,18 @@ export class DetalleReservaDto {
   estado: string;
   estadoPago: string;
   createdAt: string;
+}
+
+export class DetalleReservaGlobalDto extends DetalleReservaDto {
+  psicologoId: string;
+  nombrePsicologo: string;
+  emailPsicologo: string;
+  esDePack?: boolean;
+  packAsignacionId?: string | null;
+  packNombre?: string;
+  packPrecioTotal?: number;
+  precioPorReservaPack?: number;
+  packEstadoPago?: string;
 }
 
 export class DetallePackDto {
@@ -152,6 +176,15 @@ export class ConsolidadoMensualDto {
     totalMontoPacks: number;
     totalMontoIndividuales: number;
   };
+}
+
+export class ConsolidadoMensualGlobalDto {
+  mes: string;
+  año: number;
+  mesNumero: number;
+  totalReservas: number;
+  totalMonto: number;
+  detalle: DetalleReservaGlobalDto[];
 }
 
 

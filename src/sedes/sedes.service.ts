@@ -5,6 +5,7 @@ import { Sede } from '../common/entities/sede.entity';
 import { Box } from '../common/entities/box.entity';
 import { ReservaPsicologo, EstadoReservaPsicologo } from '../common/entities/reserva-psicologo.entity';
 import { CreateSedeDto, UpdateSedeDto, SedePublicDto } from './dto/sede.dto';
+import { Reserva, EstadoReserva } from '../common/entities/reserva.entity';
 
 @Injectable()
 export class SedesService {
@@ -15,7 +16,58 @@ export class SedesService {
     private boxesRepository: Repository<Box>,
     @InjectRepository(ReservaPsicologo)
     private reservaPsicologoRepository: Repository<ReservaPsicologo>,
+    @InjectRepository(Reserva)
+    private reservaRepository: Repository<Reserva>,
   ) {}
+
+  private normalizarDia(dia: string): string {
+    const normalizaciones: Record<string, string> = {
+      'lunes': 'Lunes',
+      'martes': 'Martes',
+      'miércoles': 'Miércoles',
+      'miercoles': 'Miércoles',
+      'jueves': 'Jueves',
+      'viernes': 'Viernes',
+      'sábado': 'Sábado',
+      'sabado': 'Sábado',
+      'domingo': 'Domingo',
+      'LUNES': 'Lunes',
+      'MARTES': 'Martes',
+      'MIÉRCOLES': 'Miércoles',
+      'MIERCOLES': 'Miércoles',
+      'JUEVES': 'Jueves',
+      'VIERNES': 'Viernes',
+      'SÁBADO': 'Sábado',
+      'SABADO': 'Sábado',
+      'DOMINGO': 'Domingo'
+    };
+    return normalizaciones[dia?.toLowerCase?.()] || dia;
+  }
+
+  private convertirHoraAMinutos(hora: string): number {
+    const [hh, mm] = hora.split(':').map(Number);
+    return (hh || 0) * 60 + (mm || 0);
+  }
+
+  private esHorarioValidoParaSede(
+    horaInicio: string,
+    horaFin: string,
+    sede: Sede,
+    diaSemana: string,
+  ): boolean {
+    if (!sede?.horarioAtencion?.diasHabiles?.length) {
+      return true; // sin restricción definida
+    }
+    const diaHorario = sede.horarioAtencion.diasHabiles.find(d => this.normalizarDia(d.dia) === this.normalizarDia(diaSemana));
+    if (!diaHorario || diaHorario.cerrado) {
+      return false;
+    }
+    const ini = this.convertirHoraAMinutos(horaInicio);
+    const fin = this.convertirHoraAMinutos(horaFin);
+    const sedeIni = this.convertirHoraAMinutos(diaHorario.inicio);
+    const sedeFin = this.convertirHoraAMinutos(diaHorario.fin);
+    return ini >= sedeIni && fin <= sedeFin;
+  }
 
   async findAll(): Promise<Sede[]> {
     return this.sedesRepository.find({
@@ -189,6 +241,23 @@ export class SedesService {
       throw new BadRequestException('La hora de fin debe ser posterior a la hora de inicio');
     }
     
+    // Validar horario de atención de la sede para el día solicitado
+    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const diaSemana = diasSemana[fecha.getDay()];
+    const dentroDeHorario = this.esHorarioValidoParaSede(horaInicio, horaFin, sede, diaSemana);
+    if (!dentroDeHorario) {
+      return {
+        fecha: fechaStr,
+        horaInicio,
+        horaFin,
+        boxesDisponibles: [],
+        total: 0,
+        boxAsignado: null,
+        asignacionAutomatica: asignarBox,
+        motivo: 'Fuera del horario de atención de la sede'
+      };
+    }
+
     try {
       // Primero obtener todos los boxes de la sede
       const boxes = await this.boxesRepository
@@ -202,13 +271,16 @@ export class SedesService {
       const boxesDisponibles: Box[] = [];
       
       for (const box of boxes) {
-        // Verificar si hay reservas conflictivas para este box en la fecha/hora especificada
-        const reservasConflictivas = await this.reservaPsicologoRepository
+        // Verificar reservas de sesiones (reservas_sesiones)
+        const conflictosSesiones = await this.reservaPsicologoRepository
           .createQueryBuilder('reserva')
           .where('reserva.boxId = :boxId', { boxId: box.id })
           .andWhere('reserva.fecha = :fecha', { fecha: fechaStr })
-          .andWhere('reserva.estado IN (:...estados)', { 
-            estados: ['confirmada', 'pendiente'] // Solo estados que existen en la BD
+          .andWhere('reserva.estado IN (:...estadosSesion)', { 
+            estadosSesion: [
+              EstadoReservaPsicologo.CONFIRMADA,
+              EstadoReservaPsicologo.PENDIENTE
+            ]
           })
           .andWhere(
             '(reserva.horaInicio < :horaFin AND reserva.horaFin > :horaInicio)',
@@ -216,7 +288,21 @@ export class SedesService {
           )
           .getCount();
 
-        if (reservasConflictivas === 0) {
+        // Verificar reservas de boxes (tabla reservas)
+        const conflictosBoxes = await this.reservaRepository
+          .createQueryBuilder('res')
+          .where('res.boxId = :boxId', { boxId: box.id })
+          .andWhere('res.fecha = :fecha', { fecha: fechaStr })
+          .andWhere('res.estado IN (:...estados)', { 
+            estados: [EstadoReserva.CONFIRMADA, EstadoReserva.PENDIENTE]
+          })
+          .andWhere(
+            '(res.horaInicio < :horaFin AND res.horaFin > :horaInicio)',
+            { horaInicio, horaFin }
+          )
+          .getCount();
+
+        if (conflictosSesiones === 0 && conflictosBoxes === 0) {
           boxesDisponibles.push(box);
         }
       }
@@ -267,7 +353,15 @@ export class SedesService {
       );
 
       if (disponibilidad.total === 0) {
-        throw new BadRequestException('No hay boxes disponibles para la fecha y hora especificadas');
+        return {
+          success: false,
+          disponible: false,
+          message: disponibilidad.motivo || 'No hay boxes disponibles para la fecha y hora especificadas',
+          fecha: disponibilidad.fecha,
+          horaInicio,
+          horaFin,
+          box: null,
+        };
       }
 
       // Seleccionar el box más apropiado (lógica simple por ahora)

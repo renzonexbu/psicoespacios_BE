@@ -731,6 +731,54 @@ export class ReservasPsicologosService {
   }
 
   /**
+   * Cancelar una reserva siendo PACIENTE (verifica propiedad)
+   */
+  async cancelByPaciente(id: string, usuarioPacienteId: string): Promise<ReservaPsicologoResponseDto> {
+    this.logger.log(`Cancelación por paciente. Reserva: ${id}, usuarioPaciente: ${usuarioPacienteId}`);
+
+    return await this.dataSource.transaction(async (manager) => {
+      const reserva = await manager.findOne(ReservaPsicologo, {
+        where: { id },
+        relations: ['psicologo', 'psicologo.usuario', 'paciente'],
+      });
+
+      if (!reserva) {
+        throw new NotFoundException('Reserva no encontrada');
+      }
+
+      if (reserva.paciente.id !== usuarioPacienteId) {
+        throw new ForbiddenException('No tienes permiso para cancelar esta reserva');
+      }
+
+      if (reserva.estado === EstadoReservaPsicologo.CANCELADA) {
+        throw new BadRequestException('La reserva ya está cancelada');
+      }
+
+      // Cancelar reserva de box si existe (para sesiones presenciales)
+      if (reserva.modalidad === ModalidadSesion.PRESENCIAL && reserva.metadatos?.reservaBoxId) {
+        this.logger.log(`Cancelando reserva de box asociada: ${reserva.metadatos.reservaBoxId}`);
+        const reservaBox = await manager.findOne(Reserva, { where: { id: reserva.metadatos.reservaBoxId } });
+        if (reservaBox) {
+          reservaBox.estado = EstadoReserva.CANCELADA;
+          await manager.save(reservaBox);
+        }
+      }
+
+      reserva.estado = EstadoReservaPsicologo.CANCELADA;
+      const updated = await manager.save(reserva);
+
+      // Obtener información del box si existe
+      let box: Box | undefined;
+      if (updated.boxId) {
+        const foundBox = await this.boxRepository.findOne({ where: { id: updated.boxId }, relations: ['sede'] });
+        box = foundBox || undefined;
+      }
+
+      return this.mapToResponseDto(updated, reserva.psicologo.usuario, reserva.paciente, box);
+    });
+  }
+
+  /**
    * Actualizar pagoId en una reserva (cuando se confirma el pago)
    */
   async actualizarPagoId(id: string, pagoId: string): Promise<ReservaPsicologoResponseDto> {

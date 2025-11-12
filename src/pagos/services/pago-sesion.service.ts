@@ -632,24 +632,37 @@ export class PagoSesionService {
     }
 
     if (box.estado !== 'DISPONIBLE') {
-      throw new BadRequestException('El box seleccionado no está disponible');
+      throw new BadRequestException('box no disponible');
     }
 
-    // Verificar conflicto de horarios para el box
-    const conflictoBox = await queryRunner.manager.findOne(ReservaPsicologo, {
-      where: {
-        boxId,
-        fecha: new Date(fecha),
-        estado: EstadoReservaPsicologo.CONFIRMADA,
-      }
-    });
+    // Construir fecha LOCAL para evitar desfases
+    const [yy, mm, dd] = (fecha || '').split('-').map(Number);
+    const fechaLocal = new Date(yy, (mm || 1) - 1, dd || 1);
 
-    if (conflictoBox) {
-      if (
-        (horaInicio < conflictoBox.horaFin && horaFin > conflictoBox.horaInicio)
-      ) {
-        throw new BadRequestException('Ya existe una reserva en ese horario para este box');
-      }
+    // Verificar conflicto en reservas de sesiones (reservas_sesiones)
+    const conflictoSesion = await queryRunner.manager
+      .createQueryBuilder(ReservaPsicologo, 'rs')
+      .where('rs.boxId = :boxId', { boxId })
+      .andWhere('rs.fecha = :fecha', { fecha: fechaLocal.toISOString().split('T')[0] })
+      .andWhere('rs.estado IN (:...estados)', { estados: [EstadoReservaPsicologo.CONFIRMADA, EstadoReservaPsicologo.PENDIENTE] })
+      .andWhere('(rs.horaInicio < :horaFin AND rs.horaFin > :horaInicio)', { horaInicio, horaFin })
+      .getCount();
+
+    if (conflictoSesion > 0) {
+      throw new BadRequestException('box no disponible');
+    }
+
+    // Verificar conflicto en reservas de box (reservas)
+    const conflictoBox = await queryRunner.manager
+      .createQueryBuilder(Reserva, 'rb')
+      .where('rb.boxId = :boxId', { boxId })
+      .andWhere('rb.fecha = :fecha', { fecha: fechaLocal.toISOString().split('T')[0] })
+      .andWhere('rb.estado IN (:...estados)', { estados: [EstadoReserva.CONFIRMADA, EstadoReserva.PENDIENTE] })
+      .andWhere('(rb.horaInicio < :horaFin AND rb.horaFin > :horaInicio)', { horaInicio, horaFin })
+      .getCount();
+
+    if (conflictoBox > 0) {
+      throw new BadRequestException('box no disponible');
     }
   }
 

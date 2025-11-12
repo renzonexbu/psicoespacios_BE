@@ -90,8 +90,9 @@ export class SedesController {
       throw new BadRequestException('Formato de fecha inválido. Use YYYY-MM-DD');
     }
     
-    // Crear objeto de fecha y validar que sea una fecha válida
-    const fechaObj = new Date(fecha);
+    // Crear objeto de fecha (LOCAL) y validar
+    const [yy, mm, dd] = fecha.split('-').map(Number);
+    const fechaObj = new Date(yy, (mm || 1) - 1, dd || 1);
     if (isNaN(fechaObj.getTime())) {
       throw new BadRequestException('Fecha inválida');
     }
@@ -157,7 +158,9 @@ export class SedesController {
       throw new BadRequestException('La hora de fin debe ser posterior a la hora de inicio');
     }
 
-    const fechaObj = new Date(fecha);
+    // Crear fecha LOCAL para evitar desfases de zona horaria
+    const [yy, mm, dd] = fecha.split('-').map(Number);
+    const fechaObj = new Date(yy, (mm || 1) - 1, dd || 1);
     if (isNaN(fechaObj.getTime())) {
       throw new BadRequestException('Fecha inválida');
     }
