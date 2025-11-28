@@ -5,9 +5,10 @@ import { ArriendosService } from './arriendos.service';
 import { ArriendoBox } from '../common/entities/arriendo-box.entity';
 import { Box } from '../common/entities/box.entity';
 import { User } from '../common/entities/user.entity';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ArriendoBox, Box, User])],
+  imports: [TypeOrmModule.forFeature([ArriendoBox, Box, User]), MailModule],
   controllers: [ArriendosController],
   providers: [ArriendosService],
   exports: [ArriendosService],

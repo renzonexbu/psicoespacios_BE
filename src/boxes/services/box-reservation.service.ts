@@ -7,6 +7,7 @@ import { User } from '../../common/entities/user.entity';
 import { PackAsignacion } from '../../packs/entities/pack-asignacion.entity';
 import { PackHora } from '../../packs/entities/pack-hora.entity';
 import { CreateBoxReservationDto, UpdateBoxReservationDto, UpdateBoxReservationPaymentDto, BoxReservationResponseDto } from '../dto/box-reservation.dto';
+import { MailService } from '../../mail/mail.service';
 
 @Injectable()
 export class BoxReservationService {
@@ -21,6 +22,7 @@ export class BoxReservationService {
     private packAsignacionRepository: Repository<PackAsignacion>,
     @InjectRepository(PackHora)
     private packHoraRepository: Repository<PackHora>,
+    private mailService: MailService,
   ) {}
 
   private validateTimeFormat(time: string): boolean {
@@ -108,6 +110,17 @@ export class BoxReservationService {
     });
 
     const savedReserva = await this.reservaRepository.save(reserva);
+    // Enviar email de confirmación de reserva de box (cuenta default)
+    try {
+      await this.mailService.sendReservaBoxConfirmada(
+        psicologo.email,
+        dto.fecha,
+        dto.horaInicio
+      );
+    } catch (error) {
+      // No bloquear creación por error de email
+      console.error(`Error al enviar email de reserva de box a ${psicologo.email}:`, error);
+    }
     return await this.mapToResponseDto(savedReserva);
   }
 
@@ -435,6 +448,7 @@ export class BoxReservationService {
       return {
         boxId,
         fecha,
+        precioBox: Number(box.precio),
         diaSemana: fechaObj.toLocaleDateString('es-ES', { weekday: 'long' }),
         diaSemanaCorto: fechaObj.toLocaleDateString('es-ES', { weekday: 'short' }),
         diaNumero: fechaObj.getDay(),
@@ -484,6 +498,7 @@ export class BoxReservationService {
     return {
       boxId,
       fecha,
+      precioBox: Number(box.precio),
       diaSemana: fechaObj.toLocaleDateString('es-ES', { weekday: 'long' }),
       diaSemanaCorto: fechaObj.toLocaleDateString('es-ES', { weekday: 'short' }),
       diaNumero: fechaObj.getDay(), // 0 = domingo, 1 = lunes, etc.

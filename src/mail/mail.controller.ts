@@ -19,12 +19,14 @@ export class MailController {
   async testBienvenidaPublic(@Body() data: {
     email: string;
     nombre: string;
+    fromAccount?: 'default' | 'alt';
   }) {
     console.log('📧 Enviando email de bienvenida público a:', data.email);
     
     const result = await this.mailService.sendBienvenida(
       data.email,
-      data.nombre
+      data.nombre,
+      data.fromAccount
     );
     
     return {
@@ -43,6 +45,7 @@ export class MailController {
     hora: string;
     modalidad: string;
     ubicacion?: string;
+    fromAccount?: 'default' | 'alt';
   }) {
     console.log('📧 Enviando email de reserva confirmada público a:', data.email);
     
@@ -52,7 +55,8 @@ export class MailController {
       data.fecha,
       data.hora,
       data.modalidad,
-      data.ubicacion
+      data.ubicacion,
+      data.fromAccount
     );
     
     return {
@@ -69,6 +73,7 @@ export class MailController {
     monto: number;
     fecha: string;
     psicologoNombre: string;
+    fromAccount?: 'default' | 'alt';
   }) {
     console.log('📧 Enviando email de pago exitoso público a:', data.email);
     
@@ -76,7 +81,8 @@ export class MailController {
       data.email,
       data.monto,
       data.fecha,
-      data.psicologoNombre
+      data.psicologoNombre,
+      data.fromAccount
     );
     
     return {
@@ -93,6 +99,7 @@ export class MailController {
     psicologoNombre: string;
     fecha: string;
     hora: string;
+    fromAccount?: 'default' | 'alt';
   }) {
     console.log('📧 Enviando email de sesión cancelada público a:', data.email);
     
@@ -100,7 +107,8 @@ export class MailController {
       data.email,
       data.psicologoNombre,
       data.fecha,
-      data.hora
+      data.hora,
+      data.fromAccount
     );
     
     return {
@@ -119,6 +127,7 @@ export class MailController {
     hora: string;
     modalidad: string;
     ubicacion?: string;
+    fromAccount?: 'default' | 'alt';
   }) {
     console.log('📧 Enviando email de recordatorio público a:', data.email);
     
@@ -128,7 +137,8 @@ export class MailController {
       data.fecha,
       data.hora,
       data.modalidad,
-      data.ubicacion
+      data.ubicacion,
+      data.fromAccount
     );
     
     return {

@@ -148,18 +148,9 @@ export class PacksService {
       asignacion.estado = EstadoPackAsignacion.CANCELADA;
       await manager.save(asignacion);
 
-      // Calcular la fecha de cancelación efectiva
+      // Calcular la fecha de cancelación efectiva: siempre desde el primer día del próximo mes
       const hoy = new Date();
-      let fechaCancelacionEfectiva: Date;
-
-      // Si se cancela hasta el día 15, el pack es válido para todo el mes
-      if (hoy.getDate() <= 15) {
-        // Si es antes del día 15, cancelar desde el próximo mes
-        fechaCancelacionEfectiva = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
-      } else {
-        // Si es después del día 15, cancelar desde el mes siguiente
-        fechaCancelacionEfectiva = new Date(hoy.getFullYear(), hoy.getMonth() + 2, 1);
-      }
+      const fechaCancelacionEfectiva = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
 
       // Cancelar todas las reservas futuras relacionadas al pack y usuario
       const reservasCanceladas = await manager.update(

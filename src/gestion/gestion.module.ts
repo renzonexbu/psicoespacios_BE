@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MailModule } from '../mail/mail.module';
 
 import { PlanesController } from './controllers/planes.controller';
 import { SuscripcionesController } from './controllers/suscripciones.controller';
@@ -52,6 +53,7 @@ import { Acreditacion } from '../common/entities/acreditacion.entity';
       HistorialPaciente,
       Acreditacion,
     ]),
+    MailModule,
   ],
   controllers: [
     PlanesController,

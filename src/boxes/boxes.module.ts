@@ -10,9 +10,10 @@ import { Reserva } from '../common/entities/reserva.entity';
 import { User } from '../common/entities/user.entity';
 import { PackAsignacion } from '../packs/entities/pack-asignacion.entity';
 import { PackHora } from '../packs/entities/pack-hora.entity';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Box, Sede, Reserva, User, PackAsignacion, PackHora])],
+  imports: [TypeOrmModule.forFeature([Box, Sede, Reserva, User, PackAsignacion, PackHora]), MailModule],
   controllers: [BoxesController, BoxReservationController],
   providers: [BoxesService, BoxReservationService],
   exports: [BoxesService, BoxReservationService],

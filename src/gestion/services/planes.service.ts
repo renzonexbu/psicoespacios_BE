@@ -27,6 +27,7 @@ export class PlanesService {
       horasIncluidas: plan.horasIncluidas,
       beneficios: plan.beneficios,
       activo: plan.activo,
+      proximamente: (plan as any).proximamente,
     }));
   }
 
@@ -49,12 +50,12 @@ export class PlanesService {
       horasIncluidas: plan.horasIncluidas,
       beneficios: plan.beneficios,
       activo: plan.activo,
+      proximamente: (plan as any).proximamente,
     };
   }
 
   async findAll() {
     return this.planRepository.find({
-      where: { activo: true },
       order: { precio: 'ASC' },
     });
   }

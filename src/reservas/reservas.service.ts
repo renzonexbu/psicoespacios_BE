@@ -7,6 +7,7 @@ import { Box } from '../common/entities/box.entity';
 import { PackAsignacion } from '../packs/entities/pack-asignacion.entity';
 import { PackHora } from '../packs/entities/pack-hora.entity';
 import { CreateReservaDto, UpdateReservaDto, UpdateEstadoPagoDto, BulkUpdateEstadoPagoDto } from './dto/reserva.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class ReservasService {
@@ -22,6 +23,7 @@ export class ReservasService {
     @InjectRepository(PackHora)
     private packHoraRepository: Repository<PackHora>,
     private dataSource: DataSource,
+    private mailService: MailService,
   ) {}
 
   async create(createReservaDto: CreateReservaDto) {
@@ -48,7 +50,23 @@ export class ReservasService {
       throw new ForbiddenException('No tienes permiso para cancelar esta reserva');
     }
     reserva.estado = updateDto.estado || EstadoReserva.CANCELADA;
-    return await this.reservaRepository.save(reserva);
+    const saved = await this.reservaRepository.save(reserva);
+    // Enviar email de cancelación al psicólogo (cuenta default)
+    try {
+      const usuario = await this.userRepository.findOne({ where: { id: saved.psicologoId } });
+      if (usuario?.email) {
+        const fechaStr = new Date(saved.fecha).toISOString().split('T')[0];
+        await this.mailService.sendReservaBoxCancelada(
+          usuario.email,
+          fechaStr,
+          saved.horaInicio
+        );
+      }
+    } catch (error) {
+      // No bloquear por error de email
+      console.error(`Error al enviar email de cancelación de box a psicólogo ${saved.psicologoId}:`, error);
+    }
+    return saved;
   }
 
   async findByPsicologoAndFecha(psicologoId: string, fecha: string): Promise<any[]> {

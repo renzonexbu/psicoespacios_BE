@@ -1,7 +1,9 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 export enum TipoPlan {
-  MENSUAL = 'MENSUAL'
+  BASICO = 'BASICO',
+  INTERMEDIO = 'INTERMEDIO',
+  PREMIUM = 'PREMIUM'
 }
 
 @Entity('planes')
@@ -12,7 +14,7 @@ export class Plan {
   @Column({
     type: 'enum',
     enum: TipoPlan,
-    default: TipoPlan.MENSUAL
+    default: TipoPlan.BASICO
   })
   tipo: TipoPlan;
 
@@ -36,6 +38,9 @@ export class Plan {
 
   @Column({ default: true })
   activo: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  proximamente: boolean;
 
   @OneToMany('Suscripcion', 'plan', {
     eager: false

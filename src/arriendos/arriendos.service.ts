@@ -5,6 +5,7 @@ import { ArriendoBox, EstadoArriendo } from '../common/entities/arriendo-box.ent
 import { Box } from '../common/entities/box.entity';
 import { User } from '../common/entities/user.entity';
 import { CreateArriendoBoxDto, UpdateArriendoBoxDto } from './dto/arriendo-box.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class ArriendosService {
@@ -15,6 +16,7 @@ export class ArriendosService {
     private boxRepository: Repository<Box>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    private mailService: MailService,
   ) {}
 
   async create(createArriendoDto: CreateArriendoBoxDto) {
@@ -135,7 +137,25 @@ export class ArriendosService {
     arriendo.motivoCancelacion = motivo;
     arriendo.fechaCancelacion = new Date();
 
-    return await this.arriendoRepository.save(arriendo);
+    const saved = await this.arriendoRepository.save(arriendo);
+
+    // Enviar email al psicólogo notificando cancelación por el equipo (cuenta default)
+    try {
+      const email = arriendo.psicologo?.email || (await this.userRepository.findOne({ where: { id: arriendo.psicologoId } }))?.email;
+      if (email) {
+        await this.mailService.sendEmail({
+          to: email,
+          template: 'reserva-box-cancelada-admin',
+          context: {}
+        });
+      }
+    } catch (error) {
+      // No bloquear por error de email
+      // eslint-disable-next-line no-console
+      console.error(`Error enviando email de cancelación por admin al psicólogo ${arriendo.psicologoId}:`, error);
+    }
+
+    return saved;
   }
 
   async renovar(id: string) {

@@ -18,6 +18,7 @@ import { Box } from '../common/entities/box.entity';
 import { Voucher } from '../common/entities/voucher.entity';
 import { ReservaPsicologo } from '../common/entities/reserva-psicologo.entity';
 import { Paciente } from '../common/entities/paciente.entity';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { Paciente } from '../common/entities/paciente.entity';
       ReservaPsicologo,
       Paciente,
     ]),
+    MailModule,
   ],
   controllers: [PagosController, FlowController, SimulatePaymentController, PagoSesionController],
   providers: [PagosService, FlowService, SimulatePaymentService, PagoSesionService],

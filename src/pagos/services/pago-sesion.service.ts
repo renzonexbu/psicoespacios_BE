@@ -11,6 +11,7 @@ import { Box } from '../../common/entities/box.entity';
 import { EstadoReservaPsicologo, ModalidadSesion } from '../../common/entities/reserva-psicologo.entity';
 import { TipoPago, EstadoPago, MetodoPago } from '../../common/entities/pago.entity';
 import { Reserva, EstadoReserva, EstadoPagoReserva } from '../../common/entities/reserva.entity';
+import { MailService } from '../../mail/mail.service';
 
 export interface ConfirmarSesionDto {
   psicologoId: string;
@@ -73,6 +74,19 @@ export interface SesionConfirmadaResponse {
     montoFinal: number;
     estado: EstadoPago;
     cuponId?: string;
+    datosTransaccion?: {
+      metodoPago: MetodoPago;
+      referencia?: string;
+      datosTarjeta?: {
+        ultimos4: string;
+        marca: string;
+      };
+      datosTransferencia?: {
+        banco: string;
+        numeroOperacion: string;
+      };
+      fechaTransaccion: Date;
+    };
   };
   reserva: {
     id: string;
@@ -82,6 +96,9 @@ export interface SesionConfirmadaResponse {
     modalidad: ModalidadSesion;
     estado: EstadoReservaPsicologo;
     boxId?: string;
+    observaciones?: string;
+    psicologoId: string;
+    pacienteId: string;
   };
   cupon?: {
     id: string;
@@ -110,6 +127,7 @@ export class PagoSesionService {
     @InjectRepository(Box)
     private boxRepository: Repository<Box>,
     private dataSource: DataSource,
+    private mailService: MailService,
   ) {}
 
   /**
@@ -310,6 +328,34 @@ export class PagoSesionService {
 
       this.logger.log(`Pago Flow confirmado: pago ${pagoGuardado.id}, reserva ${reservaTemporal.id}`);
 
+      // Enviar email de confirmación (cuenta ALT) al paciente
+      try {
+        const pacienteEmail = reservaTemporal.paciente?.email;
+        const psicologoNombre = reservaTemporal.psicologo?.usuario
+          ? `${reservaTemporal.psicologo.usuario.nombre} ${reservaTemporal.psicologo.usuario.apellido || ''}`.trim()
+          : 'tu psicólogo/a';
+        const fechaStr = reservaTemporal.fecha.toISOString().split('T')[0];
+        if (pacienteEmail) {
+          await this.mailService.sendSesionConfirmadaDerivacion(
+            pacienteEmail,
+            psicologoNombre,
+            fechaStr,
+            reservaTemporal.horaInicio
+          );
+        }
+      } catch (error) {
+        this.logger.warn(`No se pudo enviar email de confirmación de sesión (Flow): ${error?.message || error}`);
+      }
+      // Enviar email de notificación al psicólogo (cuenta default)
+      try {
+        const emailPsico = reservaTemporal.psicologo?.usuario?.email;
+        if (emailPsico) {
+          await this.mailService.sendSesionConfirmadaPsicologo(emailPsico);
+        }
+      } catch (error) {
+        this.logger.warn(`No se pudo enviar email de confirmación al psicólogo (Flow): ${error?.message || error}`);
+      }
+
       return {
         pago: {
           id: pagoGuardado.id,
@@ -318,6 +364,7 @@ export class PagoSesionService {
           montoFinal: pagoGuardado.montoFinal,
           estado: pagoGuardado.estado,
           cuponId: pagoGuardado.cuponId,
+          datosTransaccion: pagoGuardado.datosTransaccion,
         },
         reserva: {
           id: reservaTemporal.id,
@@ -327,6 +374,9 @@ export class PagoSesionService {
           modalidad: reservaTemporal.modalidad,
           estado: reservaTemporal.estado,
           boxId: reservaTemporal.boxId,
+          observaciones: reservaTemporal.observaciones,
+          psicologoId: reservaTemporal.psicologo.id,
+          pacienteId: reservaTemporal.paciente.id,
         },
         cupon: reservaTemporal.cuponId ? {
           id: reservaTemporal.cuponId,
@@ -512,6 +562,33 @@ export class PagoSesionService {
 
       this.logger.log(`Sesión confirmada: pago ${pagoGuardado.id}, reserva ${reservaGuardada.id}`);
 
+      // Enviar email de confirmación (cuenta ALT) al paciente
+      try {
+        const paciente = await this.userRepository.findOne({ where: { id: dto.pacienteId } });
+        const psicologoNombre = psicologo?.usuario
+          ? `${psicologo.usuario.nombre} ${psicologo.usuario.apellido || ''}`.trim()
+          : 'tu psicólogo/a';
+        if (paciente?.email) {
+          await this.mailService.sendSesionConfirmadaDerivacion(
+            paciente.email,
+            psicologoNombre,
+            dto.fecha,
+            dto.horaInicio
+          );
+        }
+      } catch (error) {
+        this.logger.warn(`No se pudo enviar email de confirmación de sesión: ${error?.message || error}`);
+      }
+      // Enviar email de notificación al psicólogo (cuenta default)
+      try {
+        const emailPsico = psicologo?.usuario?.email;
+        if (emailPsico) {
+          await this.mailService.sendSesionConfirmadaPsicologo(emailPsico);
+        }
+      } catch (error) {
+        this.logger.warn(`No se pudo enviar email de confirmación al psicólogo: ${error?.message || error}`);
+      }
+
       return {
         pago: {
           id: pagoGuardado.id,
@@ -520,6 +597,7 @@ export class PagoSesionService {
           montoFinal: pagoGuardado.montoFinal,
           estado: pagoGuardado.estado,
           cuponId: pagoGuardado.cuponId,
+          datosTransaccion: pagoGuardado.datosTransaccion,
         },
         reserva: {
           id: reservaGuardada.id,
@@ -529,6 +607,9 @@ export class PagoSesionService {
           modalidad: reservaGuardada.modalidad,
           estado: reservaGuardada.estado,
           boxId: reservaGuardada.boxId,
+          observaciones: reservaGuardada.observaciones,
+          psicologoId: dto.psicologoId,
+          pacienteId: dto.pacienteId,
         },
         cupon: cupon ? {
           id: cupon.id,
@@ -598,21 +679,26 @@ export class PagoSesionService {
     horaFin: string,
     queryRunner: any
   ): Promise<void> {
-    const conflicto = await queryRunner.manager.findOne(ReservaPsicologo, {
-      where: {
-        psicologo: { id: psicologoId },
-        fecha: new Date(fecha),
-        estado: EstadoReservaPsicologo.CONFIRMADA,
-      }
-    });
+    // Normalizar fecha a LOCAL (YYYY-MM-DD) para evitar desfases por timezone
+    const [yy, mm, dd] = (fecha || '').split('-').map(Number);
+    const fechaLocal = new Date(yy, (mm || 1) - 1, dd || 1);
+    const fechaStr = fechaLocal.toISOString().split('T')[0];
 
-    if (conflicto) {
-      // Verificar si hay solapamiento de horarios
-      if (
-        (horaInicio < conflicto.horaFin && horaFin > conflicto.horaInicio)
-      ) {
-        throw new BadRequestException('Ya existe una reserva en ese horario para este psicólogo');
-      }
+    // Verificar conflictos de horario para el psicólogo:
+    // - Mismo día (comparado por string YYYY-MM-DD)
+    // - Estados que bloquean (CONFIRMADA o PENDIENTE_PAGO)
+    // - Solapamiento de horas (inicio < finExistente y fin > inicioExistente)
+    const conflictos = await queryRunner.manager
+      .createQueryBuilder(ReservaPsicologo, 'rs')
+      .where('rs.psicologo_id = :psicologoId', { psicologoId })
+      .andWhere('rs.fecha = :fecha', { fecha: fechaStr })
+      // Solo bloquear si hay reservas ya confirmadas (evita error con enums no existentes)
+      .andWhere('rs.estado IN (:...estados)', { estados: [EstadoReservaPsicologo.CONFIRMADA] })
+      .andWhere('(rs.hora_inicio < :horaFin AND rs.hora_fin > :horaInicio)', { horaInicio, horaFin })
+      .getCount();
+
+    if (conflictos > 0) {
+      throw new BadRequestException('Ya existe una reserva en ese horario para este psicólogo');
     }
   }
 

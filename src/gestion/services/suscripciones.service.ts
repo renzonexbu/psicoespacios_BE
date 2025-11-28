@@ -5,6 +5,7 @@ import { Suscripcion, EstadoSuscripcion } from '../../common/entities/suscripcio
 import { User } from '../../common/entities/user.entity';
 import { Plan } from '../../common/entities/plan.entity';
 import { CreateSuscripcionDto, UpdateSuscripcionDto, ConfigurarRenovacionDto, RenovarSuscripcionDto, AsignarSuscripcionGratuitaDto } from '../dto/suscripcion.dto';
+import { MailService } from '../../mail/mail.service';
 
 @Injectable()
 export class SuscripcionesService {
@@ -15,6 +16,7 @@ export class SuscripcionesService {
     private planRepository: Repository<Plan>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    private mailService: MailService,
   ) {}
 
   // Método principal para registrar suscripción mensual
@@ -67,7 +69,20 @@ export class SuscripcionesService {
       }]
     });
 
-    return this.suscripcionRepository.save(suscripcion);
+    const saved = await this.suscripcionRepository.save(suscripcion);
+
+    // Enviar email al psicólogo (cuenta default)
+    try {
+      if (psicologo.email) {
+        await this.mailService.sendSuscripcionSecretariaActiva(psicologo.email);
+      }
+    } catch (error) {
+      // No bloquear por fallo de correo
+      // eslint-disable-next-line no-console
+      console.error(`Error enviando email de suscripción activa a ${psicologo.email}:`, error);
+    }
+
+    return saved;
   }
 
   // Calcular fecha de renovación (siempre +1 mes)

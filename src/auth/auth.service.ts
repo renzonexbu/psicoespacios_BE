@@ -442,6 +442,33 @@ export class AuthService {
     
     await this.userRepository.save(user);
 
+    // Enviar email de notificación al psicólogo (cuenta default)
+    try {
+      let mensaje = '';
+      if (subrol === 'AMBOS') {
+        mensaje = 'Hola, tu cuenta ha sido actualizada y ahora tienes acceso al panel profesional para gestionar tus box, agenda y pacientes. Bienvenido/a al ecosistema PsicoEspacios.';
+      } else if (subrol === 'CDD') {
+        mensaje = 'Hola, tu cuenta ha sido actualizada y ahora tienes acceso al panel profesional para gestionar tu agenda y pacientes. Bienvenido/a al ecosistema PsicoEspacios.';
+      } else if (subrol === 'ADB') {
+        mensaje = 'Hola, tu cuenta ha sido actualizada y ahora tienes acceso al panel profesional para gestionar tus Boxes. Bienvenido/a al ecosistema PsicoEspacios.';
+      } else {
+        mensaje = 'Hola, tu cuenta ha sido actualizada y ahora tienes acceso al panel profesional. Bienvenido/a al ecosistema PsicoEspacios.';
+      }
+      
+      await this.mailService.sendEmail({
+        to: user.email,
+        template: 'subrol-actualizado',
+        context: {
+          nombre: user.nombre,
+          subrol,
+          mensaje
+        }
+      });
+    } catch (error) {
+      // No bloquear la operación si falla el email
+      console.error(`❌ Error al enviar email de subrol a ${user.email}:`, error);
+    }
+
     return {
       success: true,
       message: 'Subrol asignado exitosamente',

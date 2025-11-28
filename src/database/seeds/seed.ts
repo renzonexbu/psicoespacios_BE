@@ -43,7 +43,7 @@ async function seed() {
     
     const planes = [
       {
-        tipo: TipoPlan.MENSUAL,
+        tipo: TipoPlan.BASICO,
         nombre: 'Plan Básico',
         descripcion: 'Plan ideal para psicólogos que están comenzando',
         precio: 29990,
@@ -58,7 +58,7 @@ async function seed() {
         activo: true,
       },
       {
-        tipo: TipoPlan.MENSUAL,
+        tipo: TipoPlan.INTERMEDIO,
         nombre: 'Plan Profesional',
         descripcion: 'Plan para psicólogos con práctica establecida',
         precio: 49990,
@@ -74,7 +74,7 @@ async function seed() {
         activo: true,
       },
       {
-        tipo: TipoPlan.MENSUAL,
+        tipo: TipoPlan.PREMIUM,
         nombre: 'Plan Premium',
         descripcion: 'Plan para psicólogos con alta demanda',
         precio: 79990,

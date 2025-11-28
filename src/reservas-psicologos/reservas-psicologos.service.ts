@@ -235,8 +235,11 @@ export class ReservasPsicologosService {
         this.logger.log(`❌ No se creará reserva de box - Modalidad: ${createReservaDto.modalidad}, boxId: ${createReservaDto.boxId}`);
       }
 
-      // 8. Enviar email de confirmación (fuera de la transacción)
+      // 8. Enviar emails (fuera de la transacción)
       try {
+        // a) Email al paciente desde cuenta ALT (derivación)
+        await this.mailService.sendSesionCreadaDerivacion(paciente.email);
+        // b) Email existente de confirmación (cuenta default)
         await this.mailService.sendReservaConfirmada(
           paciente.email,
           psicologo.usuario.nombre,
@@ -245,7 +248,7 @@ export class ReservasPsicologosService {
           createReservaDto.modalidad || ModalidadSesion.PRESENCIAL,
           createReservaDto.metadatos?.ubicacion
         );
-        this.logger.log(`Email de confirmación enviado a ${paciente.email}`);
+        this.logger.log(`Emails de creación enviados a ${paciente.email}`);
       } catch (error) {
         this.logger.error(`Error al enviar email de confirmación: ${error.message}`);
         // No fallar la operación si el email falla
@@ -715,6 +718,25 @@ export class ReservasPsicologosService {
       const updatedReserva = await manager.save(reserva);
 
       this.logger.log(`Reserva cancelada: ${id}`);
+      
+      // Enviar email al paciente (cuenta ALT)
+      try {
+        const emailPaciente = reserva.paciente?.email;
+        if (emailPaciente) {
+          await this.mailService.sendSesionCanceladaDerivacion(emailPaciente);
+        }
+      } catch (error) {
+        this.logger.warn(`No se pudo enviar email de sesión cancelada al paciente: ${error?.message || error}`);
+      }
+      // Enviar email al psicólogo (cuenta default)
+      try {
+        const emailPsicologo = reserva.psicologo?.usuario?.email;
+        if (emailPsicologo) {
+          await this.mailService.sendSesionCanceladaPsicologo(emailPsicologo);
+        }
+      } catch (error) {
+        this.logger.warn(`No se pudo enviar email de sesión cancelada al psicólogo: ${error?.message || error}`);
+      }
       
       // Obtener información del box si existe
       let box: Box | undefined;

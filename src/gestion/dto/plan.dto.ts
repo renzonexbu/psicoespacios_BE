@@ -29,6 +29,10 @@ export class CreatePlanDto {
   @IsBoolean()
   @IsOptional()
   activo?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  proximamente?: boolean;
 }
 
 export class UpdatePlanDto {
@@ -64,6 +68,10 @@ export class UpdatePlanDto {
   @IsBoolean()
   @IsOptional()
   activo?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  proximamente?: boolean;
 }
 
 export class PlanPublicDto {
@@ -76,5 +84,6 @@ export class PlanPublicDto {
   horasIncluidas: number;
   beneficios?: string[];
   activo: boolean;
+  proximamente?: boolean;
   // NO incluir: suscripciones, timestamps
 }

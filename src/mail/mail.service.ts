@@ -9,6 +9,9 @@ export interface EmailData {
   to: string;
   template: string;
   context: Record<string, any>;
+  fromAccount?: 'default' | 'alt';
+  fromEmailOverride?: string;
+  fromNameOverride?: string;
 }
 
 export interface EmailTemplate {
@@ -20,6 +23,11 @@ export interface EmailTemplate {
 export class MailService {
   private readonly logger = new Logger(MailService.name);
   private transporter: nodemailer.Transporter;
+  private transporterAlt?: nodemailer.Transporter;
+  private fromEmail: string;
+  private fromName: string;
+  private fromEmailAlt?: string;
+  private fromNameAlt?: string;
   private readonly headerImage = 'https://s3.us-east-005.backblazeb2.com/psicoespacios/images/54bc1a52-a895-4cd9-9358-f684717c389b.png';
   private readonly footerImage = 'https://s3.us-east-005.backblazeb2.com/psicoespacios/images/3df56d51-de7d-496d-9eab-4c8f89d44793.png';
   private readonly telefonoPsicologos = '+56950553501';
@@ -39,6 +47,27 @@ export class MailService {
         pass: this.configService.get<string>('MAIL_PASS'),
       },
     });
+    // Asegurar strings no undefined para evitar errores de tipo
+    this.fromEmail = this.configService.get<string>('MAIL_FROM') ?? this.configService.get<string>('MAIL_USER') ?? '';
+    this.fromName = this.configService.get<string>('MAIL_FROM_NAME') || 'PsicoEspacios';
+
+    // Transport alternativo (opcional)
+    const altHost = this.configService.get<string>('MAIL_ALT_HOST');
+    const altUser = this.configService.get<string>('MAIL_ALT_USER');
+    const altPass = this.configService.get<string>('MAIL_ALT_PASS');
+    if (altHost && altUser && altPass) {
+      this.transporterAlt = nodemailer.createTransport({
+        host: altHost,
+        port: this.configService.get<number>('MAIL_ALT_PORT') || 587,
+        secure: this.configService.get<boolean>('MAIL_ALT_SECURE') || false,
+        auth: {
+          user: altUser,
+          pass: altPass,
+        },
+      });
+      this.fromEmailAlt = this.configService.get<string>('MAIL_ALT_FROM') || altUser;
+      this.fromNameAlt = this.configService.get<string>('MAIL_ALT_FROM_NAME') || this.fromName;
+    }
 
     // Verificar conexión
     this.transporter.verify((error, success) => {
@@ -48,6 +77,16 @@ export class MailService {
         this.logger.log('Servidor de email conectado exitosamente');
       }
     });
+
+    if (this.transporterAlt) {
+      this.transporterAlt.verify((error, success) => {
+        if (error) {
+          this.logger.error('Error al conectar con el servidor de email ALT:', error);
+        } else {
+          this.logger.log('Servidor de email ALT conectado exitosamente');
+        }
+      });
+    }
   }
 
   private getEmailTemplate(templateName: string, context: Record<string, any>): EmailTemplate {
@@ -102,6 +141,16 @@ export class MailService {
       'cupon-aplicado': 'Cupón Aplicado - PsicoEspacios',
       'respuesta-contacto': 'Respuesta a tu consulta de formulario web',
       'confirmacion-contacto': 'Confirmación de consulta recibida - PsicoEspacios',
+      'subrol-actualizado': 'Tu cuenta profesional ha sido activada - PsicoEspacios',
+      'reserva-box-confirmada': 'Reserva de Box Confirmada - PsicoEspacios',
+      'reserva-box-cancelada': 'Cancelación de Reserva de Box - PsicoEspacios',
+      'reserva-box-cancelada-admin': 'Tu reserva fue cancelada - PsicoEspacios',
+      'sesion-confirmada-derivacion': 'Confirmación de sesión del centro de derivación',
+      'sesion-confirmada-psicologo': 'Nueva sesión confirmada - PsicoEspacios',
+      'sesion-cancelada-derivacion': 'Tu sesión ha sido cancelada - PsicoEspacios',
+      'sesion-cancelada-psicologo': 'Sesión cancelada - PsicoEspacios',
+      'suscripcion-secretaria-activa': 'Tu suscripción a Secretaría Virtual está activa',
+      'sesion-creada-derivacion': 'Nueva sesión agendada - PsicoEspacios',
     };
     
     return subjects[templateName] || 'PsicoEspacios';
@@ -243,15 +292,23 @@ export class MailService {
   async sendEmail(emailData: EmailData): Promise<boolean> {
     try {
       const template = this.getEmailTemplate(emailData.template, emailData.context);
-      
+
+      // Seleccionar cuenta de envío
+      const useAlt = emailData.fromAccount === 'alt' && this.transporterAlt;
+      const transporter = useAlt ? this.transporterAlt! : this.transporter;
+      const fromEmail = emailData.fromEmailOverride
+        || (useAlt ? (this.fromEmailAlt || this.fromEmail) : this.fromEmail);
+      const fromName = emailData.fromNameOverride
+        || (useAlt ? (this.fromNameAlt || this.fromName) : this.fromName);
+
       const mailOptions = {
-        from: `"${this.configService.get<string>('MAIL_FROM_NAME')}" <${this.configService.get<string>('MAIL_FROM')}>`,
+        from: `"${fromName}" <${fromEmail}>`,
         to: emailData.to,
         subject: template.subject,
         html: template.html,
       };
 
-      const info = await this.transporter.sendMail(mailOptions);
+      const info = await transporter.sendMail(mailOptions);
       this.logger.log(`Email enviado exitosamente a ${emailData.to}: ${info.messageId}`);
       return true;
     } catch (error) {
@@ -267,7 +324,8 @@ export class MailService {
     fecha: string, 
     hora: string, 
     modalidad: string,
-    ubicacion?: string
+    ubicacion?: string,
+    fromAccount?: 'default' | 'alt'
   ): Promise<boolean> {
     return this.sendEmail({
       to: pacienteEmail,
@@ -279,6 +337,7 @@ export class MailService {
         modalidad,
         ubicacion: ubicacion || 'Online',
       },
+      fromAccount,
     });
   }
 
@@ -288,7 +347,8 @@ export class MailService {
     fecha: string,
     hora: string,
     modalidad: string,
-    ubicacion?: string
+    ubicacion?: string,
+    fromAccount?: 'default' | 'alt'
   ): Promise<boolean> {
     return this.sendEmail({
       to: pacienteEmail,
@@ -300,6 +360,7 @@ export class MailService {
         modalidad,
         ubicacion: ubicacion || 'Online',
       },
+      fromAccount,
     });
   }
 
@@ -307,7 +368,8 @@ export class MailService {
     pacienteEmail: string,
     monto: number,
     fecha: string,
-    psicologoNombre: string
+    psicologoNombre: string,
+    fromAccount?: 'default' | 'alt'
   ): Promise<boolean> {
     return this.sendEmail({
       to: pacienteEmail,
@@ -317,13 +379,15 @@ export class MailService {
         fecha,
         psicologoNombre,
       },
+      fromAccount,
     });
   }
 
   async sendNuevaNota(
     pacienteEmail: string,
     psicologoNombre: string,
-    fecha: string
+    fecha: string,
+    fromAccount?: 'default' | 'alt'
   ): Promise<boolean> {
     return this.sendEmail({
       to: pacienteEmail,
@@ -332,6 +396,7 @@ export class MailService {
         psicologoNombre,
         fecha,
       },
+      fromAccount,
     });
   }
 
@@ -339,7 +404,8 @@ export class MailService {
     pacienteEmail: string,
     psicologoNombre: string,
     fecha: string,
-    hora: string
+    hora: string,
+    fromAccount?: 'default' | 'alt'
   ): Promise<boolean> {
     return this.sendEmail({
       to: pacienteEmail,
@@ -349,12 +415,14 @@ export class MailService {
         fecha,
         hora,
       },
+      fromAccount,
     });
   }
 
   async sendBienvenida(
     pacienteEmail: string,
-    nombre: string
+    nombre: string,
+    fromAccount?: 'default' | 'alt'
   ): Promise<boolean> {
     return this.sendEmail({
       to: pacienteEmail,
@@ -362,6 +430,7 @@ export class MailService {
       context: {
         nombre,
       },
+      fromAccount,
     });
   }
 
@@ -369,7 +438,8 @@ export class MailService {
     pacienteEmail: string,
     codigoCupon: string,
     descuento: number,
-    psicologoNombre: string
+    psicologoNombre: string,
+    fromAccount?: 'default' | 'alt'
   ): Promise<boolean> {
     return this.sendEmail({
       to: pacienteEmail,
@@ -379,6 +449,97 @@ export class MailService {
         descuento: descuento.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' }),
         psicologoNombre,
       },
+      fromAccount,
+    });
+  }
+
+  async sendReservaBoxConfirmada(
+    email: string,
+    fecha: string,
+    hora: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      template: 'reserva-box-confirmada',
+      context: {
+        fecha,
+        hora,
+      }
+    });
+  }
+
+  async sendReservaBoxCancelada(
+    email: string,
+    fecha: string,
+    hora: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      template: 'reserva-box-cancelada',
+      context: {
+        fecha,
+        hora,
+      }
+    });
+  }
+
+  async sendSesionConfirmadaDerivacion(
+    email: string,
+    psicologoNombre: string,
+    fecha: string,
+    hora: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      template: 'sesion-confirmada-derivacion',
+      context: {
+        psicologoNombre,
+        fecha,
+        hora,
+      },
+      fromAccount: 'alt'
+    });
+  }
+
+  async sendSesionConfirmadaPsicologo(email: string): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      template: 'sesion-confirmada-psicologo',
+      context: {},
+    });
+  }
+
+  async sendSesionCanceladaDerivacion(email: string): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      template: 'sesion-cancelada-derivacion',
+      context: {},
+      fromAccount: 'alt'
+    });
+  }
+
+  async sendSesionCanceladaPsicologo(email: string): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      template: 'sesion-cancelada-psicologo',
+      context: {},
+    });
+  }
+
+  async sendSuscripcionSecretariaActiva(email: string): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      template: 'suscripcion-secretaria-activa',
+      context: {},
+    });
+  }
+
+  async sendSesionCreadaDerivacion(email: string): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      template: 'sesion-creada-derivacion',
+      context: {},
+      fromAccount: 'alt'
     });
   }
 }
