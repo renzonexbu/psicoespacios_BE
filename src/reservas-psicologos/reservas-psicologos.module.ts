@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ReservasPsicologosController } from './reservas-psicologos.controller';
 import { ReservasPsicologosService } from './reservas-psicologos.service';
+import { ReservasPsicologosReminderService } from './reservas-psicologos-reminder.service';
 import { ReservaPsicologo } from '../common/entities/reserva-psicologo.entity';
 import { User } from '../common/entities/user.entity';
 import { Psicologo } from '../common/entities/psicologo.entity';
@@ -15,7 +16,7 @@ import { MailModule } from '../mail/mail.module';
     MailModule,
   ],
   controllers: [ReservasPsicologosController],
-  providers: [ReservasPsicologosService],
+  providers: [ReservasPsicologosService, ReservasPsicologosReminderService],
   exports: [ReservasPsicologosService],
 })
 export class ReservasPsicologosModule {} 

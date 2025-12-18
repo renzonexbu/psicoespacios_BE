@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsUUID, IsOptional, IsEnum, IsDateString, IsNumber, IsObject, Matches, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID, IsOptional, IsEnum, IsDateString, IsNumber, IsObject, Matches, Min, IsBoolean } from 'class-validator';
 import { EstadoReservaPsicologo, ModalidadSesion } from '../../common/entities/reserva-psicologo.entity';
 
 export class CreateReservaPsicologoDto {
@@ -35,6 +35,10 @@ export class CreateReservaPsicologoDto {
   @IsOptional()
   @IsEnum(ModalidadSesion)
   modalidad?: ModalidadSesion;
+
+  @IsOptional()
+  @IsBoolean()
+  fonasa?: boolean; // Indica si la sesión es pagada con FONASA
 
   @IsOptional()
   @IsString()
@@ -90,6 +94,10 @@ export class UpdateReservaPsicologoDto {
   modalidad?: ModalidadSesion;
 
   @IsOptional()
+  @IsBoolean()
+  fonasa?: boolean;
+
+  @IsOptional()
   @IsEnum(EstadoReservaPsicologo)
   estado?: EstadoReservaPsicologo;
 
@@ -141,6 +149,7 @@ export class ReservaPsicologoResponseDto {
   boxNombre?: string; // Nombre del box
   boxSede?: string; // Nombre de la sede del box
   modalidad: ModalidadSesion;
+  fonasa: boolean; // Indica si la sesión es pagada con FONASA
   estado: EstadoReservaPsicologo;
   observaciones?: string;
   cuponId?: string; // ID del cupón usado

@@ -1,6 +1,46 @@
+{{#if nombrePaciente}}
+  <p style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">
+    Hola {{nombrePaciente}},
+  </p>
+{{/if}}
+
 <div class="success-box">
   <h2>Confirmación de sesión</h2>
   <p>Tu sesión ha sido confirmada con el/la psicólogo/a <strong>{{psicologoNombre}}</strong>.</p>
-  <p>Te esperamos el <strong>{{fecha}}</strong> a las <strong>{{hora}}</strong> hrs.</p>
-  <p>Si necesitas cancelar, puedes hacerlo desde tu panel.</p>
 </div>
+
+<div class="info-box">
+  <h3>Detalles de la sesión</h3>
+  <p><strong>Fecha:</strong> {{fecha}}</p>
+  <p><strong>Hora:</strong> {{hora}}</p>
+  {{#if modalidad}}
+    <p><strong>Modalidad:</strong> {{modalidad}}</p>
+  {{/if}}
+  {{#if duracion}}
+    <p><strong>Duración:</strong> {{duracion}}</p>
+  {{/if}}
+  {{#if ubicacion}}
+    <p><strong>Ubicación:</strong> {{ubicacion}}</p>
+  {{/if}}
+  {{#if link}}
+    <p><strong>Enlace de la sesión online:</strong> {{link}}</p>
+  {{/if}}
+</div>
+
+{{#if psicologoNombre}}
+  <div class="info-box">
+    <h3>Psicólogo asignado</h3>
+    <p><strong>Nombre:</strong> {{psicologoNombre}}</p>
+    {{#if especialidad}}
+      <p><strong>Especialidad:</strong> {{especialidad}}</p>
+    {{/if}}
+    {{#if emailPsicologo}}
+      <p><strong>Email:</strong> {{emailPsicologo}}</p>
+    {{/if}}
+  </div>
+{{/if}}
+
+<p style="margin-top: 16px; font-size: 14px; line-height: 1.5;">
+  Te recomendamos conectarte unos minutos antes y buscar un lugar tranquilo.
+  Si necesitas cancelar o reagendar, puedes hacerlo desde tu panel o contactándonos por nuestros canales oficiales.
+</p>

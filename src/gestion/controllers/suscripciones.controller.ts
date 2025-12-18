@@ -117,6 +117,22 @@ export class SuscripcionesController {
     return this.suscripcionesService.asignarSuscripcionGratuita(asignarDto, req.user.id);
   }
 
+  // Cancelar suscripción (solo ADMIN), independientemente del psicólogo
+  @Post('admin/:id/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async cancelByAdmin(
+    @Param('id') id: string,
+    @Body() updateSuscripcionDto: UpdateSuscripcionDto,
+    @Req() req: any,
+  ) {
+    return this.suscripcionesService.cancelByAdmin(
+      id,
+      req.user.id,
+      updateSuscripcionDto?.notasCancelacion || updateSuscripcionDto?.estado,
+    );
+  }
+
   // Obtener psicólogos con suscripción activa (solo para administradores)
   @Get('admin/psicologos-con-suscripcion-activa')
   @UseGuards(JwtAuthGuard, RolesGuard)

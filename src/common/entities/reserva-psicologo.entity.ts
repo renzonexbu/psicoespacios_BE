@@ -65,6 +65,9 @@ export class ReservaPsicologo {
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true, name: 'descuento_aplicado' })
   descuentoAplicado: number; // Monto del descuento aplicado
 
+  @Column({ type: 'boolean', default: false })
+  fonasa: boolean; // Indica si la sesión es pagada con FONASA
+
   @Column({ type: 'jsonb', nullable: true })
   metadatos: {
     motivo?: string;

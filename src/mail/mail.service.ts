@@ -151,6 +151,7 @@ export class MailService {
       'sesion-cancelada-psicologo': 'Sesión cancelada - PsicoEspacios',
       'suscripcion-secretaria-activa': 'Tu suscripción a Secretaría Virtual está activa',
       'sesion-creada-derivacion': 'Nueva sesión agendada - PsicoEspacios',
+      'pack-activado-psicologo': 'Confirmación de packs de horas - PsicoEspacios',
     };
     
     return subjects[templateName] || 'PsicoEspacios';
@@ -259,9 +260,9 @@ export class MailService {
           <div class="footer">
             <img src="${this.footerImage}" alt="PsicoEspacios Footer" />
             <div class="footer-text">
-              © ${new Date().getFullYear()} PsicoEspacios. Todos los derechos reservados.<br>
-              Este es un email automático, por favor no respondas a este mensaje.
-              ${telefonoContacto ? `<br>Contacto: ${telefonoContacto}` : ''}
+                © ${new Date().getFullYear()} PsicoEspacios. Todos los derechos reservados.<br>
+              Este es un email automático, por favor no respondas a este mensaje.<br>
+              Contacto Psicólogos: ${this.telefonoPsicologos} &nbsp;|&nbsp; Contacto Pacientes: ${this.telefonoPacientes}
             </div>
           </div>
         </div>
@@ -283,7 +284,8 @@ export class MailService {
 
     // Mapear por nombre de template (por defecto, son emails dirigidos a pacientes)
     const templatesParaPsicologos = new Set<string>([
-      // agregar aquí templates que vayan a psicólogos cuando existan
+      'pack-activado-psicologo',
+      'bienvenida-psicologo',
     ]);
 
     return templatesParaPsicologos.has(templateName) ? 'psicologo' : 'paciente';
@@ -400,35 +402,79 @@ export class MailService {
     });
   }
 
-  async sendSesionCancelada(
-    pacienteEmail: string,
-    psicologoNombre: string,
-    fecha: string,
-    hora: string,
-    fromAccount?: 'default' | 'alt'
-  ): Promise<boolean> {
+  async sendSesionCancelada(params: {
+    to: string;
+    nombreDestinatario?: string;
+    nombrePaciente?: string;
+    psicologoNombre: string;
+    fecha: string;
+    hora: string;
+    modalidad: string;
+    motivoCancelacion: string;
+    especialidad?: string;
+    emailPsicologo?: string;
+    emailPaciente?: string;
+    ubicacion?: string;
+    audiencia?: 'paciente' | 'psicologo';
+    fromAccount?: 'default' | 'alt';
+  }): Promise<boolean> {
+    const {
+      to,
+      nombreDestinatario,
+      nombrePaciente,
+      psicologoNombre,
+      fecha,
+      hora,
+      modalidad,
+      motivoCancelacion,
+      especialidad,
+      emailPsicologo,
+      emailPaciente,
+      ubicacion,
+      audiencia,
+      fromAccount,
+    } = params;
+
     return this.sendEmail({
-      to: pacienteEmail,
+      to,
       template: 'sesion-cancelada',
       context: {
+        nombreDestinatario,
+        nombrePaciente,
+        nombrePsicologo: psicologoNombre,
         psicologoNombre,
         fecha,
         hora,
+        modalidad,
+        motivoCancelacion,
+        especialidad,
+        emailPsicologo,
+        emailPaciente,
+        ubicacion,
+        audiencia,
+        esAudienciaPaciente: audiencia === 'paciente',
+        esAudienciaPsicologo: audiencia === 'psicologo',
       },
       fromAccount,
     });
   }
 
   async sendBienvenida(
-    pacienteEmail: string,
+    email: string,
     nombre: string,
+    role?: string,
     fromAccount?: 'default' | 'alt'
   ): Promise<boolean> {
+    const normalizedRole = (role || '').toUpperCase();
+    const esPsicologo = normalizedRole === 'PSICOLOGO';
+    const template = esPsicologo ? 'bienvenida-psicologo' : 'bienvenida';
+
     return this.sendEmail({
-      to: pacienteEmail,
-      template: 'bienvenida',
+      to: email,
+      template,
       context: {
         nombre,
+        audiencia: esPsicologo ? 'psicologo' : 'paciente',
       },
       fromAccount,
     });
@@ -471,7 +517,8 @@ export class MailService {
   async sendReservaBoxCancelada(
     email: string,
     fecha: string,
-    hora: string
+    hora: string,
+    canceladaPorAdmin = false,
   ): Promise<boolean> {
     return this.sendEmail({
       to: email,
@@ -479,6 +526,8 @@ export class MailService {
       context: {
         fecha,
         hora,
+        canceladaPorAdmin,
+        audiencia: 'psicologo',
       }
     });
   }
@@ -487,25 +536,55 @@ export class MailService {
     email: string,
     psicologoNombre: string,
     fecha: string,
-    hora: string
+    hora: string,
+    modalidad?: string,
+    duracion?: string,
+    nombrePaciente?: string,
+    especialidad?: string,
+    emailPsicologo?: string,
+    ubicacion?: string,
+    link?: string,
   ): Promise<boolean> {
     return this.sendEmail({
       to: email,
       template: 'sesion-confirmada-derivacion',
       context: {
+        nombrePaciente,
         psicologoNombre,
+        especialidad,
+        emailPsicologo,
         fecha,
         hora,
+        modalidad,
+        duracion,
+        ubicacion,
+        link,
       },
       fromAccount: 'alt'
     });
   }
 
-  async sendSesionConfirmadaPsicologo(email: string): Promise<boolean> {
+  async sendSesionConfirmadaPsicologo(
+    email: string,
+    pacienteNombre: string,
+    fecha: string,
+    hora: string,
+    modalidad: string,
+    ubicacion?: string,
+    link?: string,
+  ): Promise<boolean> {
     return this.sendEmail({
       to: email,
       template: 'sesion-confirmada-psicologo',
-      context: {},
+      context: {
+        pacienteNombre,
+        fecha,
+        hora,
+        modalidad,
+        ubicacion,
+        link,
+        audiencia: 'psicologo',
+      },
     });
   }
 
@@ -540,6 +619,22 @@ export class MailService {
       template: 'sesion-creada-derivacion',
       context: {},
       fromAccount: 'alt'
+    });
+  }
+
+  async sendPackActivadoPsicologo(
+    email: string,
+    nombrePsicologo: string,
+    horas: number,
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      template: 'pack-activado-psicologo',
+      context: {
+        nombrePsicologo,
+        horas,
+        audiencia: 'psicologo',
+      },
     });
   }
 }

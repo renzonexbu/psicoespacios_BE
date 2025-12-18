@@ -114,6 +114,7 @@ export class PsicologoPublicDto {
   precioPresencial?: number;
   precioOnline?: number;
   disponibilidad?: any;
+  fonasa: boolean;
   // Información básica del usuario (sin datos sensibles)
   usuario: {
     id: string;

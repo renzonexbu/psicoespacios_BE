@@ -76,6 +76,7 @@ export class PsicologosService {
       precioPresencial: psicologo.precioPresencial,
       precioOnline: psicologo.precioOnline,
       disponibilidad: psicologo.disponibilidad,
+      fonasa: psicologo.fonasa || false,
       usuario: {
         id: psicologo.usuario.id,
         nombre: psicologo.usuario.nombre,
@@ -124,6 +125,7 @@ export class PsicologosService {
       precioPresencial: psicologo.precioPresencial,
       precioOnline: psicologo.precioOnline,
       disponibilidad: psicologo.disponibilidad,
+      fonasa: psicologo.fonasa || false,
       usuario: {
         id: psicologo.usuario.id,
         nombre: psicologo.usuario.nombre,
@@ -325,17 +327,18 @@ export class PsicologosService {
   }
 
   // Métodos para gestionar precios
-  async getPrecios(usuarioId: string): Promise<{ precioOnline: number | null; precioPresencial: number | null; updatedAt: Date }> {
+  async getPrecios(usuarioId: string): Promise<{ precioOnline: number | null; precioPresencial: number | null; fonasa: boolean; updatedAt: Date }> {
     const psicologo = await this.findByUserId(usuarioId);
     
     return {
       precioOnline: psicologo.precioOnline,
       precioPresencial: psicologo.precioPresencial,
+      fonasa: psicologo.fonasa || false,
       updatedAt: psicologo.updatedAt
     };
   }
 
-  async updatePrecios(usuarioId: string, precios: { precioOnline?: number; precioPresencial?: number }): Promise<{ precioOnline: number | null; precioPresencial: number | null; updatedAt: Date }> {
+  async updatePrecios(usuarioId: string, precios: { precioOnline?: number; precioPresencial?: number; fonasa?: boolean }): Promise<{ precioOnline: number | null; precioPresencial: number | null; fonasa: boolean; updatedAt: Date }> {
     const psicologo = await this.findByUserId(usuarioId);
     
     // Actualizar solo los precios proporcionados
@@ -345,6 +348,9 @@ export class PsicologosService {
     if (precios.precioPresencial !== undefined) {
       psicologo.precioPresencial = precios.precioPresencial;
     }
+    if (precios.fonasa !== undefined) {
+      psicologo.fonasa = precios.fonasa;
+    }
     
     // Guardar cambios
     const psicologoActualizado = await this.psicologoRepository.save(psicologo);
@@ -352,6 +358,7 @@ export class PsicologosService {
     return {
       precioOnline: psicologoActualizado.precioOnline,
       precioPresencial: psicologoActualizado.precioPresencial,
+      fonasa: psicologoActualizado.fonasa || false,
       updatedAt: psicologoActualizado.updatedAt
     };
   }

@@ -224,7 +224,7 @@ export class ReservasPsicologosService {
             ...savedReserva.metadatos,
             reservaBoxId: savedReservaBox.id,
             precioBox: precioBox,
-            ubicacion: `${box.sede?.nombre || 'Sede'} - Box ${box.numero}`
+            ubicacion: `${box.sede?.nombre || 'Sede'} - ${box.sede?.direccion || ''}${box.sede?.ciudad ? ', ' + box.sede.ciudad : ''} - Box ${box.numero}`
           };
           
           await manager.save(savedReserva);
@@ -237,20 +237,50 @@ export class ReservasPsicologosService {
 
       // 8. Enviar emails (fuera de la transacción)
       try {
-        // a) Email al paciente desde cuenta ALT (derivación)
-        await this.mailService.sendSesionCreadaDerivacion(paciente.email);
-        // b) Email existente de confirmación (cuenta default)
-        await this.mailService.sendReservaConfirmada(
-          paciente.email,
-          psicologo.usuario.nombre,
-          createReservaDto.fecha,
-          createReservaDto.horaInicio,
-          createReservaDto.modalidad || ModalidadSesion.PRESENCIAL,
-          createReservaDto.metadatos?.ubicacion
-        );
-        this.logger.log(`Emails de creación enviados a ${paciente.email}`);
+        const pacienteEmail = paciente.email;
+        const nombrePaciente = `${paciente.nombre} ${paciente.apellido || ''}`.trim();
+        const psicologoNombre = `${psicologo.usuario.nombre} ${psicologo.usuario.apellido || ''}`.trim();
+        const fechaStr = createReservaDto.fecha;
+        const modalidadStr =
+          createReservaDto.modalidad === ModalidadSesion.PRESENCIAL ? 'Presencial' : 'Online';
+        const ubicacion = createReservaDto.metadatos?.ubicacion;
+        const link = createReservaDto.metadatos?.link;
+        const especialidad = psicologo.usuario.especialidad;
+        const emailPsicologo = psicologo.usuario.email;
+
+        // a) Email al paciente (cuenta ALT) con todos los detalles
+        if (pacienteEmail) {
+          await this.mailService.sendSesionConfirmadaDerivacion(
+            pacienteEmail,
+            psicologoNombre,
+            fechaStr,
+            createReservaDto.horaInicio,
+            modalidadStr,
+            undefined,
+            nombrePaciente,
+            especialidad,
+            emailPsicologo,
+            ubicacion,
+            link,
+          );
+        }
+
+        // b) Email al psicólogo con detalles de la sesión y del paciente
+        if (emailPsicologo) {
+          await this.mailService.sendSesionConfirmadaPsicologo(
+            emailPsicologo,
+            nombrePaciente,
+            fechaStr,
+            createReservaDto.horaInicio,
+            modalidadStr,
+            ubicacion,
+            link,
+          );
+        }
+
+        this.logger.log(`Emails de creación enviados a paciente ${pacienteEmail} y psicólogo ${emailPsicologo}`);
       } catch (error) {
-        this.logger.error(`Error al enviar email de confirmación: ${error.message}`);
+        this.logger.error(`Error al enviar emails de confirmación de sesión: ${error.message}`);
         // No fallar la operación si el email falla
       }
 
@@ -796,6 +826,68 @@ export class ReservasPsicologosService {
         box = foundBox || undefined;
       }
 
+      // Enviar emails de cancelación al paciente y al psicólogo
+      try {
+        const fechaObj = new Date(updated.fecha as any);
+        const fechaStr = isNaN(fechaObj.getTime())
+          ? ''
+          : fechaObj.toISOString().split('T')[0];
+        const modalidadStr =
+          updated.modalidad === ModalidadSesion.PRESENCIAL ? 'Presencial' : 'Online';
+        const ubicacion =
+          updated.modalidad === ModalidadSesion.PRESENCIAL
+            ? updated.metadatos?.ubicacion
+            : undefined;
+
+        const nombrePaciente = `${updated.paciente.nombre} ${updated.paciente.apellido || ''}`.trim();
+        const nombrePsicologo = `${updated.psicologo.usuario.nombre} ${updated.psicologo.usuario.apellido || ''}`.trim();
+        const especialidad = updated.psicologo.usuario.especialidad;
+        const emailPsicologo = updated.psicologo.usuario.email;
+
+        // Email al paciente (cuenta ALT)
+        if (updated.paciente.email) {
+          await this.mailService.sendSesionCancelada({
+            to: updated.paciente.email,
+            nombreDestinatario: nombrePaciente,
+            nombrePaciente,
+            psicologoNombre: nombrePsicologo,
+            fecha: fechaStr,
+            hora: updated.horaInicio,
+            modalidad: modalidadStr,
+            motivoCancelacion: 'La sesión ha sido cancelada por el paciente.',
+            especialidad,
+            emailPsicologo,
+            emailPaciente: updated.paciente.email,
+            ubicacion,
+            audiencia: 'paciente',
+            fromAccount: 'alt',
+          });
+        }
+
+        // Email al psicólogo (cuenta default)
+        if (emailPsicologo) {
+          await this.mailService.sendSesionCancelada({
+            to: emailPsicologo,
+            nombreDestinatario: nombrePsicologo,
+            nombrePaciente,
+            psicologoNombre: nombrePsicologo,
+            fecha: fechaStr,
+            hora: updated.horaInicio,
+            modalidad: modalidadStr,
+            motivoCancelacion: 'La sesión ha sido cancelada por el paciente.',
+            especialidad,
+            emailPsicologo,
+            emailPaciente: updated.paciente.email,
+            ubicacion,
+            audiencia: 'psicologo',
+          });
+        }
+      } catch (error) {
+        this.logger.warn(
+          `No se pudieron enviar emails de sesión cancelada (cancelar-paciente): ${error?.message || error}`,
+        );
+      }
+
       return this.mapToResponseDto(updated, reserva.psicologo.usuario, reserva.paciente, box);
     });
   }
@@ -934,6 +1026,7 @@ export class ReservasPsicologosService {
       boxNombre: box?.nombre || box?.numero,
       boxSede: box?.sede?.nombre,
       modalidad: reserva.modalidad,
+      fonasa: reserva.fonasa || false,
       estado: reserva.estado,
       observaciones: reserva.observaciones,
       cuponId: reserva.cuponId,

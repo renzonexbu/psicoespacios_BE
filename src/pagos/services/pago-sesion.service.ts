@@ -21,6 +21,7 @@ export interface ConfirmarSesionDto {
   horaFin: string;
   boxId?: string;
   modalidad: ModalidadSesion;
+  fonasa?: boolean;
   cuponId?: string;
   precio: number;
   observaciones?: string;
@@ -47,6 +48,7 @@ export interface CrearOrdenFlowDto {
   horaFin: string;
   boxId?: string;
   modalidad: ModalidadSesion;
+  fonasa?: boolean;
   cuponId?: string;
   precio: number;
   observaciones?: string;
@@ -94,6 +96,7 @@ export interface SesionConfirmadaResponse {
     horaInicio: string;
     horaFin: string;
     modalidad: ModalidadSesion;
+    fonasa: boolean;
     estado: EstadoReservaPsicologo;
     boxId?: string;
     observaciones?: string;
@@ -181,6 +184,7 @@ export class PagoSesionService {
         horaFin: dto.horaFin,
         boxId: dto.boxId,
         modalidad: dto.modalidad,
+        fonasa: dto.fonasa || false,
         estado: EstadoReservaPsicologo.PENDIENTE_PAGO,
         observaciones: dto.observaciones,
         cuponId: cupon?.id,
@@ -331,29 +335,58 @@ export class PagoSesionService {
       // Enviar email de confirmación (cuenta ALT) al paciente
       try {
         const pacienteEmail = reservaTemporal.paciente?.email;
+        const nombrePaciente = reservaTemporal.paciente
+          ? `${reservaTemporal.paciente.nombre} ${reservaTemporal.paciente.apellido || ''}`.trim()
+          : undefined;
         const psicologoNombre = reservaTemporal.psicologo?.usuario
           ? `${reservaTemporal.psicologo.usuario.nombre} ${reservaTemporal.psicologo.usuario.apellido || ''}`.trim()
           : 'tu psicólogo/a';
         const fechaStr = reservaTemporal.fecha.toISOString().split('T')[0];
+        const modalidad = (reservaTemporal as any).modalidad || 'online';
+        let duracion: string | undefined;
+        if (reservaTemporal.horaInicio && reservaTemporal.horaFin) {
+          const hIni = parseInt(reservaTemporal.horaInicio.split(':')[0], 10);
+          const hFin = parseInt(reservaTemporal.horaFin.split(':')[0], 10);
+          if (!isNaN(hIni) && !isNaN(hFin) && hFin > hIni) {
+            const diff = hFin - hIni;
+            duracion = `${diff} hora${diff > 1 ? 's' : ''}`;
+          }
+        }
+        const especialidad = reservaTemporal.psicologo?.usuario?.especialidad;
+        const emailPsicologo = reservaTemporal.psicologo?.usuario?.email;
+        const ubicacion =
+          modalidad === 'presencial'
+            ? (reservaTemporal.metadatos && reservaTemporal.metadatos.ubicacion) || undefined
+            : undefined;
+
         if (pacienteEmail) {
           await this.mailService.sendSesionConfirmadaDerivacion(
             pacienteEmail,
             psicologoNombre,
             fechaStr,
-            reservaTemporal.horaInicio
+            reservaTemporal.horaInicio,
+            modalidad,
+            duracion,
+            nombrePaciente,
+            especialidad,
+            emailPsicologo,
+            ubicacion,
+          );
+        }
+
+        // Enviar email al psicólogo
+        if (emailPsicologo) {
+          await this.mailService.sendSesionConfirmadaPsicologo(
+            emailPsicologo,
+            nombrePaciente || 'Paciente',
+            fechaStr,
+            reservaTemporal.horaInicio,
+            modalidad,
+            ubicacion,
           );
         }
       } catch (error) {
         this.logger.warn(`No se pudo enviar email de confirmación de sesión (Flow): ${error?.message || error}`);
-      }
-      // Enviar email de notificación al psicólogo (cuenta default)
-      try {
-        const emailPsico = reservaTemporal.psicologo?.usuario?.email;
-        if (emailPsico) {
-          await this.mailService.sendSesionConfirmadaPsicologo(emailPsico);
-        }
-      } catch (error) {
-        this.logger.warn(`No se pudo enviar email de confirmación al psicólogo (Flow): ${error?.message || error}`);
       }
 
       return {
@@ -372,6 +405,7 @@ export class PagoSesionService {
           horaInicio: reservaTemporal.horaInicio,
           horaFin: reservaTemporal.horaFin,
           modalidad: reservaTemporal.modalidad,
+          fonasa: reservaTemporal.fonasa || false,
           estado: reservaTemporal.estado,
           boxId: reservaTemporal.boxId,
           observaciones: reservaTemporal.observaciones,
@@ -487,6 +521,7 @@ export class PagoSesionService {
         horaFin: dto.horaFin,
         boxId: dto.boxId,
         modalidad: dto.modalidad,
+        fonasa: dto.fonasa || false,
         estado: EstadoReservaPsicologo.CONFIRMADA,
         observaciones: dto.observaciones,
         cuponId: cupon?.id,
@@ -546,7 +581,7 @@ export class PagoSesionService {
             ...reservaGuardada.metadatos,
             reservaBoxId: savedReservaBox.id,
             precioBox: precioBox,
-            ubicacion: `${box.sede?.nombre || 'Sede'} - Box ${box.numero}`
+            ubicacion: `${box.sede?.nombre || 'Sede'} - ${box.sede?.direccion || ''}${box.sede?.ciudad ? ', ' + box.sede.ciudad : ''} - Box ${box.numero}`
           };
           
           await queryRunner.manager.save(ReservaPsicologo, reservaGuardada);
@@ -565,28 +600,57 @@ export class PagoSesionService {
       // Enviar email de confirmación (cuenta ALT) al paciente
       try {
         const paciente = await this.userRepository.findOne({ where: { id: dto.pacienteId } });
+        const nombrePaciente = paciente
+          ? `${paciente.nombre} ${paciente.apellido || ''}`.trim()
+          : undefined;
         const psicologoNombre = psicologo?.usuario
           ? `${psicologo.usuario.nombre} ${psicologo.usuario.apellido || ''}`.trim()
           : 'tu psicólogo/a';
+        const modalidad = (dto as any).modalidad || 'online';
+        let duracion: string | undefined;
+        if (dto.horaInicio && dto.horaFin) {
+          const hIni = parseInt(dto.horaInicio.split(':')[0], 10);
+          const hFin = parseInt(dto.horaFin.split(':')[0], 10);
+          if (!isNaN(hIni) && !isNaN(hFin) && hFin > hIni) {
+            const diff = hFin - hIni;
+            duracion = `${diff} hora${diff > 1 ? 's' : ''}`;
+          }
+        }
+        const especialidad = psicologo?.usuario?.especialidad;
+        const emailPsicologo = psicologo?.usuario?.email;
+        const ubicacion =
+          modalidad === 'presencial'
+            ? (reservaGuardada.metadatos && reservaGuardada.metadatos.ubicacion) || undefined
+            : undefined;
+
         if (paciente?.email) {
           await this.mailService.sendSesionConfirmadaDerivacion(
             paciente.email,
             psicologoNombre,
             dto.fecha,
-            dto.horaInicio
+            dto.horaInicio,
+            modalidad,
+            duracion,
+            nombrePaciente,
+            especialidad,
+            emailPsicologo,
+            ubicacion,
+          );
+        }
+
+        // Enviar email al psicólogo
+        if (emailPsicologo) {
+          await this.mailService.sendSesionConfirmadaPsicologo(
+            emailPsicologo,
+            nombrePaciente || 'Paciente',
+            dto.fecha,
+            dto.horaInicio,
+            modalidad,
+            ubicacion,
           );
         }
       } catch (error) {
         this.logger.warn(`No se pudo enviar email de confirmación de sesión: ${error?.message || error}`);
-      }
-      // Enviar email de notificación al psicólogo (cuenta default)
-      try {
-        const emailPsico = psicologo?.usuario?.email;
-        if (emailPsico) {
-          await this.mailService.sendSesionConfirmadaPsicologo(emailPsico);
-        }
-      } catch (error) {
-        this.logger.warn(`No se pudo enviar email de confirmación al psicólogo: ${error?.message || error}`);
       }
 
       return {
@@ -605,6 +669,7 @@ export class PagoSesionService {
           horaInicio: reservaGuardada.horaInicio,
           horaFin: reservaGuardada.horaFin,
           modalidad: reservaGuardada.modalidad,
+          fonasa: reservaGuardada.fonasa || false,
           estado: reservaGuardada.estado,
           boxId: reservaGuardada.boxId,
           observaciones: reservaGuardada.observaciones,

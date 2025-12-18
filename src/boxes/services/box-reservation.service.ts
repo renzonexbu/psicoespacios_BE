@@ -173,7 +173,7 @@ export class BoxReservationService {
     return Promise.all(reservas.map(reserva => this.mapToResponseDto(reserva)));
   }
 
-  async cancelReservation(id: string): Promise<BoxReservationResponseDto> {
+  async cancelReservation(id: string, canceladaPorAdmin = false): Promise<BoxReservationResponseDto> {
     const reserva = await this.reservaRepository.findOne({ where: { id } });
     if (!reserva) {
       throw new NotFoundException('Reserva no encontrada');
@@ -189,6 +189,27 @@ export class BoxReservationService {
 
     reserva.estado = EstadoReserva.CANCELADA;
     const updatedReserva = await this.reservaRepository.save(reserva);
+
+    // Enviar email al psicólogo informando cancelación de la reserva de box
+    try {
+      const psicologo = await this.userRepository.findOne({ where: { id: reserva.psicologoId } });
+      if (psicologo?.email && reserva.fecha) {
+        const fechaObj = new Date(reserva.fecha as any);
+        const fechaStr = isNaN(fechaObj.getTime())
+          ? ''
+          : fechaObj.toISOString().split('T')[0]; // YYYY-MM-DD
+        await this.mailService.sendReservaBoxCancelada(
+          psicologo.email,
+          fechaStr,
+          reserva.horaInicio,
+          canceladaPorAdmin,
+        );
+      }
+    } catch (error) {
+      // No bloquear la cancelación si falla el email
+      console.error(`Error al enviar email de cancelación de box a psicólogo ${reserva.psicologoId}:`, error);
+    }
+
     return await this.mapToResponseDto(updatedReserva);
   }
 

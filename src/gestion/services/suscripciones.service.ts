@@ -315,6 +315,22 @@ export class SuscripcionesService {
     return suscripcion;
   }
 
+  /**
+   * Cancelar cualquier suscripción como ADMIN (independiente del psicólogo)
+   */
+  async cancelByAdmin(id: string, adminId: string, motivo?: string): Promise<Suscripcion> {
+    const suscripcion = await this.findOne(id);
+
+    suscripcion.estado = EstadoSuscripcion.CANCELADA;
+    suscripcion.motivoCancelacion = motivo || 'Cancelada por administrador';
+    suscripcion.notasCancelacion = `Cancelada por admin ${adminId}${motivo ? `: ${motivo}` : ''}`;
+    suscripcion.fechaCancelacion = new Date();
+    suscripcion.renovacionAutomatica = false;
+    suscripcion.updatedAt = new Date();
+
+    return this.suscripcionRepository.save(suscripcion);
+  }
+
   async cancel(id: string, updateDto: any, userId: string): Promise<Suscripcion> {
     const suscripcion = await this.findOne(id);
 

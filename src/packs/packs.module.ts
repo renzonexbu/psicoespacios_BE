@@ -9,9 +9,21 @@ import { PackPagoMensual } from './entities/pack-pago-mensual.entity';
 import { Reserva } from '../common/entities/reserva.entity';
 import { Box } from '../common/entities/box.entity';
 import { User } from '../common/entities/user.entity';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PackHora, PackAsignacion, PackAsignacionHorario, PackPagoMensual, Reserva, Box, User])],
+  imports: [
+    TypeOrmModule.forFeature([
+      PackHora,
+      PackAsignacion,
+      PackAsignacionHorario,
+      PackPagoMensual,
+      Reserva,
+      Box,
+      User,
+    ]),
+    MailModule,
+  ],
   controllers: [PacksController],
   providers: [PacksService],
   exports: [PacksService],

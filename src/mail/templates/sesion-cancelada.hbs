@@ -239,32 +239,46 @@
         </div>
 
         <div class="content">
-            <div class="greeting">¡Hola {{nombrePaciente}}!</div>
+            <div class="greeting">
+              ¡Hola {{#if nombreDestinatario}}{{nombreDestinatario}}{{else}}{{nombrePaciente}}{{/if}}!
+            </div>
             
             <div class="cancellation-message">
-                <h3>❌ Sesión Cancelada</h3>
+                <h3>Sesión Cancelada</h3>
                 <p>Tu sesión ha sido cancelada. Te informamos los detalles a continuación.</p>
             </div>
 
             <div class="session-details">
-                <h3>📅 Sesión Cancelada</h3>
+                <h3>Sesión Cancelada</h3>
                 <p><strong>Fecha:</strong> {{fecha}}</p>
                 <p><strong>Hora:</strong> {{hora}}</p>
                 <p><strong>Modalidad:</strong> {{modalidad}}</p>
+                {{#if ubicacion}}
+                  <p><strong>Ubicación:</strong> {{ubicacion}}</p>
+                {{/if}}
                 <p><strong>Motivo de cancelación:</strong> {{motivoCancelacion}}</p>
             </div>
 
-            <div class="psychologist-info">
-                <h3>👨‍⚕️ Psicólogo Asignado</h3>
+            {{#if esAudienciaPaciente}}
+              <div class="psychologist-info">
+                <h3>Psicólogo Asignado</h3>
                 <p><strong>Nombre:</strong> {{nombrePsicologo}}</p>
                 <p><strong>Especialidad:</strong> {{especialidad}}</p>
                 <p><strong>Email:</strong> {{emailPsicologo}}</p>
-            </div>
+              </div>
+            {{/if}}
 
-            <div class="next-steps">
-                <h3>🔄 Próximos Pasos</h3>
-                <p>Si deseas reprogramar tu sesión, puedes contactar directamente a tu psicólogo o a nuestro equipo de atención al cliente. Estamos aquí para ayudarte a encontrar un nuevo horario que se adapte a tu agenda.</p>
-            </div>
+            {{#if esAudienciaPsicologo}}
+              <div class="psychologist-info">
+                <h3>Paciente</h3>
+                <p><strong>Nombre:</strong> {{nombrePaciente}}</p>
+                {{#if emailPaciente}}
+                  <p><strong>Email:</strong> {{emailPaciente}}</p>
+                {{/if}}
+              </div>
+            {{/if}}
+
+   
 
             <p style="margin: 20px 0; font-size: 14px; line-height: 1.5; color: #6c757d;">
                 Si tienes alguna pregunta sobre la cancelación o necesitas ayuda para reprogramar, no dudes en contactarnos.
@@ -273,6 +287,8 @@
 
         <div class="footer">
             <p>Gracias por confiar en PsicoEspacios</p>
+            <p>Canales de contacto:</p>
+            <p><strong>Psicólogos:</strong> +56 9 5055 3501 &nbsp;|&nbsp; <strong>Pacientes:</strong> +56 9 3948 8058</p>
             <p>Este es un email automático, por favor no respondas a este mensaje</p>
         </div>
     </div>

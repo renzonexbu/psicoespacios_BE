@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Put, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
 import { BoxReservationService } from '../services/box-reservation.service';
 import { CreateBoxReservationDto, UpdateBoxReservationDto, UpdateBoxReservationPaymentDto, BoxReservationResponseDto } from '../dto/box-reservation.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -42,8 +42,13 @@ export class BoxReservationController {
 
   @Put(':id/cancel')
   @Roles('PSICOLOGO', 'ADMIN')
-  async cancelReservation(@Param('id') id: string): Promise<BoxReservationResponseDto> {
-    return this.boxReservationService.cancelReservation(id);
+  async cancelReservation(
+    @Param('id') id: string,
+    @Req() req: any,
+  ): Promise<BoxReservationResponseDto> {
+    const role = req?.user?.role as string | undefined;
+    const canceladaPorAdmin = role === 'ADMIN';
+    return this.boxReservationService.cancelReservation(id, canceladaPorAdmin);
   }
 
   @Get('psicologo/:psicologoId')

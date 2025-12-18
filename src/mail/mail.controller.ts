@@ -19,6 +19,7 @@ export class MailController {
   async testBienvenidaPublic(@Body() data: {
     email: string;
     nombre: string;
+    role?: string;
     fromAccount?: 'default' | 'alt';
   }) {
     console.log('📧 Enviando email de bienvenida público a:', data.email);
@@ -26,6 +27,7 @@ export class MailController {
     const result = await this.mailService.sendBienvenida(
       data.email,
       data.nombre,
+      data.role,
       data.fromAccount
     );
     
@@ -96,20 +98,36 @@ export class MailController {
   @Post('test/sesion-cancelada-public')
   async testSesionCanceladaPublic(@Body() data: {
     email: string;
+    nombreDestinatario?: string;
+    nombrePaciente?: string;
     psicologoNombre: string;
     fecha: string;
     hora: string;
+    modalidad: string;
+    motivoCancelacion: string;
+    especialidad?: string;
+    emailPsicologo?: string;
+    ubicacion?: string;
+    audiencia?: 'paciente' | 'psicologo';
     fromAccount?: 'default' | 'alt';
   }) {
     console.log('📧 Enviando email de sesión cancelada público a:', data.email);
     
-    const result = await this.mailService.sendSesionCancelada(
-      data.email,
-      data.psicologoNombre,
-      data.fecha,
-      data.hora,
-      data.fromAccount
-    );
+    const result = await this.mailService.sendSesionCancelada({
+      to: data.email,
+      nombreDestinatario: data.nombreDestinatario,
+      nombrePaciente: data.nombrePaciente,
+      psicologoNombre: data.psicologoNombre,
+      fecha: data.fecha,
+      hora: data.hora,
+      modalidad: data.modalidad,
+      motivoCancelacion: data.motivoCancelacion,
+      especialidad: data.especialidad,
+      emailPsicologo: data.emailPsicologo,
+      ubicacion: data.ubicacion,
+      audiencia: data.audiencia,
+      fromAccount: data.fromAccount,
+    });
     
     return {
       success: result,
@@ -267,16 +285,32 @@ export class MailController {
   @Roles(Role.ADMIN)
   async testSesionCancelada(@Body() data: {
     email: string;
+    nombreDestinatario?: string;
+    nombrePaciente?: string;
     psicologoNombre: string;
     fecha: string;
     hora: string;
+    modalidad: string;
+    motivoCancelacion: string;
+    especialidad?: string;
+    emailPsicologo?: string;
+    ubicacion?: string;
+    audiencia?: 'paciente' | 'psicologo';
   }) {
-    const result = await this.mailService.sendSesionCancelada(
-      data.email,
-      data.psicologoNombre,
-      data.fecha,
-      data.hora
-    );
+    const result = await this.mailService.sendSesionCancelada({
+      to: data.email,
+      nombreDestinatario: data.nombreDestinatario,
+      nombrePaciente: data.nombrePaciente,
+      psicologoNombre: data.psicologoNombre,
+      fecha: data.fecha,
+      hora: data.hora,
+      modalidad: data.modalidad,
+      motivoCancelacion: data.motivoCancelacion,
+      especialidad: data.especialidad,
+      emailPsicologo: data.emailPsicologo,
+      ubicacion: data.ubicacion,
+      audiencia: data.audiencia,
+    });
     
     return {
       success: result,

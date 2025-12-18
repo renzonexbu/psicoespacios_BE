@@ -1,4 +1,5 @@
 import { Module, OnModuleInit, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import databaseConfig from './config/database.config';
@@ -82,6 +83,7 @@ import { PacksModule } from './packs/packs.module';
         };
       },
     }),
+    ScheduleModule.forRoot(),
     AuthModule,
     SedesModule,
     ReservasModule,

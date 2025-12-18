@@ -56,6 +56,9 @@ export class Psicologo {
   @Column({ type: 'jsonb', nullable: true })
   disponibilidad: any; // horarios disponibles
 
+  @Column({ type: 'boolean', default: false })
+  fonasa: boolean; // Indica si acepta FONASA
+
   @CreateDateColumn({ name: 'createdAt' })
   createdAt: Date;
 

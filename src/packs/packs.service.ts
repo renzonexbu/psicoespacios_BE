@@ -9,6 +9,7 @@ import { Box } from '../common/entities/box.entity';
 import { User } from '../common/entities/user.entity';
 import { Reserva, EstadoPagoReserva, EstadoReserva } from '../common/entities/reserva.entity';
 import { AsignarPackDto, CrearPackDto, CancelarPackDto } from './dto/packs.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class PacksService {
@@ -21,6 +22,7 @@ export class PacksService {
     @InjectRepository(Reserva) private reservaRepo: Repository<Reserva>,
     @InjectRepository(Box) private boxRepo: Repository<Box>,
     @InjectRepository(User) private userRepo: Repository<User>,
+    private readonly mailService: MailService,
   ) {}
 
   async crearPack(dto: CrearPackDto) {
@@ -102,6 +104,14 @@ export class PacksService {
 
       // Generar pagos mensuales para el período
       await this.generarPagosMensuales(manager, savedAsignacion.id, user.id, pack.precio, dto.fechaLimite);
+
+      // Enviar email al psicólogo notificando activación del pack (fuera del return principal)
+      if (user.email) {
+        // No await para no bloquear la respuesta si el correo falla
+        this.mailService
+          .sendPackActivadoPsicologo(user.email, user.nombre || 'Profesional', pack.horas)
+          .catch(() => undefined);
+      }
 
       return { 
         asignacionId: savedAsignacion.id,

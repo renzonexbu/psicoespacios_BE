@@ -181,7 +181,8 @@ export class AuthService {
     try {
       await this.mailService.sendBienvenida(
         user.email,
-        user.nombre
+        user.nombre,
+        user.role,
       );
       console.log(`✅ Email de bienvenida enviado a ${user.email}`);
     } catch (error) {
@@ -291,6 +292,7 @@ export class AuthService {
               precioPresencial: psicologo.precioPresencial,
               precioOnline: psicologo.precioOnline,
               disponibilidad: psicologo.disponibilidad,
+              fonasa: psicologo.fonasa,
               createdAt: psicologo.createdAt,
               updatedAt: psicologo.updatedAt
             }

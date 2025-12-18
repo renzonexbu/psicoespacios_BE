@@ -56,39 +56,6 @@ async function seed() {
           'Soporte por email'
         ],
         activo: true,
-      },
-      {
-        tipo: TipoPlan.INTERMEDIO,
-        nombre: 'Plan Profesional',
-        descripcion: 'Plan para psicólogos con práctica establecida',
-        precio: 49990,
-        duracion: 1,
-        horasIncluidas: 40,
-        beneficios: [
-          'Hasta 40 horas de reserva de box por mes',
-          'Sistema de derivación avanzado',
-          'Reportes detallados mensuales',
-          'Soporte prioritario',
-          'Acceso a estadísticas avanzadas'
-        ],
-        activo: true,
-      },
-      {
-        tipo: TipoPlan.PREMIUM,
-        nombre: 'Plan Premium',
-        descripcion: 'Plan para psicólogos con alta demanda',
-        precio: 79990,
-        duracion: 1,
-        horasIncluidas: 80,
-        beneficios: [
-          'Hasta 80 horas de reserva de box por mes',
-          'Sistema de derivación premium',
-          'Reportes personalizados',
-          'Soporte 24/7',
-          'Acceso a herramientas avanzadas',
-          'Gestión de múltiples sedes'
-        ],
-        activo: true,
       }
     ];
 
