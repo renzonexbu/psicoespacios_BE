@@ -248,7 +248,8 @@ export class MatchingService {
         afinidad: this.obtenerCoincidencias(paciente.afinidad_personal_preferida, psicologo.afinidad_paciente_preferida, this.configuracionMatching.mapeosAfinidad),
         filtros: this.obtenerCoincidenciasFiltros(paciente, psicologo)
       },
-      porcentajeCoincidencia: Math.round(porcentajeCoincidencia * 100) / 100
+      porcentajeCoincidencia: Math.round(porcentajeCoincidencia * 100) / 100,
+      fonasa: psicologo.fonasa || false
     };
   }
 
@@ -297,7 +298,8 @@ export class MatchingService {
         afinidad: this.obtenerCoincidencias(respuestasFormulario.afinidad_personal_preferida || [], psicologo.afinidad_paciente_preferida, this.configuracionMatching.mapeosAfinidad),
         filtros: this.obtenerCoincidenciasFiltrosConRespuestas(respuestasFormulario, psicologo)
       },
-      porcentajeCoincidencia: Math.round(porcentajeCoincidencia * 100) / 100
+      porcentajeCoincidencia: Math.round(porcentajeCoincidencia * 100) / 100,
+      fonasa: psicologo.fonasa || false
     };
   }
 

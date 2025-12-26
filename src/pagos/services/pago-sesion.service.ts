@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Pago } from '../../common/entities/pago.entity';
@@ -12,6 +12,7 @@ import { EstadoReservaPsicologo, ModalidadSesion } from '../../common/entities/r
 import { TipoPago, EstadoPago, MetodoPago } from '../../common/entities/pago.entity';
 import { Reserva, EstadoReserva, EstadoPagoReserva } from '../../common/entities/reserva.entity';
 import { MailService } from '../../mail/mail.service';
+import { FlowService } from './flow.service';
 
 export interface ConfirmarSesionDto {
   psicologoId: string;
@@ -102,6 +103,19 @@ export interface SesionConfirmadaResponse {
     observaciones?: string;
     psicologoId: string;
     pacienteId: string;
+    box?: {
+      id: string;
+      numero: string;
+      nombre: string;
+      sede: {
+        id: string;
+        nombre: string;
+        direccion: string;
+        ciudad: string;
+        telefono: string;
+        email: string;
+      } | null;
+    } | null;
   };
   cupon?: {
     id: string;
@@ -131,6 +145,7 @@ export class PagoSesionService {
     private boxRepository: Repository<Box>,
     private dataSource: DataSource,
     private mailService: MailService,
+    private flowService: FlowService,
   ) {}
 
   /**
@@ -176,10 +191,18 @@ export class PagoSesionService {
       await this.crearOActualizarPaciente(dto.pacienteId, dto.psicologoId, queryRunner);
 
       // 5. Crear reserva temporal con estado PENDIENTE_PAGO
+      // Corregir problema de timezone: crear fecha en zona horaria local
+      // Usar el mismo método que en confirmarSesion para evitar problemas de timezone
+      const fechaLocal = new Date(dto.fecha + 'T00:00:00');
+      
+      // Log para debugging de fechas
+      this.logger.log(`📅 [crearOrdenFlow] Fecha recibida: ${dto.fecha}`);
+      this.logger.log(`📅 [crearOrdenFlow] Fecha procesada: ${fechaLocal.toISOString()}`);
+      
       const reservaTemporal = queryRunner.manager.create(ReservaPsicologo, {
         psicologo: { id: dto.psicologoId },
         paciente: { id: dto.pacienteId },
-        fecha: new Date(dto.fecha),
+        fecha: fechaLocal,
         horaInicio: dto.horaInicio,
         horaFin: dto.horaFin,
         boxId: dto.boxId,
@@ -203,15 +226,47 @@ export class PagoSesionService {
 
       const reservaGuardada = await queryRunner.manager.save(ReservaPsicologo, reservaTemporal);
 
-      // 6. Crear orden en Flow (aquí iría la integración real con Flow)
-      const flowOrderId = `flow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const flowUrl = `https://flow.cl/pay/${flowOrderId}`;
+      // 6. Obtener email del paciente para crear orden en Flow
+      const paciente = await queryRunner.manager.findOne(User, {
+        where: { id: dto.pacienteId }
+      });
 
-      // 7. Guardar referencia de Flow en metadatos
+      if (!paciente || !paciente.email) {
+        throw new BadRequestException('Paciente no encontrado o sin email');
+      }
+
+      // 7. Crear orden en Flow usando el servicio real
+      // Flow requiere que commerceOrder tenga máximo 45 caracteres
+      // Usamos el UUID sin guiones (32 chars) + timestamp corto (8 últimos dígitos) = 40 caracteres
+      const uuidSinGuiones = reservaGuardada.id.replace(/-/g, '');
+      const timestampCorto = Date.now().toString().slice(-8); // Últimos 8 dígitos
+      const orderId = `${uuidSinGuiones}${timestampCorto}`; // 40 caracteres, dentro del límite
+      const subject = `Sesión psicológica - ${dto.modalidad === ModalidadSesion.PRESENCIAL ? 'Presencial' : 'Online'}`;
+      
+      // Validar y limpiar el email antes de enviarlo a Flow
+      const emailPaciente = paciente.email?.trim();
+      if (!emailPaciente) {
+        throw new BadRequestException('El paciente debe tener un email válido para procesar el pago');
+      }
+      
+      this.logger.log(`Creando orden Flow con email: ${emailPaciente}`);
+      
+      const flowResult = await this.flowService.createPayment(
+        montoFinal,
+        orderId,
+        subject,
+        emailPaciente
+      );
+
+      const flowOrderId = flowResult.flowOrder;
+      const flowUrl = flowResult.url;
+
+      // 8. Guardar referencia de Flow en metadatos
       reservaGuardada.metadatos = {
         ...reservaGuardada.metadatos,
         flowOrderId,
         flowUrl,
+        flowToken: flowResult.token,
       };
       await queryRunner.manager.save(ReservaPsicologo, reservaGuardada);
 
@@ -243,6 +298,219 @@ export class PagoSesionService {
   }
 
   /**
+   * Confirmar pago directamente por ID de reserva (más eficiente cuando ya tenemos la reserva)
+   */
+  async confirmarPagoPorReservaId(reservaId: string, datosPago: any): Promise<SesionConfirmadaResponse> {
+    this.logger.log(`Confirmando pago por reservaId: ${reservaId}`);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 1. Buscar reserva directamente por ID
+      const reservaTemporal = await queryRunner.manager.findOne(ReservaPsicologo, {
+        where: { id: reservaId },
+        relations: ['psicologo', 'psicologo.usuario', 'paciente']
+      });
+
+      if (!reservaTemporal) {
+        this.logger.error(`Reserva no encontrada para id: ${reservaId}`);
+        throw new NotFoundException(`Reserva no encontrada para id: ${reservaId}`);
+      }
+
+      // Verificar que esté pendiente de pago
+      if (reservaTemporal.estado !== EstadoReservaPsicologo.PENDIENTE_PAGO) {
+        this.logger.warn(`Reserva ${reservaId} no está pendiente de pago, estado actual: ${reservaTemporal.estado}`);
+        // Si ya está confirmada, retornar la información actual
+        if (reservaTemporal.estado === EstadoReservaPsicologo.CONFIRMADA) {
+          const pagoId = reservaTemporal.metadatos?.pagoId;
+          const pago = pagoId ? await queryRunner.manager.findOne(Pago, { where: { id: pagoId } }) : null;
+          
+          return {
+            pago: pago ? {
+              id: pago.id,
+              monto: pago.monto,
+              descuentoAplicado: pago.descuentoAplicado,
+              montoFinal: pago.montoFinal,
+              estado: pago.estado,
+              cuponId: pago.cuponId,
+              datosTransaccion: pago.datosTransaccion,
+            } : {
+              id: '',
+              monto: reservaTemporal.metadatos?.precio || 0,
+              descuentoAplicado: reservaTemporal.descuentoAplicado || 0,
+              montoFinal: (reservaTemporal.metadatos?.precio || 0) - (reservaTemporal.descuentoAplicado || 0),
+              estado: EstadoPago.COMPLETADO,
+              cuponId: reservaTemporal.cuponId,
+              datosTransaccion: undefined,
+            },
+            reserva: {
+              id: reservaTemporal.id,
+              fecha: reservaTemporal.fecha,
+              horaInicio: reservaTemporal.horaInicio,
+              horaFin: reservaTemporal.horaFin,
+              modalidad: reservaTemporal.modalidad,
+              fonasa: reservaTemporal.fonasa || false,
+              estado: reservaTemporal.estado,
+              boxId: reservaTemporal.boxId,
+              observaciones: reservaTemporal.observaciones,
+              psicologoId: reservaTemporal.psicologo.id,
+              pacienteId: reservaTemporal.paciente.id,
+            },
+            cupon: undefined,
+          };
+        }
+        throw new BadRequestException(`Reserva ${reservaId} no está en estado pendiente de pago`);
+      }
+      
+      this.logger.log(`Reserva encontrada para confirmar: ${reservaTemporal.id}, estado actual: ${reservaTemporal.estado}`);
+
+      // 2. Crear el pago
+      const precio = reservaTemporal.metadatos?.precio || 0;
+      const descuento = reservaTemporal.descuentoAplicado || 0;
+      const montoFinal = precio - descuento;
+
+      const pago = queryRunner.manager.create(Pago, {
+        tipo: TipoPago.SESION,
+        monto: precio,
+        cuponId: reservaTemporal.cuponId,
+        descuentoAplicado: descuento,
+        montoFinal: montoFinal,
+        estado: EstadoPago.COMPLETADO,
+        datosTransaccion: {
+          metodoPago: datosPago.paymentMethod === 'credit_card' ? MetodoPago.TARJETA : MetodoPago.TRANSFERENCIA,
+          referencia: datosPago.transactionId || reservaTemporal.metadatos?.flowOrderId,
+          datosTarjeta: datosPago.cardLast4 ? {
+            ultimos4: datosPago.cardLast4,
+            marca: datosPago.cardBrand || 'unknown',
+          } : undefined,
+          fechaTransaccion: new Date(),
+        },
+        fechaCompletado: new Date(),
+        metadatos: {
+          tipoSesion: 'psicologo',
+          psicologoId: reservaTemporal.psicologo.id,
+          pacienteId: reservaTemporal.paciente.id,
+          fecha: reservaTemporal.fecha,
+          horaInicio: reservaTemporal.horaInicio,
+          horaFin: reservaTemporal.horaFin,
+          modalidad: reservaTemporal.modalidad,
+          boxId: reservaTemporal.boxId,
+          flowOrderId: reservaTemporal.metadatos?.flowOrderId,
+        }
+      });
+
+      const pagoGuardado = await queryRunner.manager.save(Pago, pago);
+
+      // 3. Actualizar reserva a CONFIRMADA y vincular con pago
+      reservaTemporal.estado = EstadoReservaPsicologo.CONFIRMADA;
+      reservaTemporal.metadatos = {
+        ...reservaTemporal.metadatos,
+        pagoId: pagoGuardado.id,
+        confirmadoEn: new Date(),
+        esTemporal: false,
+      };
+      await queryRunner.manager.save(ReservaPsicologo, reservaTemporal);
+
+      // 4. Incrementar uso del cupón si existe
+      if (reservaTemporal.cuponId) {
+        const cupon = await queryRunner.manager.findOne(Voucher, {
+          where: { id: reservaTemporal.cuponId }
+        });
+        if (cupon) {
+          cupon.usosActuales += 1;
+          await queryRunner.manager.save(Voucher, cupon);
+        }
+      }
+
+      await queryRunner.commitTransaction();
+
+      this.logger.log(`✅ Pago confirmado por reservaId: pago ${pagoGuardado.id}, reserva ${reservaTemporal.id}`);
+
+      // Enviar email de confirmación (cuenta ALT) al paciente
+      try {
+        const pacienteEmail = reservaTemporal.paciente?.email;
+        const nombrePaciente = reservaTemporal.paciente
+          ? `${reservaTemporal.paciente.nombre} ${reservaTemporal.paciente.apellido || ''}`.trim()
+          : undefined;
+        const psicologoNombre = reservaTemporal.psicologo?.usuario
+          ? `${reservaTemporal.psicologo.usuario.nombre} ${reservaTemporal.psicologo.usuario.apellido || ''}`.trim()
+          : 'tu psicólogo/a';
+        const fechaStr = reservaTemporal.fecha.toISOString().split('T')[0];
+        const modalidad = (reservaTemporal as any).modalidad || 'online';
+
+        if (pacienteEmail) {
+          await this.mailService.sendSesionConfirmadaDerivacion(
+            pacienteEmail,
+            psicologoNombre,
+            fechaStr,
+            reservaTemporal.horaInicio,
+            modalidad,
+            `${reservaTemporal.horaInicio} - ${reservaTemporal.horaFin}`,
+            nombrePaciente || 'Paciente',
+            reservaTemporal.psicologo?.usuario?.especialidad,
+            reservaTemporal.psicologo?.usuario?.email,
+            reservaTemporal.modalidad === ModalidadSesion.PRESENCIAL ? reservaTemporal.metadatos?.ubicacion : undefined,
+          );
+        }
+
+        // Enviar email al psicólogo
+        const emailPsicologo = reservaTemporal.psicologo?.usuario?.email;
+        if (emailPsicologo) {
+          await this.mailService.sendSesionConfirmadaPsicologo(
+            emailPsicologo,
+            nombrePaciente || 'Paciente',
+            fechaStr,
+            reservaTemporal.horaInicio,
+            modalidad,
+            reservaTemporal.modalidad === ModalidadSesion.PRESENCIAL ? reservaTemporal.metadatos?.ubicacion : undefined,
+          );
+        }
+      } catch (error) {
+        this.logger.warn(`No se pudo enviar email de confirmación: ${error?.message || error}`);
+      }
+
+      return {
+        pago: {
+          id: pagoGuardado.id,
+          monto: pagoGuardado.monto,
+          descuentoAplicado: pagoGuardado.descuentoAplicado,
+          montoFinal: pagoGuardado.montoFinal,
+          estado: pagoGuardado.estado,
+          cuponId: pagoGuardado.cuponId,
+          datosTransaccion: pagoGuardado.datosTransaccion,
+        },
+        reserva: {
+          id: reservaTemporal.id,
+          fecha: reservaTemporal.fecha,
+          horaInicio: reservaTemporal.horaInicio,
+          horaFin: reservaTemporal.horaFin,
+          modalidad: reservaTemporal.modalidad,
+          fonasa: reservaTemporal.fonasa || false,
+          estado: reservaTemporal.estado,
+          boxId: reservaTemporal.boxId,
+          observaciones: reservaTemporal.observaciones,
+          psicologoId: reservaTemporal.psicologo.id,
+          pacienteId: reservaTemporal.paciente.id,
+        },
+        cupon: reservaTemporal.cuponId ? {
+          id: reservaTemporal.cuponId,
+          nombre: 'Cupón aplicado',
+          porcentaje: 0,
+        } : undefined,
+      };
+
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(`Error al confirmar pago por reservaId: ${error.message}`);
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
    * Confirmar pago desde webhook de Flow y activar reserva
    */
   async confirmarPagoFlow(flowOrderId: string, datosPago: any): Promise<SesionConfirmadaResponse> {
@@ -253,18 +521,22 @@ export class PagoSesionService {
     await queryRunner.startTransaction();
 
     try {
-      // 1. Buscar reserva temporal por flowOrderId
-      const reservaTemporal = await queryRunner.manager.findOne(ReservaPsicologo, {
-        where: {
-          estado: EstadoReservaPsicologo.PENDIENTE_PAGO
-        },
-        relations: ['psicologo', 'psicologo.usuario', 'paciente']
-      });
+      // 1. Buscar reserva temporal por flowOrderId usando query builder para buscar en JSONB
+      const reservaTemporal = await queryRunner.manager
+        .createQueryBuilder(ReservaPsicologo, 'reserva')
+        .where('reserva.estado = :estado', { estado: EstadoReservaPsicologo.PENDIENTE_PAGO })
+        .andWhere("reserva.metadatos->>'flowOrderId' = :flowOrderId", { flowOrderId })
+        .leftJoinAndSelect('reserva.psicologo', 'psicologo')
+        .leftJoinAndSelect('psicologo.usuario', 'usuario')
+        .leftJoinAndSelect('reserva.paciente', 'paciente')
+        .getOne();
 
-      // Filtrar por flowOrderId en los metadatos
-      if (!reservaTemporal || reservaTemporal.metadatos?.flowOrderId !== flowOrderId) {
-        throw new NotFoundException('Reserva temporal no encontrada');
+      if (!reservaTemporal) {
+        this.logger.error(`Reserva temporal no encontrada para flowOrderId: ${flowOrderId}`);
+        throw new NotFoundException(`Reserva temporal no encontrada para flowOrderId: ${flowOrderId}`);
       }
+      
+      this.logger.log(`Reserva encontrada para confirmar: ${reservaTemporal.id}, estado actual: ${reservaTemporal.estado}`);
 
       if (!reservaTemporal) {
         throw new NotFoundException('Reserva temporal no encontrada');
@@ -850,6 +1122,237 @@ export class PagoSesionService {
     }
 
     await queryRunner.manager.save(Paciente, pacienteRecord);
+  }
+
+  /**
+   * Verificar estado de una reserva temporal después del pago en Flow
+   * Útil cuando el usuario regresa de Flow y queremos verificar si ya se confirmó
+   * Devuelve toda la información de la sesión, similar a confirmarSesion
+   * 
+   * @param reservaTemporalId ID de la reserva a verificar
+   * @param usuarioId ID del usuario autenticado (para validar que sea el paciente)
+   * @param usuarioRole Rol del usuario autenticado (ADMIN puede ver cualquier reserva)
+   */
+  async verificarEstadoReserva(
+    reservaTemporalId: string,
+    usuarioId?: string,
+    usuarioRole?: string
+  ): Promise<SesionConfirmadaResponse & {
+    confirmada: boolean;
+    flowOrderId?: string;
+    psicologo?: {
+      id: string;
+      nombre: string;
+      apellido: string;
+      email: string;
+      especialidad?: string;
+    };
+    mensaje: string;
+  }> {
+    // Cargar relaciones necesarias, incluyendo box y sede si es presencial
+    const reserva = await this.reservaRepository.findOne({
+      where: { id: reservaTemporalId },
+      relations: ['psicologo', 'psicologo.usuario', 'paciente']
+    });
+
+    if (!reserva) {
+      throw new NotFoundException('Reserva no encontrada');
+    }
+
+    // Validar que el usuario autenticado sea el paciente de la reserva (o ADMIN)
+    if (usuarioId && usuarioRole !== 'ADMIN') {
+      if (reserva.paciente.id !== usuarioId) {
+        this.logger.warn(`Intento de acceso no autorizado: usuario ${usuarioId} intentó ver reserva ${reservaTemporalId} del paciente ${reserva.paciente.id}`);
+        throw new ForbiddenException('No tienes permiso para ver esta reserva. Solo puedes ver tus propias reservas.');
+      }
+    }
+
+    const confirmada = reserva.estado === EstadoReservaPsicologo.CONFIRMADA;
+    const pagoId = reserva.metadatos?.pagoId;
+    const flowOrderId = reserva.metadatos?.flowOrderId;
+
+    // Buscar el pago si existe
+    let pago: Pago | null = null;
+    let cupon: Voucher | null = null;
+
+    if (pagoId) {
+      pago = await this.pagoRepository.findOne({
+        where: { id: pagoId },
+        relations: ['cupon']
+      });
+
+      // Si hay cupón en la relación, usarlo directamente
+      if (pago?.cupon) {
+        cupon = pago.cupon;
+      } else if (pago?.cuponId) {
+        // Si no está cargado en la relación, buscarlo
+        cupon = await this.voucherRepository.findOne({
+          where: { id: pago.cuponId }
+        });
+      }
+    }
+
+    // Si no hay pago pero hay cupón en la reserva, buscarlo
+    if (!cupon && reserva.cuponId) {
+      cupon = await this.voucherRepository.findOne({
+        where: { id: reserva.cuponId }
+      });
+    }
+
+    // Información del psicólogo
+    const psicologoInfo = reserva.psicologo?.usuario ? {
+      id: reserva.psicologo.id,
+      nombre: reserva.psicologo.usuario.nombre,
+      apellido: reserva.psicologo.usuario.apellido || '',
+      email: reserva.psicologo.usuario.email,
+      especialidad: reserva.psicologo.usuario.especialidad,
+    } : undefined;
+
+    // Precio desde metadatos o desde el pago
+    const precio = reserva.metadatos?.precio || pago?.monto || 0;
+    const descuentoAplicado = reserva.descuentoAplicado || pago?.descuentoAplicado || 0;
+    const montoFinal = precio - descuentoAplicado;
+
+    // Si es presencial, cargar información del box y sede
+    let boxInfo: {
+      id: string;
+      numero: string;
+      nombre: string;
+      sede: {
+        id: string;
+        nombre: string;
+        direccion: string;
+        ciudad: string;
+        telefono: string;
+        email: string;
+      } | null;
+    } | null = null;
+    if (reserva.modalidad === ModalidadSesion.PRESENCIAL && reserva.boxId) {
+      const box = await this.boxRepository.findOne({
+        where: { id: reserva.boxId },
+        relations: ['sede']
+      });
+
+      if (box) {
+        boxInfo = {
+          id: box.id,
+          numero: box.numero,
+          nombre: box.nombre || `Box ${box.numero}`,
+          sede: box.sede ? {
+            id: box.sede.id,
+            nombre: box.sede.nombre,
+            direccion: box.sede.direccion,
+            ciudad: box.sede.ciudad,
+            telefono: box.sede.telefono,
+            email: box.sede.email,
+          } : null,
+        };
+      }
+    }
+
+    return {
+      reserva: {
+        id: reserva.id,
+        fecha: reserva.fecha,
+        horaInicio: reserva.horaInicio,
+        horaFin: reserva.horaFin,
+        modalidad: reserva.modalidad,
+        fonasa: reserva.fonasa || false,
+        estado: reserva.estado,
+        boxId: reserva.boxId,
+        observaciones: reserva.observaciones,
+        psicologoId: reserva.psicologo.id,
+        pacienteId: reserva.paciente.id,
+        // Información del box y sede si es presencial
+        box: boxInfo,
+      },
+      pago: pago ? {
+        id: pago.id,
+        monto: pago.monto,
+        descuentoAplicado: pago.descuentoAplicado,
+        montoFinal: pago.montoFinal,
+        estado: pago.estado,
+        cuponId: pago.cuponId,
+        datosTransaccion: pago.datosTransaccion,
+      } : {
+        id: '',
+        monto: precio,
+        descuentoAplicado: descuentoAplicado,
+        montoFinal: montoFinal,
+        estado: EstadoPago.PENDIENTE,
+        cuponId: reserva.cuponId,
+        datosTransaccion: undefined,
+      },
+      cupon: cupon ? {
+        id: cupon.id,
+        nombre: cupon.nombre,
+        porcentaje: cupon.porcentaje,
+      } : (reserva.cuponId ? {
+        id: reserva.cuponId,
+        nombre: 'Cupón aplicado',
+        porcentaje: 0,
+      } : undefined),
+      confirmada,
+      flowOrderId,
+      psicologo: psicologoInfo,
+      mensaje: confirmada
+        ? 'Reserva confirmada exitosamente'
+        : reserva.estado === EstadoReservaPsicologo.PENDIENTE_PAGO
+        ? 'Reserva pendiente de pago. El callback de Flow procesará el pago automáticamente.'
+        : `Estado actual: ${reserva.estado}`
+    };
+  }
+
+  /**
+   * Verificar estado de una reserva por flowOrder
+   * Busca la reserva por flowOrderId en los metadatos y luego verifica su estado
+   * 
+   * @param flowOrder FlowOrder de la reserva a verificar
+   * @param usuarioId ID del usuario autenticado (para validar que sea el paciente)
+   * @param usuarioRole Rol del usuario autenticado (ADMIN puede ver cualquier reserva)
+   */
+  async verificarEstadoReservaPorFlowOrder(
+    flowOrder: string,
+    usuarioId?: string,
+    usuarioRole?: string
+  ): Promise<SesionConfirmadaResponse & {
+    confirmada: boolean;
+    flowOrderId?: string;
+    psicologo?: {
+      id: string;
+      nombre: string;
+      apellido: string;
+      email: string;
+      especialidad?: string;
+    };
+    mensaje: string;
+  }> {
+    // Buscar la reserva por flowOrderId en los metadatos usando query builder
+    const reserva = await this.reservaRepository
+      .createQueryBuilder('reserva')
+      .where('reserva.estado IN (:...estados)', {
+        estados: [EstadoReservaPsicologo.PENDIENTE_PAGO, EstadoReservaPsicologo.CONFIRMADA]
+      })
+      .andWhere("(reserva.metadatos->>'flowOrderId' = :flowOrder OR reserva.metadatos->>'flowToken' = :flowOrder)", { flowOrder })
+      .leftJoinAndSelect('reserva.psicologo', 'psicologo')
+      .leftJoinAndSelect('psicologo.usuario', 'usuario')
+      .leftJoinAndSelect('reserva.paciente', 'paciente')
+      .getOne();
+
+    if (!reserva) {
+      throw new NotFoundException(`Reserva no encontrada para flowOrder: ${flowOrder}`);
+    }
+
+    // Validar que el usuario autenticado sea el paciente de la reserva (o ADMIN)
+    if (usuarioId && usuarioRole !== 'ADMIN') {
+      if (reserva.paciente.id !== usuarioId) {
+        this.logger.warn(`Intento de acceso no autorizado: usuario ${usuarioId} intentó ver reserva con flowOrder ${flowOrder} del paciente ${reserva.paciente.id}`);
+        throw new ForbiddenException('No tienes permiso para ver esta reserva. Solo puedes ver tus propias reservas.');
+      }
+    }
+
+    // Usar el método existente con el ID de la reserva (pasa los parámetros de validación)
+    return this.verificarEstadoReserva(reserva.id, usuarioId, usuarioRole);
   }
 
   /**

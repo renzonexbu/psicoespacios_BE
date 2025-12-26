@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Param, Query, BadRequestException, Request, ForbiddenException } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -12,10 +12,27 @@ export class PagoSesionController {
 
   /**
    * Crear orden en Flow y reserva temporal
+   * ENDPOINT PRINCIPAL - Todos los pagos pasan por Flow
+   * 
+   * Este es el endpoint que debe usar el frontend para crear cualquier reserva.
+   * Siempre crea una orden en Flow y devuelve la URL para que el usuario complete el pago.
    */
   @Post('crear-orden-flow')
   @Roles(Role.PACIENTE, Role.ADMIN)
   async crearOrdenFlow(@Body() crearOrdenFlowDto: CrearOrdenFlowDto) {
+    return this.pagoSesionService.crearOrdenFlow(crearOrdenFlowDto);
+  }
+
+  /**
+   * @deprecated Usar 'crear-orden-flow' en su lugar
+   * Este endpoint ahora también redirige a Flow en lugar de procesar pagos directos
+   * 
+   * Mantenido por compatibilidad, pero internamente usa Flow
+   */
+  @Post('crear-orden')
+  @Roles(Role.PACIENTE, Role.ADMIN)
+  async crearOrden(@Body() crearOrdenFlowDto: CrearOrdenFlowDto) {
+    // Redirigir al método que usa Flow
     return this.pagoSesionService.crearOrdenFlow(crearOrdenFlowDto);
   }
 
@@ -32,11 +49,68 @@ export class PagoSesionController {
   }
 
   /**
-   * Confirmar pago y crear reserva de sesión en una sola transacción
+   * @deprecated Usar 'crear-orden-flow' en su lugar
+   * 
+   * Este endpoint está deprecado. Todos los pagos ahora deben pasar por Flow.
+   * 
+   * Si necesitas procesar un pago directo (transferencia, efectivo) sin Flow,
+   * contacta al equipo de desarrollo para habilitar esta funcionalidad.
+   * 
+   * Por defecto, este endpoint ahora redirige a crear una orden en Flow.
    */
   @Post('confirmar-sesion')
   @Roles(Role.PACIENTE, Role.ADMIN)
   async confirmarSesion(@Body() confirmarSesionDto: ConfirmarSesionDto) {
-    return this.pagoSesionService.confirmarSesion(confirmarSesionDto);
+    // Convertir ConfirmarSesionDto a CrearOrdenFlowDto y usar Flow
+    const crearOrdenDto: CrearOrdenFlowDto = {
+      psicologoId: confirmarSesionDto.psicologoId,
+      pacienteId: confirmarSesionDto.pacienteId,
+      fecha: confirmarSesionDto.fecha,
+      horaInicio: confirmarSesionDto.horaInicio,
+      horaFin: confirmarSesionDto.horaFin,
+      boxId: confirmarSesionDto.boxId,
+      modalidad: confirmarSesionDto.modalidad,
+      fonasa: confirmarSesionDto.fonasa,
+      cuponId: confirmarSesionDto.cuponId,
+      precio: confirmarSesionDto.precio,
+      observaciones: confirmarSesionDto.observaciones,
+    };
+    
+    // Usar Flow en lugar de procesar directamente
+    return this.pagoSesionService.crearOrdenFlow(crearOrdenDto);
+  }
+
+  /**
+   * Verificar estado de una reserva temporal después del pago en Flow
+   * Útil cuando el usuario regresa de Flow y queremos verificar si ya se confirmó
+   * 
+   * Valida que el usuario autenticado sea el paciente que creó la reserva
+   * 
+   * Puede recibir:
+   * - reservaTemporalId como parámetro de ruta
+   * - flowOrder como query parameter (alternativa)
+   */
+  @Get('verificar-reserva/:reservaTemporalId')
+  @Roles(Role.PACIENTE, Role.ADMIN)
+  async verificarReserva(
+    @Param('reservaTemporalId') reservaTemporalId: string,
+    @Request() req: any
+  ) {
+    return this.pagoSesionService.verificarEstadoReserva(reservaTemporalId, req.user?.id, req.user?.role);
+  }
+
+  /**
+   * Verificar estado de una reserva temporal por flowOrder
+   * Alternativa al endpoint anterior cuando solo se tiene el flowOrder
+   * 
+   * Valida que el usuario autenticado sea el paciente que creó la reserva
+   */
+  @Get('verificar-reserva-flow/:flowOrder')
+  @Roles(Role.PACIENTE, Role.ADMIN)
+  async verificarReservaPorFlowOrder(
+    @Param('flowOrder') flowOrder: string,
+    @Request() req: any
+  ) {
+    return this.pagoSesionService.verificarEstadoReservaPorFlowOrder(flowOrder, req.user?.id, req.user?.role);
   }
 }

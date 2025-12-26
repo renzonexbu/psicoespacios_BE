@@ -62,6 +62,7 @@ export interface ResultadoMatching {
     filtros: string[];
   };
   porcentajeCoincidencia: number;
+  fonasa: boolean; // Indica si el psicólogo acepta FONASA
 }
 
 export interface CriterioMatching {
