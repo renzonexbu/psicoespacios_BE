@@ -40,8 +40,8 @@ export class CreateVoucherTable1720800014000 implements MigrationInterface {
     await queryRunner.query(`DROP INDEX "IDX_voucher_modalidad"`);
     await queryRunner.query(`DROP INDEX "IDX_voucher_vencimiento"`);
     await queryRunner.query(`DROP INDEX "IDX_voucher_psicologoId"`);
-    
+
     // Eliminar tabla
     await queryRunner.query(`DROP TABLE "voucher"`);
   }
-} 
+}

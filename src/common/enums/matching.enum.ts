@@ -20,7 +20,7 @@ export enum DiagnosticoPaciente {
   SALUD_FISICA = 'Salud física',
   ALIMENTACION = 'Alimentación',
   CONSUMO_SUSTANCIAS = 'Consumo de alcohol o drogas',
-  SEXUALIDAD_GENERO = 'Sexualidad / Género'
+  SEXUALIDAD_GENERO = 'Sexualidad / Género',
 }
 
 export enum DiagnosticoPsicologo {
@@ -39,7 +39,7 @@ export enum DiagnosticoPsicologo {
   IMPACTO_PSICOLOGICO_MEDICO = 'Impacto psicológico por diagnóstico de enfermedad médica crónica',
   TRASTORNOS_ALIMENTACION = 'Trastornos de la conducta alimentaria (TCA)',
   CONSUMO_PROBLEMATICO = 'Consumo problemático de alcohol u otras sustancias',
-  IDENTIDAD_GENERO = 'Dificultades relacionadas con la identidad de género o la orientación sexual / Disfunciones sexuales'
+  IDENTIDAD_GENERO = 'Dificultades relacionadas con la identidad de género o la orientación sexual / Disfunciones sexuales',
 }
 
 // 2. Coincidencias Temáticas (25%)
@@ -63,7 +63,7 @@ export enum TemaPaciente {
   CRISIS_EXISTENCIAL = 'Crisis existencial',
   CAMBIOS_VITALES = 'Cambios vitales',
   GENERO_SEXUALIDAD = 'Género y sexualidad',
-  DISCRIMINACION = 'Discriminación'
+  DISCRIMINACION = 'Discriminación',
 }
 
 export enum TemaPsicologo {
@@ -84,7 +84,7 @@ export enum TemaPsicologo {
   DUELO_PERDIDAS = 'Duelo por pérdidas significativas o rupturas importantes',
   CRISIS_VITALES = 'Crisis vitales o existenciales',
   ADAPTACION_CAMBIOS = 'Adaptación frente a cambios profundos o inesperados en la vida',
-  VIVENCIAS_DISCRIMINACION = 'Vivencias de discriminación o exclusión'
+  VIVENCIAS_DISCRIMINACION = 'Vivencias de discriminación o exclusión',
 }
 
 // 3. Coincidencias de Estilo Terapéutico (20%)
@@ -102,7 +102,7 @@ export enum EstiloTerapeuticoPaciente {
   ESTRUCTURA_CLARIDAD = 'Que tenga estructura y claridad en el trabajo',
   ADAPTACION_RITMO = 'Que se adapte a mi ritmo',
   EXPLICACION_BASE = 'Que me explique las cosas con base',
-  PENSAR_PROFUNDIDAD = 'Que me ayude a pensar en profundidad'
+  PENSAR_PROFUNDIDAD = 'Que me ayude a pensar en profundidad',
 }
 
 export enum EstiloTerapeuticoPsicologo {
@@ -117,7 +117,7 @@ export enum EstiloTerapeuticoPsicologo {
   ESTRUCTURA_ORDEN = 'Con estructura y orden en el trabajo clínico',
   FLEXIBLE_ADAPTACION = 'Flexible y abierto/a a adaptar el proceso',
   PUENTES_TEORIA_PRACTICA = 'Tiende puentes entre teoría y práctica',
-  REFLEXIVO_INTROSPECCION = 'Reflexivo/a y promotor/a de la introspección'
+  REFLEXIVO_INTROSPECCION = 'Reflexivo/a y promotor/a de la introspección',
 }
 
 // 4. Enfoque teórico (10%)
@@ -134,7 +134,7 @@ export enum EnfoqueTeorico {
   GESTALT = 'Gestalt',
   TERAPIAS_CORPORALES = 'Terapias corporales',
   TERAPIA_BREVE_ESTRATEGICA = 'Terapia Breve Estratégica',
-  TERAPIA_BASADA_EVIDENCIA = 'Terapia Basada en la Evidencia'
+  TERAPIA_BASADA_EVIDENCIA = 'Terapia Basada en la Evidencia',
 }
 
 // 5. Afinidad Personal (10%)
@@ -158,7 +158,7 @@ export enum AfinidadPersonalPaciente {
   CRITICO_CONSTRUCTIVO = 'Crítico/a constructivo/a',
   INTENSO_EMOCIONALMENTE = 'Intenso/a emocionalmente',
   PACIENTE = 'Paciente',
-  INTROSPECTIVO = 'Introspectivo/a'
+  INTROSPECTIVO = 'Introspectivo/a',
 }
 
 export enum AfinidadPersonalPsicologo {
@@ -181,27 +181,26 @@ export enum AfinidadPersonalPsicologo {
   MIRADA_CRITICA = 'Con mirada crítica pero constructiva',
   INTENSO_EMOCIONALMENTE = 'Emocionalmente intenso/a',
   PACIENTE_RITMO = 'Paciente o con ritmo propio',
-  INTROSPECTIVO_PROFUNDO = 'Introspectivo/a y profundo/a'
+  INTROSPECTIVO_PROFUNDO = 'Introspectivo/a y profundo/a',
 }
 
 // 6. Filtros Logísticos
 export enum Genero {
   HOMBRE = 'M',
   MUJER = 'F',
-  NO_BINARIO = 'N'
+  NO_BINARIO = 'N',
 }
 
 export enum ModalidadAtencion {
   ONLINE = 'Online',
   PRESENCIAL = 'Presencial',
   AMBAS = 'Ambas',
-  INDIFERENTE = 'Indiferente'
+  INDIFERENTE = 'Indiferente',
 }
 
 export enum GeneroPreferido {
   HOMBRE = 'Hombre',
   MUJER = 'Mujer',
   NO_BINARIO = 'No binario',
-  INDIFERENTE = 'Indiferente'
+  INDIFERENTE = 'Indiferente',
 }
-

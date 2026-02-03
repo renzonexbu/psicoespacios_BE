@@ -1,6 +1,18 @@
-import { IsUUID, IsDateString, IsString, IsNumber, IsOptional, IsEnum, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsUUID,
+  IsDateString,
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { EstadoReserva, EstadoPagoReserva } from '../../common/entities/reserva.entity';
+import {
+  EstadoReserva,
+  EstadoPagoReserva,
+} from '../../common/entities/reserva.entity';
 
 export class CreateReservaDto {
   @IsUUID()

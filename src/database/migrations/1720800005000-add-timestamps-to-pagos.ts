@@ -28,4 +28,4 @@ export class AddTimestampsToPagos1720800005000 implements MigrationInterface {
     await queryRunner.query(`ALTER TABLE "pagos" DROP COLUMN "updatedAt"`);
     await queryRunner.query(`ALTER TABLE "pagos" DROP COLUMN "createdAt"`);
   }
-} 
+}

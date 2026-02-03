@@ -31,7 +31,9 @@ export class ReservasPsicologosReminderService {
     const target = new Date(ahora.getTime() + 24 * 60 * 60 * 1000);
     const targetDateStr = target.toISOString().split('T')[0]; // YYYY-MM-DD
 
-    this.logger.log(`Buscando sesiones para recordatorio 24h del día ${targetDateStr}`);
+    this.logger.log(
+      `Buscando sesiones para recordatorio 24h del día ${targetDateStr}`,
+    );
 
     // Obtener sesiones confirmadas para la fecha objetivo
     const reservas = await this.reservaPsicologoRepository.find({
@@ -46,7 +48,9 @@ export class ReservasPsicologosReminderService {
       return;
     }
 
-    this.logger.log(`Encontradas ${reservas.length} sesiones confirmadas para enviar recordatorio`);
+    this.logger.log(
+      `Encontradas ${reservas.length} sesiones confirmadas para enviar recordatorio`,
+    );
 
     for (const reserva of reservas) {
       try {
@@ -61,7 +65,9 @@ export class ReservasPsicologosReminderService {
           ? targetDateStr
           : fechaObj.toISOString().split('T')[0];
         const modalidadStr =
-          reserva.modalidad === ModalidadSesion.PRESENCIAL ? 'Presencial' : 'Online';
+          reserva.modalidad === ModalidadSesion.PRESENCIAL
+            ? 'Presencial'
+            : 'Online';
 
         // Obtener ubicación si es presencial
         let ubicacion: string | undefined;
@@ -126,5 +132,3 @@ export class ReservasPsicologosReminderService {
     }
   }
 }
-
-

@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { User } from './user.entity';
 
 export enum TipoReporte {
@@ -8,20 +15,20 @@ export enum TipoReporte {
   DERIVACIONES = 'DERIVACIONES',
   PERSONALIZADO = 'PERSONALIZADO',
   SESIONES = 'SESIONES',
-  PAGOS = 'PAGOS'
+  PAGOS = 'PAGOS',
 }
 
 export enum FormatoReporte {
   PDF = 'PDF',
   EXCEL = 'EXCEL',
-  CSV = 'CSV'
+  CSV = 'CSV',
 }
 
 export enum EstadoReporte {
   PENDIENTE = 'PENDIENTE',
   GENERANDO = 'GENERANDO',
   COMPLETADO = 'COMPLETADO',
-  ERROR = 'ERROR'
+  ERROR = 'ERROR',
 }
 
 interface ParametrosReporte {
@@ -42,7 +49,7 @@ export class Reporte {
 
   @Column({
     type: 'enum',
-    enum: TipoReporte
+    enum: TipoReporte,
   })
   tipo: TipoReporte;
 
@@ -58,7 +65,7 @@ export class Reporte {
   @Column({
     type: 'enum',
     enum: FormatoReporte,
-    nullable: true
+    nullable: true,
   })
   formatoExportacion: FormatoReporte;
 
@@ -68,7 +75,7 @@ export class Reporte {
   @Column({
     type: 'enum',
     enum: EstadoReporte,
-    default: EstadoReporte.PENDIENTE
+    default: EstadoReporte.PENDIENTE,
   })
   estado: EstadoReporte;
 

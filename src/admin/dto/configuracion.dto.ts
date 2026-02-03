@@ -1,4 +1,13 @@
-import { IsNotEmpty, IsString, IsNumber, IsArray, IsOptional, IsBoolean, ValidateNested, IsObject } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsArray,
+  IsOptional,
+  IsBoolean,
+  ValidateNested,
+  IsObject,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class ConfiguracionGeneralDto {

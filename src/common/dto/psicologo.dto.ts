@@ -1,4 +1,10 @@
-import { IsString, IsArray, IsOptional, IsNumber, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsArray,
+  IsOptional,
+  IsNumber,
+  IsEnum,
+} from 'class-validator';
 
 export class CreatePsicologoDto {
   @IsString()

@@ -12,4 +12,4 @@ export class PacienteAsignadoDto {
   proximaSesion: Date | null;
   estado: string;
   tag: string | null;
-} 
+}

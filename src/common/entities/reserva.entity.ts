@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Box } from './box.entity';
 import { User } from './user.entity';
 
@@ -6,12 +14,12 @@ export enum EstadoReserva {
   PENDIENTE = 'pendiente',
   CONFIRMADA = 'confirmada',
   CANCELADA = 'cancelada',
-  COMPLETADA = 'completada'
+  COMPLETADA = 'completada',
 }
 
 export enum EstadoPagoReserva {
   PENDIENTE_PAGO = 'pendiente_pago',
-  PAGADO = 'pagado'
+  PAGADO = 'pagado',
 }
 
 @Entity('reservas')
@@ -37,14 +45,14 @@ export class Reserva {
   @Column({
     type: 'enum',
     enum: EstadoReserva,
-    default: EstadoReserva.CONFIRMADA
+    default: EstadoReserva.CONFIRMADA,
   })
   estado: EstadoReserva;
 
   @Column({
     type: 'enum',
     enum: EstadoPagoReserva,
-    default: EstadoPagoReserva.PENDIENTE_PAGO
+    default: EstadoPagoReserva.PENDIENTE_PAGO,
   })
   estadoPago: EstadoPagoReserva;
 

@@ -1,12 +1,30 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Query,
+  Request,
+} from '@nestjs/common';
 import { PsicologosService } from '../gestion/services/psicologos.service';
-import { CreatePsicologoDto, UpdatePsicologoDto } from '../common/dto/psicologo.dto';
+import {
+  CreatePsicologoDto,
+  UpdatePsicologoDto,
+} from '../common/dto/psicologo.dto';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { AgendaService } from './services/agenda.service';
-import { AgendaDisponibilidadDto, PsicologoDisponibilidadDto, BoxDisponibleDto } from './dto/agenda-disponibilidad.dto';
+import {
+  AgendaDisponibilidadDto,
+  PsicologoDisponibilidadDto,
+  BoxDisponibleDto,
+} from './dto/agenda-disponibilidad.dto';
 import { CrearPacienteService } from './services/crear-paciente.service';
 import { CrearPacienteDto } from './dto/crear-paciente.dto';
 import { CrearPacienteResponseDto } from './dto/crear-paciente-response.dto';
@@ -20,7 +38,7 @@ export class PsicologosController {
     private readonly psicologosService: PsicologosService,
     private readonly agendaService: AgendaService,
     private readonly crearPacienteService: CrearPacienteService,
-    private readonly transferirPacienteService: TransferirPacienteService
+    private readonly transferirPacienteService: TransferirPacienteService,
   ) {}
 
   @Post()
@@ -52,7 +70,10 @@ export class PsicologosController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.PSICOLOGO)
-  update(@Param('id') id: string, @Body() updatePsicologoDto: UpdatePsicologoDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updatePsicologoDto: UpdatePsicologoDto,
+  ) {
     return this.psicologosService.update(id, updatePsicologoDto);
   }
 
@@ -93,9 +114,12 @@ export class PsicologosController {
   @Roles(Role.PSICOLOGO, Role.ADMIN)
   async crearPaciente(
     @Body() crearPacienteDto: CrearPacienteDto,
-    @Request() req
+    @Request() req,
   ): Promise<CrearPacienteResponseDto> {
-    return this.crearPacienteService.crearPaciente(crearPacienteDto, req.user.id);
+    return this.crearPacienteService.crearPaciente(
+      crearPacienteDto,
+      req.user.id,
+    );
   }
 
   // Endpoint para transferir un paciente a otro psicólogo
@@ -104,9 +128,12 @@ export class PsicologosController {
   @Roles(Role.PSICOLOGO, Role.ADMIN)
   async transferirPaciente(
     @Body() transferirPacienteDto: TransferirPacienteDto,
-    @Request() req
+    @Request() req,
   ): Promise<TransferirPacienteResponseDto> {
-    return this.transferirPacienteService.transferirPaciente(transferirPacienteDto, req.user.id);
+    return this.transferirPacienteService.transferirPaciente(
+      transferirPacienteDto,
+      req.user.id,
+    );
   }
 
   // Endpoint para obtener un psicólogo específico por ID (debe estar al final)

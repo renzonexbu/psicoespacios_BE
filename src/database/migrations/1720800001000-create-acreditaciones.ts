@@ -19,4 +19,4 @@ export class CreateAcreditaciones1720800001000 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP TABLE IF EXISTS "acreditaciones"`);
   }
-} 
+}

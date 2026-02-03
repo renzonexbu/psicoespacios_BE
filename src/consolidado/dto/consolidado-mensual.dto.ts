@@ -3,7 +3,7 @@ import { IsString, IsOptional, IsDateString, Matches } from 'class-validator';
 export class QueryConsolidadoMensualDto {
   @IsString()
   @Matches(/^\d{4}-\d{2}$/, {
-    message: 'El mes debe tener el formato YYYY-MM (ej: 2024-01)'
+    message: 'El mes debe tener el formato YYYY-MM (ej: 2024-01)',
   })
   mes: string; // Formato YYYY-MM
 
@@ -15,7 +15,7 @@ export class QueryConsolidadoMensualDto {
 export class QueryConsolidadoMensualGlobalDto {
   @IsString()
   @Matches(/^\d{4}-\d{2}$/, {
-    message: 'El mes debe tener el formato YYYY-MM (ej: 2024-01)'
+    message: 'El mes debe tener el formato YYYY-MM (ej: 2024-01)',
   })
   mes: string; // Formato YYYY-MM
 
@@ -186,7 +186,3 @@ export class ConsolidadoMensualGlobalDto {
   totalMonto: number;
   detalle: DetalleReservaGlobalDto[];
 }
-
-
-
-

@@ -1,4 +1,11 @@
-import { IsString, IsUrl, IsArray, ValidateNested, IsEnum, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsUrl,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+  IsNumber,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ModalidadDto {

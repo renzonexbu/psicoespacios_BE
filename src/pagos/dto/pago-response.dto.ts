@@ -1,4 +1,8 @@
-import { TipoPago, EstadoPago, MetodoPago } from '../../common/entities/pago.entity';
+import {
+  TipoPago,
+  EstadoPago,
+  MetodoPago,
+} from '../../common/entities/pago.entity';
 
 export class CuponInfoDto {
   id: string;
@@ -36,16 +40,3 @@ export class PagoResponseDto {
   createdAt: Date;
   updatedAt: Date;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

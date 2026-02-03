@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateDocumentosPsicologo1720800011000 implements MigrationInterface {
+export class CreateDocumentosPsicologo1720800011000
+  implements MigrationInterface
+{
   name = 'CreateDocumentosPsicologo1720800011000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -55,7 +57,9 @@ export class CreateDocumentosPsicologo1720800011000 implements MigrationInterfac
     // Eliminar índices
     await queryRunner.query(`DROP INDEX "IDX_documento_psicologo_verificado"`);
     await queryRunner.query(`DROP INDEX "IDX_documento_psicologo_tipo"`);
-    await queryRunner.query(`DROP INDEX "IDX_documento_psicologo_psicologo_id"`);
+    await queryRunner.query(
+      `DROP INDEX "IDX_documento_psicologo_psicologo_id"`,
+    );
 
     // Eliminar foreign key
     await queryRunner.query(`
@@ -68,4 +72,4 @@ export class CreateDocumentosPsicologo1720800011000 implements MigrationInterfac
     // Eliminar enum
     await queryRunner.query(`DROP TYPE "public"."tipo_documento_enum"`);
   }
-} 
+}

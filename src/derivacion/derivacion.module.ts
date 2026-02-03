@@ -21,17 +21,8 @@ import { User } from '../common/entities/user.entity';
       User,
     ]),
   ],
-  controllers: [
-    PerfilesDerivacionController,
-    SolicitudesDerivacionController,
-  ],
-  providers: [
-    PerfilesDerivacionService,
-    SolicitudesDerivacionService,
-  ],
-  exports: [
-    PerfilesDerivacionService,
-    SolicitudesDerivacionService,
-  ],
+  controllers: [PerfilesDerivacionController, SolicitudesDerivacionController],
+  providers: [PerfilesDerivacionService, SolicitudesDerivacionService],
+  exports: [PerfilesDerivacionService, SolicitudesDerivacionService],
 })
 export class DerivacionModule {}

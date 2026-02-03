@@ -29,7 +29,3 @@ import { MailModule } from '../mail/mail.module';
   exports: [PacksService],
 })
 export class PacksModule {}
-
-
-
-

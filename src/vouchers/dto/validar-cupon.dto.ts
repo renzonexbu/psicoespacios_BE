@@ -11,5 +11,9 @@ export class ValidarCuponResponseDto {
 export class ValidarCuponErrorDto {
   valido: false;
   mensaje: string;
-  error: 'CUPON_NO_EXISTE' | 'CUPON_EXPIRADO' | 'CUPON_AGOTADO' | 'ERROR_VALIDACION';
+  error:
+    | 'CUPON_NO_EXISTE'
+    | 'CUPON_EXPIRADO'
+    | 'CUPON_AGOTADO'
+    | 'ERROR_VALIDACION';
 }

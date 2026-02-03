@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+  JoinColumn,
+} from 'typeorm';
 import { User } from './user.entity';
 
 export enum TipoNota {
@@ -7,7 +15,7 @@ export enum TipoNota {
   OBSERVACION = 'observacion',
   PLAN_TRATAMIENTO = 'plan_tratamiento',
   PROGRESO = 'progreso',
-  OTRO = 'otro'
+  OTRO = 'otro',
 }
 
 @Entity('notas')
@@ -32,7 +40,7 @@ export class Nota {
   @Column({
     type: 'enum',
     enum: TipoNota,
-    default: TipoNota.OTRO
+    default: TipoNota.OTRO,
   })
   tipo: TipoNota;
 
@@ -53,4 +61,4 @@ export class Nota {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-} 
+}

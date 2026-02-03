@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsNumber, IsDateString, IsUUID } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsDateString,
+  IsUUID,
+} from 'class-validator';
 
 export class AgendaDisponibilidadDto {
   @IsUUID()
@@ -111,4 +117,4 @@ export class BoxInfoResponseDto {
   sedeEmail?: string;
   createdAt: Date;
   updatedAt: Date;
-} 
+}

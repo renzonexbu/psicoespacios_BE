@@ -1,16 +1,38 @@
-import { Controller, Get, Post, Body, Param, Put, Patch, Delete, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Patch,
+  Delete,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ReservasPsicologosService } from './reservas-psicologos.service';
-import { CreateReservaPsicologoDto, UpdateReservaPsicologoDto, QueryReservasPsicologoDto, ActualizarPagoDto } from './dto/reserva-psicologo.dto';
+import {
+  CreateReservaPsicologoDto,
+  UpdateReservaPsicologoDto,
+  QueryReservasPsicologoDto,
+  ActualizarPagoDto,
+} from './dto/reserva-psicologo.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
-import { EstadoReservaPsicologo, ModalidadSesion } from '../common/entities/reserva-psicologo.entity';
+import {
+  EstadoReservaPsicologo,
+  ModalidadSesion,
+} from '../common/entities/reserva-psicologo.entity';
 
 @Controller('api/v1/reservas-sesiones')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ReservasPsicologosController {
-  constructor(private readonly reservasPsicologosService: ReservasPsicologosService) {}
+  constructor(
+    private readonly reservasPsicologosService: ReservasPsicologosService,
+  ) {}
 
   /**
    * Crear una nueva reserva de sesión con psicólogo
@@ -55,7 +77,7 @@ export class ReservasPsicologosController {
   @Roles(Role.ADMIN)
   async findBySede(
     @Param('sedeId') sedeId: string,
-    @Query() query: QueryReservasPsicologoDto
+    @Query() query: QueryReservasPsicologoDto,
   ) {
     return this.reservasPsicologosService.findBySede(sedeId, query);
   }
@@ -85,10 +107,13 @@ export class ReservasPsicologosController {
   @Roles(Role.PSICOLOGO, Role.ADMIN)
   async findByUsuarioPsicologo(
     @Param('usuarioId') usuarioId: string,
-    @Query('soloFuturas') soloFuturas?: string
+    @Query('soloFuturas') soloFuturas?: string,
   ) {
     const soloFuturasBoolean = soloFuturas === 'true';
-    return this.reservasPsicologosService.findByUsuarioPsicologo(usuarioId, soloFuturasBoolean);
+    return this.reservasPsicologosService.findByUsuarioPsicologo(
+      usuarioId,
+      soloFuturasBoolean,
+    );
   }
 
   /**
@@ -98,7 +123,7 @@ export class ReservasPsicologosController {
   @Roles(Role.PSICOLOGO, Role.ADMIN)
   async update(
     @Param('id') id: string,
-    @Body() updateReservaDto: UpdateReservaPsicologoDto
+    @Body() updateReservaDto: UpdateReservaPsicologoDto,
   ) {
     return this.reservasPsicologosService.update(id, updateReservaDto);
   }
@@ -128,9 +153,12 @@ export class ReservasPsicologosController {
   @Roles(Role.ADMIN, Role.PSICOLOGO)
   async actualizarPagoId(
     @Param('id') id: string,
-    @Body() actualizarPagoDto: ActualizarPagoDto
+    @Body() actualizarPagoDto: ActualizarPagoDto,
   ) {
-    return this.reservasPsicologosService.actualizarPagoId(id, actualizarPagoDto.pagoId);
+    return this.reservasPsicologosService.actualizarPagoId(
+      id,
+      actualizarPagoDto.pagoId,
+    );
   }
 
   /**
@@ -158,4 +186,4 @@ export class ReservasPsicologosController {
   getModalidadesSesion() {
     return Object.values(ModalidadSesion);
   }
-} 
+}

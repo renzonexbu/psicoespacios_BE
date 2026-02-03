@@ -22,17 +22,19 @@ export class AdminService {
 
     if (!configuracion) {
       // Crear configuración inicial por defecto
-      return this.configuracionRepository.save(this.getConfiguracionPorDefecto());
+      return this.configuracionRepository.save(
+        this.getConfiguracionPorDefecto(),
+      );
     }
 
     return configuracion;
   }
 
   async updateConfiguracion(updateDto: UpdateConfiguracionDto) {
-    let configuracion = await this.getConfiguracion();
+    const configuracion = await this.getConfiguracion();
 
     // Actualizar solo los campos proporcionados
-    Object.keys(updateDto).forEach(key => {
+    Object.keys(updateDto).forEach((key) => {
       if (updateDto[key]) {
         configuracion[key] = {
           ...configuracion[key],

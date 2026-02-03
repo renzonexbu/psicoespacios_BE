@@ -1,6 +1,23 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { PacksService } from './packs.service';
-import { AsignarPackDto, CancelarAsignacionDto, CrearPackDto, CancelarPackDto, MarcarPagoMensualDto, ReembolsarPagoMensualDto } from './dto/packs.dto';
+import {
+  AsignarPackDto,
+  CancelarAsignacionDto,
+  CrearPackDto,
+  CancelarPackDto,
+  MarcarPagoMensualDto,
+  ReembolsarPagoMensualDto,
+} from './dto/packs.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -43,7 +60,8 @@ export class PacksController {
   @Get()
   @Roles('ADMIN')
   listar(@Query('activo') activo?: string) {
-    const filter = typeof activo === 'string' ? { activo: activo === 'true' } : undefined;
+    const filter =
+      typeof activo === 'string' ? { activo: activo === 'true' } : undefined;
     return this.packsService.listarPacks(filter);
   }
 
@@ -67,14 +85,18 @@ export class PacksController {
       montoPagado: dto.montoPagado,
       metodoPago: dto.metodoPago,
       referenciaPago: dto.referenciaPago,
-      observaciones: dto.observaciones
+      observaciones: dto.observaciones,
     });
   }
 
   @Post('pagos/reembolsar')
   @Roles('ADMIN')
   reembolsarPagoMensual(@Body() dto: ReembolsarPagoMensualDto) {
-    return this.packsService.reembolsarPagoMensual(dto.pagoId, dto.montoReembolsado, dto.observaciones);
+    return this.packsService.reembolsarPagoMensual(
+      dto.pagoId,
+      dto.montoReembolsado,
+      dto.observaciones,
+    );
   }
 
   @Get('pagos/asignacion/:asignacionId')
@@ -85,7 +107,10 @@ export class PacksController {
 
   @Get('pagos/usuario/:usuarioId')
   @Roles('ADMIN', 'PSICOLOGO')
-  getPagosPorUsuario(@Param('usuarioId') usuarioId: string, @Query('mes') mes?: string) {
+  getPagosPorUsuario(
+    @Param('usuarioId') usuarioId: string,
+    @Query('mes') mes?: string,
+  ) {
     return this.packsService.getPagosMensualesPorUsuario(usuarioId, mes);
   }
 
@@ -95,5 +120,3 @@ export class PacksController {
     return this.packsService.getPagosPendientes();
   }
 }
-
-

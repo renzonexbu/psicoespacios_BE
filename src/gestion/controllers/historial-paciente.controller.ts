@@ -1,6 +1,17 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { HistorialPacienteService } from '../services/historial-paciente.service';
-import { CreateHistorialPacienteDto, UpdateHistorialPacienteDto } from '../dto/historial-paciente.dto';
+import {
+  CreateHistorialPacienteDto,
+  UpdateHistorialPacienteDto,
+} from '../dto/historial-paciente.dto';
 
 @Controller('api/v1/gestion/historial-paciente')
 export class HistorialPacienteController {
@@ -22,7 +33,10 @@ export class HistorialPacienteController {
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateHistorialPacienteDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateHistorialPacienteDto,
+  ) {
     return this.historialService.update(id, dto);
   }
 
@@ -35,4 +49,4 @@ export class HistorialPacienteController {
   async findByPaciente(@Param('idUsuarioPaciente') idUsuarioPaciente: string) {
     return this.historialService.findByPaciente(idUsuarioPaciente);
   }
-} 
+}

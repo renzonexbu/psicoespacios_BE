@@ -1,6 +1,20 @@
-import { IsString, IsNumber, IsOptional, IsArray, IsUUID, IsEnum, IsDateString, IsBoolean, ValidateNested, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsArray,
+  IsUUID,
+  IsEnum,
+  IsDateString,
+  IsBoolean,
+  ValidateNested,
+  IsObject,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { EstadoArriendo, TipoArriendo } from '../../common/entities/arriendo-box.entity';
+import {
+  EstadoArriendo,
+  TipoArriendo,
+} from '../../common/entities/arriendo-box.entity';
 
 export class HorarioDto {
   @IsString()
@@ -136,4 +150,4 @@ export class UpdateArriendoBoxDto {
   @IsString()
   @IsOptional()
   motivoCancelacion?: string;
-} 
+}

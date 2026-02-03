@@ -1,19 +1,26 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In } from 'typeorm';
 import { Disponibilidad } from '../entities/disponibilidad.entity';
 import { Box } from '../../common/entities/box.entity';
 import { Reserva, EstadoReserva } from '../../common/entities/reserva.entity';
-import { ReservaPsicologo, EstadoReservaPsicologo } from '../../common/entities/reserva-psicologo.entity';
+import {
+  ReservaPsicologo,
+  EstadoReservaPsicologo,
+} from '../../common/entities/reserva-psicologo.entity';
 import { Psicologo } from '../../common/entities/psicologo.entity';
 import { Sede } from '../../common/entities/sede.entity';
 import { User } from '../../common/entities/user.entity';
-import { 
-  AgendaDisponibilidadDto, 
-  AgendaResponseDto, 
+import {
+  AgendaDisponibilidadDto,
+  AgendaResponseDto,
   DisponibilidadSlotDto,
   PsicologoDisponibilidadDto,
-  PsicologoDisponibilidadResponseDto
+  PsicologoDisponibilidadResponseDto,
 } from '../dto/agenda-disponibilidad.dto';
 
 @Injectable()
@@ -36,11 +43,13 @@ export class AgendaService {
   ) {}
 
   // Método existente para agenda completa (con boxes)
-  async getAgendaDisponibilidad(query: AgendaDisponibilidadDto): Promise<AgendaResponseDto> {
+  async getAgendaDisponibilidad(
+    query: AgendaDisponibilidadDto,
+  ): Promise<AgendaResponseDto> {
     // 1. Verificar que el psicólogo existe
     const psicologo = await this.psicologoRepository.findOne({
       where: { id: query.psicologoId },
-      relations: ['usuario']
+      relations: ['usuario'],
     });
 
     if (!psicologo) {
@@ -49,25 +58,27 @@ export class AgendaService {
 
     // 2. Obtener la disponibilidad del psicólogo
     const disponibilidad = await this.disponibilidadRepository.find({
-      where: { 
+      where: {
         psicologo: { id: psicologo.usuario.id },
-        active: true 
-      }
+        active: true,
+      },
     });
 
     if (disponibilidad.length === 0) {
-      throw new BadRequestException('El psicólogo no tiene disponibilidad configurada');
+      throw new BadRequestException(
+        'El psicólogo no tiene disponibilidad configurada',
+      );
     }
 
     // 3. Obtener boxes disponibles según la sede solicitada (opcional)
     let boxes: Box[] = [];
     if (query.sedeId && query.sedeId !== 'online') {
       boxes = await this.boxRepository.find({
-        where: { 
+        where: {
           sede: { id: query.sedeId },
-          estado: 'DISPONIBLE'
+          estado: 'DISPONIBLE',
         },
-        relations: ['sede']
+        relations: ['sede'],
       });
     }
 
@@ -76,11 +87,14 @@ export class AgendaService {
       query,
       disponibilidad,
       boxes,
-      psicologo
+      psicologo,
     );
 
     // 5. Verificar reservas existentes
-    const slotsConReservas = await this.checkReservasExistentes(slots, query.psicologoId);
+    const slotsConReservas = await this.checkReservasExistentes(
+      slots,
+      query.psicologoId,
+    );
 
     return {
       psicologoId: query.psicologoId,
@@ -89,15 +103,18 @@ export class AgendaService {
       fechaFin: query.fechaFin,
       slots: slotsConReservas,
       totalSlots: slotsConReservas.length,
-      slotsDisponibles: slotsConReservas.filter(slot => slot.disponible).length
+      slotsDisponibles: slotsConReservas.filter((slot) => slot.disponible)
+        .length,
     };
   }
 
   // Nuevo método para disponibilidad del psicólogo (sin boxes)
-  async getPsicologoDisponibilidad(query: PsicologoDisponibilidadDto): Promise<PsicologoDisponibilidadResponseDto> {
+  async getPsicologoDisponibilidad(
+    query: PsicologoDisponibilidadDto,
+  ): Promise<PsicologoDisponibilidadResponseDto> {
     const psicologo = await this.psicologoRepository.findOne({
       where: { id: query.psicologoId },
-      relations: ['usuario']
+      relations: ['usuario'],
     });
 
     if (!psicologo) {
@@ -105,30 +122,37 @@ export class AgendaService {
     }
 
     const disponibilidad = await this.disponibilidadRepository.find({
-      where: { 
+      where: {
         psicologo: { id: psicologo.usuario.id },
-        active: true 
-      }
+        active: true,
+      },
     });
 
     if (disponibilidad.length === 0) {
-      throw new BadRequestException('El psicólogo no tiene disponibilidad configurada');
+      throw new BadRequestException(
+        'El psicólogo no tiene disponibilidad configurada',
+      );
     }
 
     const slots = await this.generatePsicologoSlots(
       query,
       disponibilidad,
-      psicologo
+      psicologo,
     );
 
     // Usar el verificador común de reservas
-    const slotsConReservas = await this.checkReservasExistentes(slots, query.psicologoId);
+    const slotsConReservas = await this.checkReservasExistentes(
+      slots,
+      query.psicologoId,
+    );
 
     // Si es presencial, priorizar por horario/sede y evitar duplicados por hora
     let finalSlots = slotsConReservas;
     if (query.modalidad === 'presencial') {
       const grupos = new Map<string, DisponibilidadSlotDto[]>();
-      for (const s of slotsConReservas.filter(s => s.modalidad === 'presencial')) {
+      for (const s of slotsConReservas.filter(
+        (s) => s.modalidad === 'presencial',
+      )) {
         const key = `${s.fecha}|${s.horaInicio}|${s.horaFin}`;
         const arr = grupos.get(key) || [];
         arr.push(s);
@@ -137,7 +161,7 @@ export class AgendaService {
       const escogidos: DisponibilidadSlotDto[] = [];
       for (const [, arr] of grupos) {
         // Preferir cualquiera que esté disponible (ya filtrados por sede abierta y con boxes)
-        const elegido = arr.find(a => a.disponible) || arr[0];
+        const elegido = arr.find((a) => a.disponible) || arr[0];
         if (elegido?.disponible) {
           escogidos.push(elegido);
         }
@@ -152,30 +176,30 @@ export class AgendaService {
       fechaFin: query.fechaFin,
       slots: finalSlots,
       totalSlots: finalSlots.length,
-      slotsDisponibles: finalSlots.filter(slot => slot.disponible).length
+      slotsDisponibles: finalSlots.filter((slot) => slot.disponible).length,
     };
   }
 
   private normalizarDia(dia: string): string {
     const normalizaciones = {
-      'lunes': 'Lunes',
-      'martes': 'Martes', 
-      'miércoles': 'Miércoles',
-      'miercoles': 'Miércoles',
-      'jueves': 'Jueves',
-      'viernes': 'Viernes',
-      'sábado': 'Sábado',
-      'sabado': 'Sábado',
-      'domingo': 'Domingo',
-      'LUNES': 'Lunes',
-      'MARTES': 'Martes',
-      'MIÉRCOLES': 'Miércoles',
-      'MIERCOLES': 'Miércoles',
-      'JUEVES': 'Jueves',
-      'VIERNES': 'Viernes',
-      'SÁBADO': 'Sábado',
-      'SABADO': 'Sábado',
-      'DOMINGO': 'Domingo'
+      lunes: 'Lunes',
+      martes: 'Martes',
+      miércoles: 'Miércoles',
+      miercoles: 'Miércoles',
+      jueves: 'Jueves',
+      viernes: 'Viernes',
+      sábado: 'Sábado',
+      sabado: 'Sábado',
+      domingo: 'Domingo',
+      LUNES: 'Lunes',
+      MARTES: 'Martes',
+      MIÉRCOLES: 'Miércoles',
+      MIERCOLES: 'Miércoles',
+      JUEVES: 'Jueves',
+      VIERNES: 'Viernes',
+      SÁBADO: 'Sábado',
+      SABADO: 'Sábado',
+      DOMINGO: 'Domingo',
     };
     return normalizaciones[dia.toLowerCase()] || dia;
   }
@@ -188,21 +212,33 @@ export class AgendaService {
   private async generatePsicologoSlots(
     query: PsicologoDisponibilidadDto,
     disponibilidad: Disponibilidad[],
-    psicologo: Psicologo
+    psicologo: Psicologo,
   ): Promise<DisponibilidadSlotDto[]> {
     const slots: DisponibilidadSlotDto[] = [];
     const fechaInicio = this.crearFechaLocal(query.fechaInicio);
     const fechaFin = this.crearFechaLocal(query.fechaFin);
-    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const diasSemana = [
+      'Domingo',
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+    ];
     const sedeCache = new Map<string, Sede>();
     const disponibilidadBoxCache = new Map<string, boolean>();
 
-    for (let fecha = new Date(fechaInicio); fecha <= fechaFin; fecha = new Date(fecha.getTime() + 24 * 60 * 60 * 1000)) {
+    for (
+      let fecha = new Date(fechaInicio);
+      fecha <= fechaFin;
+      fecha = new Date(fecha.getTime() + 24 * 60 * 60 * 1000)
+    ) {
       const diaSemana = diasSemana[fecha.getDay()];
       const fechaString = fecha.toISOString().split('T')[0];
 
-      const disponibilidadDia = disponibilidad.find(d => 
-        this.normalizarDia(d.day) === diaSemana || d.day === diaSemana
+      const disponibilidadDia = disponibilidad.find(
+        (d) => this.normalizarDia(d.day) === diaSemana || d.day === diaSemana,
       );
       if (!disponibilidadDia || !disponibilidadDia.hours) continue;
 
@@ -210,22 +246,33 @@ export class AgendaService {
       if (Array.isArray(hoursValue)) {
         for (const hora of hoursValue) {
           const horaFin = this.calcularHoraFin(hora);
-          const modalidadSlot = disponibilidadDia.sede_id === 'online' ? 'online' : 'presencial';
+          const modalidadSlot =
+            disponibilidadDia.sede_id === 'online' ? 'online' : 'presencial';
           if (!query.modalidad || query.modalidad === modalidadSlot) {
             if (modalidadSlot === 'presencial' && disponibilidadDia.sede_id) {
               let sede = sedeCache.get(disponibilidadDia.sede_id);
               if (!sede) {
-                const found = await this.sedeRepository.findOne({ where: { id: disponibilidadDia.sede_id } });
+                const found = await this.sedeRepository.findOne({
+                  where: { id: disponibilidadDia.sede_id },
+                });
                 sede = found ?? undefined;
                 if (sede) sedeCache.set(disponibilidadDia.sede_id, sede);
               }
-              if (!sede || !this.esHorarioValidoParaSede(hora, horaFin, sede, diaSemana)) {
+              if (
+                !sede ||
+                !this.esHorarioValidoParaSede(hora, horaFin, sede, diaSemana)
+              ) {
                 continue; // fuera de horario de sede
               }
               const cacheKey = `${disponibilidadDia.sede_id}|${fechaString}|${hora}|${horaFin}`;
               let hayBoxDisponible = disponibilidadBoxCache.get(cacheKey);
               if (hayBoxDisponible === undefined) {
-                const box = await this.getBoxDisponible({ sedeId: disponibilidadDia.sede_id, fecha: fechaString, horaInicio: hora, horaFin });
+                const box = await this.getBoxDisponible({
+                  sedeId: disponibilidadDia.sede_id,
+                  fecha: fechaString,
+                  horaInicio: hora,
+                  horaFin,
+                });
                 hayBoxDisponible = !!box;
                 disponibilidadBoxCache.set(cacheKey, hayBoxDisponible);
               }
@@ -233,17 +280,33 @@ export class AgendaService {
                 continue; // no hay boxes disponibles en ese horario en la sede
               }
             }
-            slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: modalidadSlot, sedeId: disponibilidadDia.sede_id });
+            slots.push({
+              fecha: fechaString,
+              horaInicio: hora,
+              horaFin,
+              disponible: true,
+              modalidad: modalidadSlot,
+              sedeId: disponibilidadDia.sede_id,
+            });
           }
         }
       } else if (typeof hoursValue === 'object') {
-        const online: string[] = Array.isArray(hoursValue.online) ? hoursValue.online : [];
-        const presenciales: Array<{ sedeId: string; horas: string[] }> = Array.isArray(hoursValue.presenciales) ? hoursValue.presenciales : [];
+        const online: string[] = Array.isArray(hoursValue.online)
+          ? hoursValue.online
+          : [];
+        const presenciales: Array<{ sedeId: string; horas: string[] }> =
+          Array.isArray(hoursValue.presenciales) ? hoursValue.presenciales : [];
 
         if (!query.modalidad || query.modalidad === 'online') {
           for (const hora of online) {
             const horaFin = this.calcularHoraFin(hora);
-            slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: 'online' });
+            slots.push({
+              fecha: fechaString,
+              horaInicio: hora,
+              horaFin,
+              disponible: true,
+              modalidad: 'online',
+            });
           }
         }
         if (!query.modalidad || query.modalidad === 'presencial') {
@@ -253,17 +316,27 @@ export class AgendaService {
               if (blk.sedeId) {
                 let sede = sedeCache.get(blk.sedeId);
                 if (!sede) {
-                  const found = await this.sedeRepository.findOne({ where: { id: blk.sedeId } });
+                  const found = await this.sedeRepository.findOne({
+                    where: { id: blk.sedeId },
+                  });
                   sede = found ?? undefined;
                   if (sede) sedeCache.set(blk.sedeId, sede);
                 }
-                if (!sede || !this.esHorarioValidoParaSede(hora, horaFin, sede, diaSemana)) {
+                if (
+                  !sede ||
+                  !this.esHorarioValidoParaSede(hora, horaFin, sede, diaSemana)
+                ) {
                   continue;
                 }
                 const cacheKey = `${blk.sedeId}|${fechaString}|${hora}|${horaFin}`;
                 let hayBoxDisponible = disponibilidadBoxCache.get(cacheKey);
                 if (hayBoxDisponible === undefined) {
-                  const box = await this.getBoxDisponible({ sedeId: blk.sedeId, fecha: fechaString, horaInicio: hora, horaFin });
+                  const box = await this.getBoxDisponible({
+                    sedeId: blk.sedeId,
+                    fecha: fechaString,
+                    horaInicio: hora,
+                    horaFin,
+                  });
                   hayBoxDisponible = !!box;
                   disponibilidadBoxCache.set(cacheKey, hayBoxDisponible);
                 }
@@ -271,7 +344,14 @@ export class AgendaService {
                   continue; // no hay boxes disponibles en esa sede/horario
                 }
               }
-              slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: 'presencial', sedeId: blk.sedeId });
+              slots.push({
+                fecha: fechaString,
+                horaInicio: hora,
+                horaFin,
+                disponible: true,
+                modalidad: 'presencial',
+                sedeId: blk.sedeId,
+              });
             }
           }
         }
@@ -285,12 +365,20 @@ export class AgendaService {
     query: AgendaDisponibilidadDto,
     disponibilidad: Disponibilidad[],
     boxes: Box[],
-    psicologo: Psicologo
+    psicologo: Psicologo,
   ): Promise<DisponibilidadSlotDto[]> {
     const slots: DisponibilidadSlotDto[] = [];
     const fechaInicio = this.crearFechaLocal(query.fechaInicio);
     const fechaFin = this.crearFechaLocal(query.fechaFin);
-    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const diasSemana = [
+      'Domingo',
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+    ];
 
     const boxesPorSede = new Map<string, Box[]>();
     if (boxes && boxes.length > 0) {
@@ -302,12 +390,16 @@ export class AgendaService {
       }
     }
 
-    for (let fecha = new Date(fechaInicio); fecha <= fechaFin; fecha = new Date(fecha.getTime() + 24 * 60 * 60 * 1000)) {
+    for (
+      let fecha = new Date(fechaInicio);
+      fecha <= fechaFin;
+      fecha = new Date(fecha.getTime() + 24 * 60 * 60 * 1000)
+    ) {
       const diaSemana = diasSemana[fecha.getDay()];
       const fechaString = fecha.toISOString().split('T')[0];
 
-      const disponibilidadDia = disponibilidad.find(d => 
-        this.normalizarDia(d.day) === diaSemana || d.day === diaSemana
+      const disponibilidadDia = disponibilidad.find(
+        (d) => this.normalizarDia(d.day) === diaSemana || d.day === diaSemana,
       );
       if (!disponibilidadDia || !disponibilidadDia.hours) continue;
 
@@ -315,39 +407,103 @@ export class AgendaService {
       if (Array.isArray(hoursValue)) {
         for (const hora of hoursValue) {
           const horaFin = this.calcularHoraFin(hora);
-          if (query.modalidad === 'online' || (!query.modalidad && disponibilidadDia.sede_id === 'online')) {
+          if (
+            query.modalidad === 'online' ||
+            (!query.modalidad && disponibilidadDia.sede_id === 'online')
+          ) {
             if (disponibilidadDia.sede_id === 'online') {
-              slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: 'online', sedeId: 'online' });
+              slots.push({
+                fecha: fechaString,
+                horaInicio: hora,
+                horaFin,
+                disponible: true,
+                modalidad: 'online',
+                sedeId: 'online',
+              });
             }
           }
-          if (query.modalidad === 'presencial' || (!query.modalidad && disponibilidadDia.sede_id && disponibilidadDia.sede_id !== 'online')) {
+          if (
+            query.modalidad === 'presencial' ||
+            (!query.modalidad &&
+              disponibilidadDia.sede_id &&
+              disponibilidadDia.sede_id !== 'online')
+          ) {
             if (!boxes || boxes.length === 0) {
               if (disponibilidadDia.sede_id) {
-                const sede = await this.sedeRepository.findOne({ where: { id: disponibilidadDia.sede_id } });
-                if (sede && this.esHorarioValidoParaSede(hora, horaFin, sede, diaSemana)) {
-                  const boxesSede = await this.boxRepository.find({ where: { sede: { id: disponibilidadDia.sede_id }, estado: 'DISPONIBLE' }, relations: ['sede'] });
+                const sede = await this.sedeRepository.findOne({
+                  where: { id: disponibilidadDia.sede_id },
+                });
+                if (
+                  sede &&
+                  this.esHorarioValidoParaSede(hora, horaFin, sede, diaSemana)
+                ) {
+                  const boxesSede = await this.boxRepository.find({
+                    where: {
+                      sede: { id: disponibilidadDia.sede_id },
+                      estado: 'DISPONIBLE',
+                    },
+                    relations: ['sede'],
+                  });
                   for (const box of boxesSede) {
-                    slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: 'presencial', boxId: box.id, boxNumero: box.numero, sedeId: box.sede?.id, sedeNombre: box.sede?.nombre });
+                    slots.push({
+                      fecha: fechaString,
+                      horaInicio: hora,
+                      horaFin,
+                      disponible: true,
+                      modalidad: 'presencial',
+                      boxId: box.id,
+                      boxNumero: box.numero,
+                      sedeId: box.sede?.id,
+                      sedeNombre: box.sede?.nombre,
+                    });
                   }
                 }
               }
             } else {
               for (const box of boxes) {
-                if (box.sede && this.esHorarioValidoParaSede(hora, horaFin, box.sede, diaSemana)) {
-                  slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: 'presencial', boxId: box.id, boxNumero: box.numero, sedeId: box.sede.id, sedeNombre: box.sede.nombre });
+                if (
+                  box.sede &&
+                  this.esHorarioValidoParaSede(
+                    hora,
+                    horaFin,
+                    box.sede,
+                    diaSemana,
+                  )
+                ) {
+                  slots.push({
+                    fecha: fechaString,
+                    horaInicio: hora,
+                    horaFin,
+                    disponible: true,
+                    modalidad: 'presencial',
+                    boxId: box.id,
+                    boxNumero: box.numero,
+                    sedeId: box.sede.id,
+                    sedeNombre: box.sede.nombre,
+                  });
                 }
               }
             }
           }
         }
       } else if (typeof hoursValue === 'object') {
-        const online: string[] = Array.isArray(hoursValue.online) ? hoursValue.online : [];
-        const presenciales: Array<{ sedeId: string; horas: string[] }> = Array.isArray(hoursValue.presenciales) ? hoursValue.presenciales : [];
+        const online: string[] = Array.isArray(hoursValue.online)
+          ? hoursValue.online
+          : [];
+        const presenciales: Array<{ sedeId: string; horas: string[] }> =
+          Array.isArray(hoursValue.presenciales) ? hoursValue.presenciales : [];
 
         if (!query.modalidad || query.modalidad === 'online') {
           for (const hora of online) {
             const horaFin = this.calcularHoraFin(hora);
-            slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: 'online', sedeId: 'online' });
+            slots.push({
+              fecha: fechaString,
+              horaInicio: hora,
+              horaFin,
+              disponible: true,
+              modalidad: 'online',
+              sedeId: 'online',
+            });
           }
         }
 
@@ -356,12 +512,33 @@ export class AgendaService {
             for (const hora of blk.horas) {
               const horaFin = this.calcularHoraFin(hora);
               let boxesDeSede = boxesPorSede.get(blk.sedeId) || [];
-              if ((!boxesDeSede || boxesDeSede.length === 0)) {
-                boxesDeSede = await this.boxRepository.find({ where: { sede: { id: blk.sedeId }, estado: 'DISPONIBLE' }, relations: ['sede'] });
+              if (!boxesDeSede || boxesDeSede.length === 0) {
+                boxesDeSede = await this.boxRepository.find({
+                  where: { sede: { id: blk.sedeId }, estado: 'DISPONIBLE' },
+                  relations: ['sede'],
+                });
               }
               for (const box of boxesDeSede) {
-                if (box.sede && this.esHorarioValidoParaSede(hora, horaFin, box.sede, diaSemana)) {
-                  slots.push({ fecha: fechaString, horaInicio: hora, horaFin, disponible: true, modalidad: 'presencial', boxId: box.id, boxNumero: box.numero, sedeId: box.sede.id, sedeNombre: box.sede.nombre });
+                if (
+                  box.sede &&
+                  this.esHorarioValidoParaSede(
+                    hora,
+                    horaFin,
+                    box.sede,
+                    diaSemana,
+                  )
+                ) {
+                  slots.push({
+                    fecha: fechaString,
+                    horaInicio: hora,
+                    horaFin,
+                    disponible: true,
+                    modalidad: 'presencial',
+                    boxId: box.id,
+                    boxNumero: box.numero,
+                    sedeId: box.sede.id,
+                    sedeNombre: box.sede.nombre,
+                  });
                 }
               }
             }
@@ -375,7 +552,7 @@ export class AgendaService {
 
   private async checkReservasExistentes(
     slots: DisponibilidadSlotDto[],
-    psicologoId: string
+    psicologoId: string,
   ): Promise<DisponibilidadSlotDto[]> {
     const slotsActualizados = [...slots];
 
@@ -386,8 +563,11 @@ export class AgendaService {
         where: {
           psicologo: { id: psicologoId },
           fecha: fechaDate,
-          estado: In([EstadoReservaPsicologo.CONFIRMADA, EstadoReservaPsicologo.PENDIENTE])
-        }
+          estado: In([
+            EstadoReservaPsicologo.CONFIRMADA,
+            EstadoReservaPsicologo.PENDIENTE,
+          ]),
+        },
       });
 
       if (slot.boxId) {
@@ -395,8 +575,8 @@ export class AgendaService {
           where: {
             boxId: slot.boxId,
             fecha: fechaDate,
-            estado: EstadoReserva.CONFIRMADA
-          }
+            estado: EstadoReserva.CONFIRMADA,
+          },
         });
 
         // Sesiones con ese mismo box (reservas_sesiones)
@@ -404,44 +584,50 @@ export class AgendaService {
           where: {
             boxId: slot.boxId,
             fecha: fechaDate,
-            estado: In([EstadoReservaPsicologo.CONFIRMADA, EstadoReservaPsicologo.PENDIENTE])
-          }
+            estado: In([
+              EstadoReservaPsicologo.CONFIRMADA,
+              EstadoReservaPsicologo.PENDIENTE,
+            ]),
+          },
         });
 
-        const hayConflicto = sesionesPsicologo.some(reserva => 
-          this.hayConflictoHorarios(
-            reserva.horaInicio, 
-            reserva.horaFin, 
-            slot.horaInicio, 
-            slot.horaFin
-          )
-        ) || reservasBox.some(reserva => 
-          this.hayConflictoHorarios(
-            reserva.horaInicio, 
-            reserva.horaFin, 
-            slot.horaInicio, 
-            slot.horaFin
-          )
-        ) || sesionesBox.some(reserva =>
-          this.hayConflictoHorarios(
-            reserva.horaInicio,
-            reserva.horaFin,
-            slot.horaInicio,
-            slot.horaFin
-          )
-        );
+        const hayConflicto =
+          sesionesPsicologo.some((reserva) =>
+            this.hayConflictoHorarios(
+              reserva.horaInicio,
+              reserva.horaFin,
+              slot.horaInicio,
+              slot.horaFin,
+            ),
+          ) ||
+          reservasBox.some((reserva) =>
+            this.hayConflictoHorarios(
+              reserva.horaInicio,
+              reserva.horaFin,
+              slot.horaInicio,
+              slot.horaFin,
+            ),
+          ) ||
+          sesionesBox.some((reserva) =>
+            this.hayConflictoHorarios(
+              reserva.horaInicio,
+              reserva.horaFin,
+              slot.horaInicio,
+              slot.horaFin,
+            ),
+          );
 
         if (hayConflicto) {
           slot.disponible = false;
         }
       } else {
-        const hayConflicto = sesionesPsicologo.some(reserva => 
+        const hayConflicto = sesionesPsicologo.some((reserva) =>
           this.hayConflictoHorarios(
-            reserva.horaInicio, 
-            reserva.horaFin, 
-            slot.horaInicio, 
-            slot.horaFin
-          )
+            reserva.horaInicio,
+            reserva.horaFin,
+            slot.horaInicio,
+            slot.horaFin,
+          ),
         );
 
         if (hayConflicto) {
@@ -451,20 +637,20 @@ export class AgendaService {
     }
 
     // Ocultar slots no disponibles (p. ej., si el psicólogo ya tiene sesión online/presencial a esa hora)
-    return slotsActualizados.filter(s => s.disponible);
+    return slotsActualizados.filter((s) => s.disponible);
   }
 
   private hayConflictoHorarios(
-    inicio1: string, 
-    fin1: string, 
-    inicio2: string, 
-    fin2: string
+    inicio1: string,
+    fin1: string,
+    inicio2: string,
+    fin2: string,
   ): boolean {
     const h1 = parseInt(inicio1.split(':')[0]);
     const m1 = parseInt(inicio1.split(':')[1]);
     const h2 = parseInt(fin1.split(':')[0]);
     const m2 = parseInt(fin1.split(':')[1]);
-    
+
     const h3 = parseInt(inicio2.split(':')[0]);
     const m3 = parseInt(inicio2.split(':')[1]);
     const h4 = parseInt(fin2.split(':')[0]);
@@ -486,15 +672,17 @@ export class AgendaService {
   }
 
   private esHorarioValidoParaSede(
-    horaInicio: string, 
-    horaFin: string, 
-    sede: Sede, 
-    diaSemana: string
+    horaInicio: string,
+    horaFin: string,
+    sede: Sede,
+    diaSemana: string,
   ): boolean {
     if (!sede.horarioAtencion || !sede.horarioAtencion.diasHabiles) {
       return true;
     }
-    const diaHorario = sede.horarioAtencion.diasHabiles.find(dia => this.normalizarDia(dia.dia) === this.normalizarDia(diaSemana));
+    const diaHorario = sede.horarioAtencion.diasHabiles.find(
+      (dia) => this.normalizarDia(dia.dia) === this.normalizarDia(diaSemana),
+    );
     if (!diaHorario || diaHorario.cerrado) {
       return false;
     }
@@ -502,7 +690,9 @@ export class AgendaService {
     const horaFinMinutos = this.convertirHoraAMinutos(horaFin);
     const sedeInicioMinutos = this.convertirHoraAMinutos(diaHorario.inicio);
     const sedeFinMinutos = this.convertirHoraAMinutos(diaHorario.fin);
-    return horaInicioMinutos >= sedeInicioMinutos && horaFinMinutos <= sedeFinMinutos;
+    return (
+      horaInicioMinutos >= sedeInicioMinutos && horaFinMinutos <= sedeFinMinutos
+    );
   }
 
   private convertirHoraAMinutos(hora: string): number {
@@ -515,27 +705,71 @@ export class AgendaService {
     if (!sedeId || sedeId === 'online') {
       return null;
     }
-    const boxes = await this.boxRepository.find({ where: { sede: { id: sedeId }, estado: 'DISPONIBLE' } });
+    const boxes = await this.boxRepository.find({
+      where: { sede: { id: sedeId }, estado: 'DISPONIBLE' },
+    });
     if (boxes.length === 0) {
       return null;
     }
     const fechaDate = this.crearFechaLocal(fecha);
     for (const box of boxes) {
-      const reservasExistentes = await this.reservaRepository.find({ where: { boxId: box.id, fecha: fechaDate, estado: EstadoReserva.CONFIRMADA } });
-      const reservasSesiones = await this.reservaPsicologoRepository.find({ where: { boxId: box.id, fecha: fechaDate, estado: EstadoReservaPsicologo.CONFIRMADA } });
-      const hayConflicto = reservasExistentes.some(reserva => this.hayConflictoHorarios(reserva.horaInicio, reserva.horaFin, horaInicio, horaFin)) || reservasSesiones.some(reserva => this.hayConflictoHorarios(reserva.horaInicio, reserva.horaFin, horaInicio, horaFin));
+      const reservasExistentes = await this.reservaRepository.find({
+        where: {
+          boxId: box.id,
+          fecha: fechaDate,
+          estado: EstadoReserva.CONFIRMADA,
+        },
+      });
+      const reservasSesiones = await this.reservaPsicologoRepository.find({
+        where: {
+          boxId: box.id,
+          fecha: fechaDate,
+          estado: EstadoReservaPsicologo.CONFIRMADA,
+        },
+      });
+      const hayConflicto =
+        reservasExistentes.some((reserva) =>
+          this.hayConflictoHorarios(
+            reserva.horaInicio,
+            reserva.horaFin,
+            horaInicio,
+            horaFin,
+          ),
+        ) ||
+        reservasSesiones.some((reserva) =>
+          this.hayConflictoHorarios(
+            reserva.horaInicio,
+            reserva.horaFin,
+            horaInicio,
+            horaFin,
+          ),
+        );
       if (!hayConflicto) {
-        return { id: box.id, numero: box.numero, sedeId: box.sede?.id, sedeNombre: box.sede?.nombre };
+        return {
+          id: box.id,
+          numero: box.numero,
+          sedeId: box.sede?.id,
+          sedeNombre: box.sede?.nombre,
+        };
       }
     }
     return null;
   }
 
   async getBoxById(id: string): Promise<any> {
-    const box = await this.boxRepository.findOne({ where: { id }, relations: ['sede'] });
+    const box = await this.boxRepository.findOne({
+      where: { id },
+      relations: ['sede'],
+    });
     if (!box) {
       throw new NotFoundException('Box no encontrado');
     }
-    return { id: box.id, numero: box.numero, estado: box.estado, sedeId: box.sede?.id, sedeNombre: box.sede?.nombre };
+    return {
+      id: box.id,
+      numero: box.numero,
+      estado: box.estado,
+      sedeId: box.sede?.id,
+      sedeNombre: box.sede?.nombre,
+    };
   }
-} 
+}

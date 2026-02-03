@@ -1,7 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Reporte, TipoReporte, FormatoReporte, EstadoReporte } from '../../common/entities/reporte.entity';
+import {
+  Reporte,
+  TipoReporte,
+  FormatoReporte,
+  EstadoReporte,
+} from '../../common/entities/reporte.entity';
 import { User } from '../../common/entities/user.entity';
 import { CreateReporteDto } from '../dto/reporte.dto';
 
@@ -24,9 +33,9 @@ export class ReportesService {
 
   async findOne(id: string, userId: string) {
     const reporte = await this.reporteRepository.findOne({
-      where: { 
+      where: {
         id,
-        usuario: { id: userId }
+        usuario: { id: userId },
       },
       relations: ['usuario'],
     });
@@ -38,9 +47,12 @@ export class ReportesService {
     return reporte;
   }
 
-  async create(createReporteDto: CreateReporteDto, userId: string): Promise<Reporte> {
+  async create(
+    createReporteDto: CreateReporteDto,
+    userId: string,
+  ): Promise<Reporte> {
     const usuario = await this.userRepository.findOne({
-      where: { id: userId }
+      where: { id: userId },
     });
 
     if (!usuario) {
@@ -54,7 +66,7 @@ export class ReportesService {
     // Generar el contenido del reporte
     const resultados = await this.generarContenidoReporte(
       createReporteDto.tipo,
-      createReporteDto.parametros
+      createReporteDto.parametros,
     );
 
     const reporte = new Reporte();
@@ -64,11 +76,14 @@ export class ReportesService {
     reporte.resultados = resultados;
     reporte.formatoExportacion = createReporteDto.formato;
     reporte.estado = EstadoReporte.PENDIENTE;
-    
+
     return await this.reporteRepository.save(reporte);
   }
 
-  private async generarContenidoReporte(tipo: TipoReporte, parametros: any): Promise<any> {
+  private async generarContenidoReporte(
+    tipo: TipoReporte,
+    parametros: any,
+  ): Promise<any> {
     switch (tipo) {
       case TipoReporte.SESIONES:
         return this.generarReporteSesiones(parametros);

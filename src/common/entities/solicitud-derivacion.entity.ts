@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { User } from './user.entity';
 import { Paciente } from './paciente.entity';
 import { PerfilDerivacion } from './perfil-derivacion.entity';
@@ -8,7 +15,7 @@ export enum EstadoSolicitudDerivacion {
   ACEPTADA = 'ACEPTADA',
   RECHAZADA = 'RECHAZADA',
   PAGADA = 'PAGADA',
-  CANCELADA = 'CANCELADA'
+  CANCELADA = 'CANCELADA',
 }
 
 @Entity('solicitudes_derivacion')
@@ -22,7 +29,7 @@ export class SolicitudDerivacion {
   @ManyToOne(() => User)
   psicologoOrigen: User;
 
-  @ManyToOne(() => PerfilDerivacion, perfil => perfil.solicitudesRecibidas)
+  @ManyToOne(() => PerfilDerivacion, (perfil) => perfil.solicitudesRecibidas)
   psicologoDestino: PerfilDerivacion;
 
   @Column({ type: 'text' })
@@ -34,7 +41,7 @@ export class SolicitudDerivacion {
   @Column({
     type: 'enum',
     enum: EstadoSolicitudDerivacion,
-    default: EstadoSolicitudDerivacion.PENDIENTE
+    default: EstadoSolicitudDerivacion.PENDIENTE,
   })
   estado: EstadoSolicitudDerivacion;
 

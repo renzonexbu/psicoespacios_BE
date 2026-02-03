@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Param, Put, UseGuards, Request, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  UseGuards,
+  Request,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PacientesService } from '../services/pacientes.service';
 import { CreatePacienteDto, UpdatePacienteDto } from '../dto/paciente.dto';
 import { PsicologosService } from '../services/psicologos.service';
@@ -35,27 +45,38 @@ export class PacientesController {
     if (req.user?.role === Role.PSICOLOGO) {
       const psicologo = await this.psicologosService.findByUserId(req.user.id);
       if (!psicologo || paciente.idUsuarioPsicologo !== psicologo.id) {
-        throw new ForbiddenException('No tienes permisos para ver esta información');
+        throw new ForbiddenException(
+          'No tienes permisos para ver esta información',
+        );
       }
       return paciente;
     }
 
     // Cualquier otro rol no permitido
-    throw new ForbiddenException('No tienes permisos para ver esta información');
+    throw new ForbiddenException(
+      'No tienes permisos para ver esta información',
+    );
   }
 
   @Get(':id/psicologo')
   async getPsicologoInfo(@Param('id') id: string) {
     const paciente = await this.pacientesService.findOne(id);
     // Buscar el psicólogo por el idUsuarioPsicologo (que es el id de usuario)
-    const psicologo = await this.psicologosService.findByUserId(paciente.idUsuarioPsicologo);
+    const psicologo = await this.psicologosService.findByUserId(
+      paciente.idUsuarioPsicologo,
+    );
     return psicologo;
   }
 
   @Get('usuario/:idUsuarioPaciente/psicologo')
-  async getPsicologoInfoByUsuario(@Param('idUsuarioPaciente') idUsuarioPaciente: string) {
-    const paciente = await this.pacientesService.findByUserId(idUsuarioPaciente);
-    const psicologo = await this.psicologosService.findByUserId(paciente.idUsuarioPsicologo);
+  async getPsicologoInfoByUsuario(
+    @Param('idUsuarioPaciente') idUsuarioPaciente: string,
+  ) {
+    const paciente =
+      await this.pacientesService.findByUserId(idUsuarioPaciente);
+    const psicologo = await this.psicologosService.findByUserId(
+      paciente.idUsuarioPsicologo,
+    );
     return psicologo;
   }
 

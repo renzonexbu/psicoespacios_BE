@@ -3,7 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Paciente } from '../../common/entities/paciente.entity';
 import { User } from '../../common/entities/user.entity';
-import { CreatePacienteDto, UpdatePacienteDto, PacienteWithUserDto } from '../dto/paciente.dto';
+import {
+  CreatePacienteDto,
+  UpdatePacienteDto,
+  PacienteWithUserDto,
+} from '../dto/paciente.dto';
 
 @Injectable()
 export class PacientesService {
@@ -25,8 +29,8 @@ export class PacientesService {
     }
 
     // Obtener información del usuario asociado
-    const usuario = await this.userRepository.findOne({ 
-      where: { id: paciente.idUsuarioPaciente } 
+    const usuario = await this.userRepository.findOne({
+      where: { id: paciente.idUsuarioPaciente },
     });
 
     if (!usuario) {
@@ -50,12 +54,14 @@ export class PacientesService {
         estado: usuario.estado,
         createdAt: usuario.createdAt,
         updatedAt: usuario.updatedAt,
-      }
+      },
     };
   }
 
   async findByUserId(idUsuarioPaciente: string): Promise<Paciente> {
-    const paciente = await this.pacienteRepository.findOne({ where: { idUsuarioPaciente } });
+    const paciente = await this.pacienteRepository.findOne({
+      where: { idUsuarioPaciente },
+    });
     if (!paciente) {
       throw new NotFoundException('Paciente no encontrado para este usuario');
     }
@@ -67,7 +73,10 @@ export class PacientesService {
     return this.pacienteRepository.save(paciente);
   }
 
-  async update(id: string, updatePacienteDto: UpdatePacienteDto): Promise<Paciente> {
+  async update(
+    id: string,
+    updatePacienteDto: UpdatePacienteDto,
+  ): Promise<Paciente> {
     const paciente = await this.findOne(id);
     Object.assign(paciente, updatePacienteDto);
     return this.pacienteRepository.save(paciente);

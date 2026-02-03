@@ -1,8 +1,19 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { SolicitudDerivacion, EstadoSolicitudDerivacion } from '../../common/entities/solicitud-derivacion.entity';
-import { CreateSolicitudDerivacionDto, UpdateSolicitudDerivacionDto, PagoSesionDto } from '../dto/solicitud-derivacion.dto';
+import {
+  SolicitudDerivacion,
+  EstadoSolicitudDerivacion,
+} from '../../common/entities/solicitud-derivacion.entity';
+import {
+  CreateSolicitudDerivacionDto,
+  UpdateSolicitudDerivacionDto,
+  PagoSesionDto,
+} from '../dto/solicitud-derivacion.dto';
 import { User } from '../../common/entities/user.entity';
 import { Paciente } from '../../common/entities/paciente.entity';
 import { PerfilDerivacion } from '../../common/entities/perfil-derivacion.entity';
@@ -90,7 +101,9 @@ export class SolicitudesDerivacionService {
     const solicitud = await this.findOne(id);
 
     if (solicitud.psicologoDestino.psicologo.id !== userId) {
-      throw new BadRequestException('No tienes permiso para aceptar esta solicitud');
+      throw new BadRequestException(
+        'No tienes permiso para aceptar esta solicitud',
+      );
     }
 
     if (solicitud.estado !== EstadoSolicitudDerivacion.PENDIENTE) {
@@ -105,7 +118,9 @@ export class SolicitudesDerivacionService {
     const solicitud = await this.findOne(id);
 
     if (solicitud.psicologoDestino.psicologo.id !== userId) {
-      throw new BadRequestException('No tienes permiso para rechazar esta solicitud');
+      throw new BadRequestException(
+        'No tienes permiso para rechazar esta solicitud',
+      );
     }
 
     if (solicitud.estado !== EstadoSolicitudDerivacion.PENDIENTE) {
@@ -121,11 +136,15 @@ export class SolicitudesDerivacionService {
     const solicitud = await this.findOne(id);
 
     if (solicitud.psicologoDestino.psicologo.id !== userId) {
-      throw new BadRequestException('No tienes permiso para procesar el pago de esta solicitud');
+      throw new BadRequestException(
+        'No tienes permiso para procesar el pago de esta solicitud',
+      );
     }
 
     if (solicitud.estado !== EstadoSolicitudDerivacion.ACEPTADA) {
-      throw new BadRequestException('La solicitud debe estar aceptada para procesar el pago');
+      throw new BadRequestException(
+        'La solicitud debe estar aceptada para procesar el pago',
+      );
     }
 
     solicitud.estado = EstadoSolicitudDerivacion.PAGADA;

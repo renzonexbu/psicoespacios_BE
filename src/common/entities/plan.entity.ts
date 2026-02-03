@@ -1,20 +1,27 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 export enum TipoPlan {
   BASICO = 'BASICO',
   INTERMEDIO = 'INTERMEDIO',
-  PREMIUM = 'PREMIUM'
+  PREMIUM = 'PREMIUM',
 }
 
 @Entity('planes')
 export class Plan {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column({
     type: 'enum',
     enum: TipoPlan,
-    default: TipoPlan.BASICO
+    default: TipoPlan.BASICO,
   })
   tipo: TipoPlan;
 
@@ -43,7 +50,7 @@ export class Plan {
   proximamente: boolean;
 
   @OneToMany('Suscripcion', 'plan', {
-    eager: false
+    eager: false,
   })
   suscripciones: any[];
 

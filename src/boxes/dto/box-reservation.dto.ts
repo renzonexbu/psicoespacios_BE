@@ -1,5 +1,15 @@
-import { IsUUID, IsDateString, IsString, IsNumber, IsEnum, IsNotEmpty } from 'class-validator';
-import { EstadoReserva, EstadoPagoReserva } from '../../common/entities/reserva.entity';
+import {
+  IsUUID,
+  IsDateString,
+  IsString,
+  IsNumber,
+  IsEnum,
+  IsNotEmpty,
+} from 'class-validator';
+import {
+  EstadoReserva,
+  EstadoPagoReserva,
+} from '../../common/entities/reserva.entity';
 
 export class CreateBoxReservationDto {
   @IsUUID()
@@ -58,4 +68,4 @@ export class BoxReservationResponseDto {
   } | null;
   createdAt: Date;
   updatedAt: Date;
-} 
+}

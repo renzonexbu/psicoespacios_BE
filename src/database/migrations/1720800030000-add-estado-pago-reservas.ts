@@ -18,8 +18,8 @@ export class AddEstadoPagoReservas1720800030000 implements MigrationInterface {
     // Opcional: Actualizar registros existentes
     // Si quieres que todas las reservas existentes tengan estado 'pagado' por defecto:
     // await queryRunner.query(`
-    //   UPDATE "reservas" 
-    //   SET "estadoPago" = 'pagado' 
+    //   UPDATE "reservas"
+    //   SET "estadoPago" = 'pagado'
     //   WHERE "estadoPago" = 'pendiente_pago'
     // `);
   }
@@ -37,4 +37,3 @@ export class AddEstadoPagoReservas1720800030000 implements MigrationInterface {
     `);
   }
 }
-

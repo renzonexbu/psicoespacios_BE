@@ -10,7 +10,10 @@ import { PackHora } from '../packs/entities/pack-hora.entity';
 import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Reserva, Box, User, PackAsignacion, PackHora]), MailModule],
+  imports: [
+    TypeOrmModule.forFeature([Reserva, Box, User, PackAsignacion, PackHora]),
+    MailModule,
+  ],
   controllers: [ReservasController],
   providers: [ReservasService],
   exports: [ReservasService],

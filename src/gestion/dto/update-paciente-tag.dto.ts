@@ -12,4 +12,3 @@ export class RemovePacienteTagDto {
   @IsOptional()
   motivo?: string;
 }
-

@@ -1,10 +1,19 @@
-import { IsString, IsArray, IsBoolean, IsOptional, IsNotEmpty, IsNumber, ValidateNested, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsArray,
+  IsBoolean,
+  IsOptional,
+  IsNotEmpty,
+  IsNumber,
+  ValidateNested,
+  IsEnum,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum Modalidad {
   PRESENCIAL = 'PRESENCIAL',
   ONLINE = 'ONLINE',
-  HIBRIDA = 'HIBRIDA'
+  HIBRIDA = 'HIBRIDA',
 }
 
 class HorarioAtencionDto {

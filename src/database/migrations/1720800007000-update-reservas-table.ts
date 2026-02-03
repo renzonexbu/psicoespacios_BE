@@ -26,11 +26,13 @@ export class UpdateReservasTable1720800007000 implements MigrationInterface {
       `);
     } else {
       // Actualizar la tabla existente
-      
+
       // Verificar si existe la columna pacienteId y eliminarla si existe
       const hasPacienteId = table.findColumnByName('pacienteId');
       if (hasPacienteId) {
-        await queryRunner.query(`ALTER TABLE "reservas" DROP COLUMN "pacienteId"`);
+        await queryRunner.query(
+          `ALTER TABLE "reservas" DROP COLUMN "pacienteId"`,
+        );
       }
 
       // Verificar si existe la columna horario y eliminarla si existe
@@ -42,30 +44,50 @@ export class UpdateReservasTable1720800007000 implements MigrationInterface {
       // Agregar columnas nuevas si no existen
       const hasHoraInicio = table.findColumnByName('horaInicio');
       if (!hasHoraInicio) {
-        await queryRunner.query(`ALTER TABLE "reservas" ADD COLUMN "horaInicio" character varying(5) NOT NULL DEFAULT '09:00'`);
+        await queryRunner.query(
+          `ALTER TABLE "reservas" ADD COLUMN "horaInicio" character varying(5) NOT NULL DEFAULT '09:00'`,
+        );
       }
 
       const hasHoraFin = table.findColumnByName('horaFin');
       if (!hasHoraFin) {
-        await queryRunner.query(`ALTER TABLE "reservas" ADD COLUMN "horaFin" character varying(5) NOT NULL DEFAULT '10:00'`);
+        await queryRunner.query(
+          `ALTER TABLE "reservas" ADD COLUMN "horaFin" character varying(5) NOT NULL DEFAULT '10:00'`,
+        );
       }
 
       // Actualizar el tipo de la columna fecha si es necesario
-      await queryRunner.query(`ALTER TABLE "reservas" ALTER COLUMN "fecha" TYPE date`);
+      await queryRunner.query(
+        `ALTER TABLE "reservas" ALTER COLUMN "fecha" TYPE date`,
+      );
 
       // Actualizar el tipo de la columna estado
-      await queryRunner.query(`ALTER TABLE "reservas" ALTER COLUMN "estado" TYPE character varying(20)`);
-      await queryRunner.query(`ALTER TABLE "reservas" ALTER COLUMN "estado" SET DEFAULT 'pendiente'`);
+      await queryRunner.query(
+        `ALTER TABLE "reservas" ALTER COLUMN "estado" TYPE character varying(20)`,
+      );
+      await queryRunner.query(
+        `ALTER TABLE "reservas" ALTER COLUMN "estado" SET DEFAULT 'pendiente'`,
+      );
 
       // Actualizar el tipo de la columna precio
-      await queryRunner.query(`ALTER TABLE "reservas" ALTER COLUMN "precio" TYPE decimal(10,2)`);
+      await queryRunner.query(
+        `ALTER TABLE "reservas" ALTER COLUMN "precio" TYPE decimal(10,2)`,
+      );
     }
 
     // Crear índices para mejorar performance
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_reservas_psicologo" ON "reservas" ("psicologoId")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_reservas_box" ON "reservas" ("boxId")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_reservas_fecha" ON "reservas" ("fecha")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_reservas_estado" ON "reservas" ("estado")`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_reservas_psicologo" ON "reservas" ("psicologoId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_reservas_box" ON "reservas" ("boxId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_reservas_fecha" ON "reservas" ("fecha")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_reservas_estado" ON "reservas" ("estado")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -81,7 +103,9 @@ export class UpdateReservasTable1720800007000 implements MigrationInterface {
       // Eliminar columnas nuevas
       const hasHoraInicio = table.findColumnByName('horaInicio');
       if (hasHoraInicio) {
-        await queryRunner.query(`ALTER TABLE "reservas" DROP COLUMN "horaInicio"`);
+        await queryRunner.query(
+          `ALTER TABLE "reservas" DROP COLUMN "horaInicio"`,
+        );
       }
 
       const hasHoraFin = table.findColumnByName('horaFin');
@@ -90,12 +114,24 @@ export class UpdateReservasTable1720800007000 implements MigrationInterface {
       }
 
       // Restaurar columnas originales
-      await queryRunner.query(`ALTER TABLE "reservas" ADD COLUMN "pacienteId" uuid`);
-      await queryRunner.query(`ALTER TABLE "reservas" ADD COLUMN "horario" character varying`);
-      await queryRunner.query(`ALTER TABLE "reservas" ALTER COLUMN "fecha" TYPE character varying`);
-      await queryRunner.query(`ALTER TABLE "reservas" ALTER COLUMN "estado" TYPE character varying`);
-      await queryRunner.query(`ALTER TABLE "reservas" ALTER COLUMN "estado" SET DEFAULT 'PENDIENTE'`);
-      await queryRunner.query(`ALTER TABLE "reservas" ALTER COLUMN "precio" TYPE numeric(10,2)`);
+      await queryRunner.query(
+        `ALTER TABLE "reservas" ADD COLUMN "pacienteId" uuid`,
+      );
+      await queryRunner.query(
+        `ALTER TABLE "reservas" ADD COLUMN "horario" character varying`,
+      );
+      await queryRunner.query(
+        `ALTER TABLE "reservas" ALTER COLUMN "fecha" TYPE character varying`,
+      );
+      await queryRunner.query(
+        `ALTER TABLE "reservas" ALTER COLUMN "estado" TYPE character varying`,
+      );
+      await queryRunner.query(
+        `ALTER TABLE "reservas" ALTER COLUMN "estado" SET DEFAULT 'PENDIENTE'`,
+      );
+      await queryRunner.query(
+        `ALTER TABLE "reservas" ALTER COLUMN "precio" TYPE numeric(10,2)`,
+      );
     }
   }
-} 
+}

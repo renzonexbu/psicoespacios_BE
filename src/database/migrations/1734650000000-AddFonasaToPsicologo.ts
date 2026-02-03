@@ -17,4 +17,3 @@ export class AddFonasaToPsicologo1734650000000 implements MigrationInterface {
     await queryRunner.dropColumn('psicologo', 'fonasa');
   }
 }
-

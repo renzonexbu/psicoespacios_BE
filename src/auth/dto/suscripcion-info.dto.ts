@@ -8,19 +8,3 @@ export class SuscripcionInfoDto {
   renovacionAutomatica?: boolean;
   precioRenovacion?: number;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -49,27 +49,18 @@ export class AddCuponToPagos1720800017000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Eliminar foreign key
-    await queryRunner.query(`ALTER TABLE "pagos" DROP CONSTRAINT "FK_pagos_cupon"`);
-    
+    await queryRunner.query(
+      `ALTER TABLE "pagos" DROP CONSTRAINT "FK_pagos_cupon"`,
+    );
+
     // Eliminar índice
     await queryRunner.query(`DROP INDEX "IDX_pagos_cuponId"`);
-    
+
     // Eliminar columnas
     await queryRunner.query(`ALTER TABLE "pagos" DROP COLUMN "montoFinal"`);
-    await queryRunner.query(`ALTER TABLE "pagos" DROP COLUMN "descuentoAplicado"`);
+    await queryRunner.query(
+      `ALTER TABLE "pagos" DROP COLUMN "descuentoAplicado"`,
+    );
     await queryRunner.query(`ALTER TABLE "pagos" DROP COLUMN "cuponId"`);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

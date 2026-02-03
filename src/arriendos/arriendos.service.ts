@@ -1,10 +1,21 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { ArriendoBox, EstadoArriendo } from '../common/entities/arriendo-box.entity';
+import {
+  ArriendoBox,
+  EstadoArriendo,
+} from '../common/entities/arriendo-box.entity';
 import { Box } from '../common/entities/box.entity';
 import { User } from '../common/entities/user.entity';
-import { CreateArriendoBoxDto, UpdateArriendoBoxDto } from './dto/arriendo-box.dto';
+import {
+  CreateArriendoBoxDto,
+  UpdateArriendoBoxDto,
+} from './dto/arriendo-box.dto';
 import { MailService } from '../mail/mail.service';
 
 @Injectable()
@@ -21,17 +32,23 @@ export class ArriendosService {
 
   async create(createArriendoDto: CreateArriendoBoxDto) {
     // Verificar que el box existe
-    const box = await this.boxRepository.findOne({ where: { id: createArriendoDto.boxId } });
+    const box = await this.boxRepository.findOne({
+      where: { id: createArriendoDto.boxId },
+    });
     if (!box) {
-      throw new NotFoundException(`Box con ID ${createArriendoDto.boxId} no encontrado`);
+      throw new NotFoundException(
+        `Box con ID ${createArriendoDto.boxId} no encontrado`,
+      );
     }
 
     // Verificar que el psicólogo existe
-    const psicologo = await this.userRepository.findOne({ 
-      where: { id: createArriendoDto.psicologoId, role: 'PSICOLOGO' } 
+    const psicologo = await this.userRepository.findOne({
+      where: { id: createArriendoDto.psicologoId, role: 'PSICOLOGO' },
     });
     if (!psicologo) {
-      throw new NotFoundException(`Psicólogo con ID ${createArriendoDto.psicologoId} no encontrado`);
+      throw new NotFoundException(
+        `Psicólogo con ID ${createArriendoDto.psicologoId} no encontrado`,
+      );
     }
 
     // Verificar que no hay conflictos de horarios para el box
@@ -49,14 +66,14 @@ export class ArriendosService {
   async findAll() {
     return await this.arriendoRepository.find({
       relations: ['box', 'psicologo'],
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
   }
 
   async findOne(id: string) {
     const arriendo = await this.arriendoRepository.findOne({
       where: { id },
-      relations: ['box', 'psicologo']
+      relations: ['box', 'psicologo'],
     });
 
     if (!arriendo) {
@@ -70,7 +87,7 @@ export class ArriendosService {
     return await this.arriendoRepository.find({
       where: { psicologoId },
       relations: ['box'],
-      order: { fechaInicio: 'DESC' }
+      order: { fechaInicio: 'DESC' },
     });
   }
 
@@ -78,7 +95,7 @@ export class ArriendosService {
     return await this.arriendoRepository.find({
       where: { boxId },
       relations: ['psicologo'],
-      order: { fechaInicio: 'DESC' }
+      order: { fechaInicio: 'DESC' },
     });
   }
 
@@ -88,10 +105,10 @@ export class ArriendosService {
       where: {
         estado: EstadoArriendo.ACTIVO,
         fechaInicio: LessThanOrEqual(hoy),
-        fechaFin: MoreThanOrEqual(hoy)
+        fechaFin: MoreThanOrEqual(hoy),
       },
       relations: ['box', 'psicologo'],
-      order: { fechaInicio: 'ASC' }
+      order: { fechaInicio: 'ASC' },
     });
   }
 
@@ -102,10 +119,10 @@ export class ArriendosService {
     return await this.arriendoRepository.find({
       where: {
         estado: EstadoArriendo.ACTIVO,
-        fechaFin: Between(new Date(), fechaLimite)
+        fechaFin: Between(new Date(), fechaLimite),
       },
       relations: ['box', 'psicologo'],
-      order: { fechaFin: 'ASC' }
+      order: { fechaFin: 'ASC' },
     });
   }
 
@@ -113,12 +130,19 @@ export class ArriendosService {
     const arriendo = await this.findOne(id);
 
     // Si se está actualizando fechas o horarios, verificar conflictos
-    if (updateArriendoDto.fechaInicio || updateArriendoDto.fechaFin || updateArriendoDto.horarios) {
+    if (
+      updateArriendoDto.fechaInicio ||
+      updateArriendoDto.fechaFin ||
+      updateArriendoDto.horarios
+    ) {
       await this.verificarConflictosHorarios(updateArriendoDto, id);
     }
 
     // Si se está cancelando, agregar fecha de cancelación
-    if (updateArriendoDto.estado === EstadoArriendo.CANCELADO && arriendo.estado !== EstadoArriendo.CANCELADO) {
+    if (
+      updateArriendoDto.estado === EstadoArriendo.CANCELADO &&
+      arriendo.estado !== EstadoArriendo.CANCELADO
+    ) {
       updateArriendoDto['fechaCancelacion'] = new Date();
     }
 
@@ -128,7 +152,7 @@ export class ArriendosService {
 
   async cancelar(id: string, motivo: string) {
     const arriendo = await this.findOne(id);
-    
+
     if (arriendo.estado === EstadoArriendo.CANCELADO) {
       throw new BadRequestException('El arriendo ya está cancelado');
     }
@@ -141,18 +165,27 @@ export class ArriendosService {
 
     // Enviar email al psicólogo notificando cancelación por el equipo (cuenta default)
     try {
-      const email = arriendo.psicologo?.email || (await this.userRepository.findOne({ where: { id: arriendo.psicologoId } }))?.email;
+      const email =
+        arriendo.psicologo?.email ||
+        (
+          await this.userRepository.findOne({
+            where: { id: arriendo.psicologoId },
+          })
+        )?.email;
       if (email) {
         await this.mailService.sendEmail({
           to: email,
           template: 'reserva-box-cancelada-admin',
-          context: {}
+          context: {},
         });
       }
     } catch (error) {
       // No bloquear por error de email
-      // eslint-disable-next-line no-console
-      console.error(`Error enviando email de cancelación por admin al psicólogo ${arriendo.psicologoId}:`, error);
+
+      console.error(
+        `Error enviando email de cancelación por admin al psicólogo ${arriendo.psicologoId}:`,
+        error,
+      );
     }
 
     return saved;
@@ -160,7 +193,7 @@ export class ArriendosService {
 
   async renovar(id: string) {
     const arriendo = await this.findOne(id);
-    
+
     if (arriendo.estado !== EstadoArriendo.ACTIVO) {
       throw new BadRequestException('Solo se pueden renovar arriendos activos');
     }
@@ -181,7 +214,9 @@ export class ArriendosService {
         nuevaFechaFin.setFullYear(nuevaFechaFin.getFullYear() + 1);
         break;
       default:
-        throw new BadRequestException('No se puede renovar automáticamente este tipo de arriendo');
+        throw new BadRequestException(
+          'No se puede renovar automáticamente este tipo de arriendo',
+        );
     }
 
     arriendo.fechaFin = nuevaFechaFin;
@@ -196,8 +231,8 @@ export class ArriendosService {
         boxId,
         estado: EstadoArriendo.ACTIVO,
         fechaInicio: LessThanOrEqual(fecha),
-        fechaFin: MoreThanOrEqual(fecha)
-      }
+        fechaFin: MoreThanOrEqual(fecha),
+      },
     });
 
     // Verificar conflictos de horarios
@@ -212,8 +247,8 @@ export class ArriendosService {
                 conflicto: {
                   arriendoId: arriendo.id,
                   psicologoId: arriendo.psicologoId,
-                  horario: horarioExistente
-                }
+                  horario: horarioExistente,
+                },
               };
             }
           }
@@ -224,11 +259,15 @@ export class ArriendosService {
     return { disponible: true };
   }
 
-  private async verificarConflictosHorarios(arriendoDto: any, excludeId?: string) {
-    const query = this.arriendoRepository.createQueryBuilder('arriendo')
+  private async verificarConflictosHorarios(
+    arriendoDto: any,
+    excludeId?: string,
+  ) {
+    const query = this.arriendoRepository
+      .createQueryBuilder('arriendo')
       .where('arriendo.boxId = :boxId', { boxId: arriendoDto.boxId })
-      .andWhere('arriendo.estado IN (:...estados)', { 
-        estados: [EstadoArriendo.ACTIVO, EstadoArriendo.PENDIENTE] 
+      .andWhere('arriendo.estado IN (:...estados)', {
+        estados: [EstadoArriendo.ACTIVO, EstadoArriendo.PENDIENTE],
       });
 
     if (excludeId) {
@@ -239,23 +278,32 @@ export class ArriendosService {
 
     for (const arriendoExistente of arriendosExistentes) {
       // Verificar si hay superposición de fechas
-      const fechaInicio = arriendoDto.fechaInicio ? new Date(arriendoDto.fechaInicio) : arriendoExistente.fechaInicio;
-      const fechaFin = arriendoDto.fechaFin ? new Date(arriendoDto.fechaFin) : arriendoExistente.fechaFin;
+      const fechaInicio = arriendoDto.fechaInicio
+        ? new Date(arriendoDto.fechaInicio)
+        : arriendoExistente.fechaInicio;
+      const fechaFin = arriendoDto.fechaFin
+        ? new Date(arriendoDto.fechaFin)
+        : arriendoExistente.fechaFin;
 
-      if (this.fechasSeSuperponen(
-        fechaInicio, 
-        fechaFin, 
-        arriendoExistente.fechaInicio, 
-        arriendoExistente.fechaFin
-      )) {
+      if (
+        this.fechasSeSuperponen(
+          fechaInicio,
+          fechaFin,
+          arriendoExistente.fechaInicio,
+          arriendoExistente.fechaFin,
+        )
+      ) {
         // Verificar conflictos de horarios
         const horarios = arriendoDto.horarios || arriendoExistente.horarios;
         for (const horario of horarios) {
           for (const horarioExistente of arriendoExistente.horarios) {
-            if (horario.dia === horarioExistente.dia && horarioExistente.activo) {
+            if (
+              horario.dia === horarioExistente.dia &&
+              horarioExistente.activo
+            ) {
               if (this.horariosSeSuperponen(horario, horarioExistente)) {
                 throw new ConflictException(
-                  `Conflicto de horarios: El box ya está arrendado en ${horario.dia} de ${horarioExistente.horaInicio} a ${horarioExistente.horaFin}`
+                  `Conflicto de horarios: El box ya está arrendado en ${horario.dia} de ${horarioExistente.horaInicio} a ${horarioExistente.horaFin}`,
                 );
               }
             }
@@ -265,7 +313,12 @@ export class ArriendosService {
     }
   }
 
-  private fechasSeSuperponen(inicio1: Date, fin1: Date, inicio2: Date, fin2: Date): boolean {
+  private fechasSeSuperponen(
+    inicio1: Date,
+    fin1: Date,
+    inicio2: Date,
+    fin2: Date,
+  ): boolean {
     return inicio1 <= fin2 && inicio2 <= fin1;
   }
 
@@ -287,4 +340,4 @@ export class ArriendosService {
     const arriendo = await this.findOne(id);
     return await this.arriendoRepository.remove(arriendo);
   }
-} 
+}

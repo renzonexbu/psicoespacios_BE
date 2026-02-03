@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddPendientePagoToEstadoReservaPsicologo1735000000000 implements MigrationInterface {
+export class AddPendientePagoToEstadoReservaPsicologo1735000000000
+  implements MigrationInterface
+{
   name = 'AddPendientePagoToEstadoReservaPsicologo1735000000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -18,10 +20,8 @@ export class AddPendientePagoToEstadoReservaPsicologo1735000000000 implements Mi
     // 2. Migrar los datos
     // 3. Eliminar el enum viejo
     // 4. Renombrar el nuevo enum
-    
     // Por ahora, simplemente no hacemos nada en el down
     // ya que eliminar valores de enum es complejo y rara vez necesario
     // Si hay registros usando 'pendiente_pago', primero hay que actualizarlos
   }
 }
-

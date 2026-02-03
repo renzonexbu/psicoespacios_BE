@@ -1,8 +1,20 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { DocumentoPsicologo, Psicologo, TipoDocumento } from '../../common/entities';
-import { CreateDocumentoPsicologoDto, UpdateDocumentoPsicologoDto, DocumentoPsicologoResponseDto } from '../dto/documento-psicologo.dto';
+import {
+  DocumentoPsicologo,
+  Psicologo,
+  TipoDocumento,
+} from '../../common/entities';
+import {
+  CreateDocumentoPsicologoDto,
+  UpdateDocumentoPsicologoDto,
+  DocumentoPsicologoResponseDto,
+} from '../dto/documento-psicologo.dto';
 import { UploadDocumentoDto } from '../dto/upload-documento.dto';
 import { BackblazeService } from '../../uploads/services/backblaze.service';
 
@@ -34,9 +46,11 @@ export class DocumentosPsicologoService {
     createDto: CreateDocumentoPsicologoDto,
   ): Promise<DocumentoPsicologoResponseDto> {
     // Buscar el usuario para verificar que existe y es psicólogo
-    const user = await this.psicologoRepository.manager.getRepository('users').findOne({
-      where: { id: userId, role: 'PSICOLOGO' }
-    });
+    const user = await this.psicologoRepository.manager
+      .getRepository('users')
+      .findOne({
+        where: { id: userId, role: 'PSICOLOGO' },
+      });
 
     if (!user) {
       throw new NotFoundException('Usuario no encontrado o no es psicólogo');
@@ -44,7 +58,7 @@ export class DocumentosPsicologoService {
 
     // Buscar el registro de psicólogo correspondiente
     const psicologo = await this.psicologoRepository.findOne({
-      where: { usuario: { id: userId } }
+      where: { usuario: { id: userId } },
     });
 
     if (!psicologo) {
@@ -59,7 +73,8 @@ export class DocumentosPsicologoService {
       psicologo: { id: psicologo.id } as any,
     });
 
-    const savedDocumento = await this.documentoPsicologoRepository.save(documento);
+    const savedDocumento =
+      await this.documentoPsicologoRepository.save(documento);
     return this.mapToResponseDto(savedDocumento);
   }
 
@@ -71,12 +86,14 @@ export class DocumentosPsicologoService {
     console.log('🔍 Debug - uploadDocumento llamado con:', {
       userId,
       uploadDto,
-      fileInfo: file ? {
-        fieldname: file.fieldname,
-        originalname: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size
-      } : 'No file'
+      fileInfo: file
+        ? {
+            fieldname: file.fieldname,
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+          }
+        : 'No file',
     });
 
     console.log('🔍 Debug - Validando DTO:', {
@@ -85,19 +102,23 @@ export class DocumentosPsicologoService {
       urlDocumento: uploadDto.urlDocumento,
       tipoType: typeof uploadDto.tipo,
       nombreType: typeof uploadDto.nombre,
-      urlType: typeof uploadDto.urlDocumento
+      urlType: typeof uploadDto.urlDocumento,
     });
 
     // Validar que el DTO tenga los campos requeridos
     if (!uploadDto.tipo || !uploadDto.nombre || !uploadDto.urlDocumento) {
       console.log('❌ DTO inválido:', uploadDto);
-      throw new BadRequestException('Los campos tipo, nombre y urlDocumento son requeridos');
+      throw new BadRequestException(
+        'Los campos tipo, nombre y urlDocumento son requeridos',
+      );
     }
 
     // Buscar el usuario para verificar que existe y es psicólogo
-    const user = await this.psicologoRepository.manager.getRepository('users').findOne({
-      where: { id: userId, role: 'PSICOLOGO' }
-    });
+    const user = await this.psicologoRepository.manager
+      .getRepository('users')
+      .findOne({
+        where: { id: userId, role: 'PSICOLOGO' },
+      });
 
     if (!user) {
       console.log('❌ Usuario no encontrado o no es psicólogo:', userId);
@@ -106,11 +127,14 @@ export class DocumentosPsicologoService {
 
     // Buscar el registro de psicólogo correspondiente
     const psicologo = await this.psicologoRepository.findOne({
-      where: { usuario: { id: userId } }
+      where: { usuario: { id: userId } },
     });
 
     if (!psicologo) {
-      console.log('❌ Registro de psicólogo no encontrado para usuario:', userId);
+      console.log(
+        '❌ Registro de psicólogo no encontrado para usuario:',
+        userId,
+      );
       throw new NotFoundException('Registro de psicólogo no encontrado');
     }
 
@@ -118,7 +142,7 @@ export class DocumentosPsicologoService {
 
     try {
       console.log('🚀 Creando documento con URL del frontend...');
-      
+
       // Crear el documento con la URL que envía el frontend
       const documento = this.documentoPsicologoRepository.create({
         tipo: uploadDto.tipo,
@@ -129,15 +153,17 @@ export class DocumentosPsicologoService {
 
       console.log('🔍 Documento a crear:', documento);
 
-      const savedDocumento = await this.documentoPsicologoRepository.save(documento);
+      const savedDocumento =
+        await this.documentoPsicologoRepository.save(documento);
       console.log('✅ Documento guardado en BD:', savedDocumento.id);
-      
-      return this.mapToResponseDto(savedDocumento);
 
+      return this.mapToResponseDto(savedDocumento);
     } catch (error) {
       console.error('❌ Error en uploadDocumento:', error);
       console.error('❌ Stack trace:', error.stack);
-      throw new BadRequestException(`Error al crear el documento: ${error.message}`);
+      throw new BadRequestException(
+        `Error al crear el documento: ${error.message}`,
+      );
     }
   }
 
@@ -160,7 +186,9 @@ export class DocumentosPsicologoService {
     });
 
     if (!updatedDocumento) {
-      throw new NotFoundException('Documento no encontrado después de la actualización');
+      throw new NotFoundException(
+        'Documento no encontrado después de la actualización',
+      );
     }
 
     return this.mapToResponseDto(updatedDocumento);
@@ -185,7 +213,9 @@ export class DocumentosPsicologoService {
     });
 
     if (!updatedDocumento) {
-      throw new NotFoundException('Documento no encontrado después de la actualización');
+      throw new NotFoundException(
+        'Documento no encontrado después de la actualización',
+      );
     }
 
     return this.mapToResponseDto(updatedDocumento);
@@ -209,7 +239,9 @@ export class DocumentosPsicologoService {
         }
       } catch (error) {
         // Log del error pero no fallar la eliminación del documento
-        console.error(`Error eliminando archivo de Backblaze: ${error.message}`);
+        console.error(
+          `Error eliminando archivo de Backblaze: ${error.message}`,
+        );
       }
     }
 
@@ -221,7 +253,7 @@ export class DocumentosPsicologoService {
   ): Promise<DocumentoPsicologoResponseDto[]> {
     // Buscar el registro de psicólogo correspondiente al usuario
     const psicologo = await this.psicologoRepository.findOne({
-      where: { usuario: { id: userId } }
+      where: { usuario: { id: userId } },
     });
 
     if (!psicologo) {
@@ -233,7 +265,7 @@ export class DocumentosPsicologoService {
       order: { createdAt: 'DESC' },
     });
 
-    return documentos.map(doc => this.mapToResponseDto(doc));
+    return documentos.map((doc) => this.mapToResponseDto(doc));
   }
 
   async findById(id: string): Promise<DocumentoPsicologoResponseDto> {
@@ -249,7 +281,9 @@ export class DocumentosPsicologoService {
     return this.mapToResponseDto(documento);
   }
 
-  private mapToResponseDto(documento: DocumentoPsicologo): DocumentoPsicologoResponseDto {
+  private mapToResponseDto(
+    documento: DocumentoPsicologo,
+  ): DocumentoPsicologoResponseDto {
     return {
       id: documento.id,
       tipo: documento.tipo,
@@ -257,9 +291,11 @@ export class DocumentosPsicologoService {
       urlDocumento: documento.urlDocumento,
       createdAt: documento.createdAt,
       updatedAt: documento.updatedAt,
-      psicologo: documento.psicologo ? {
-        id: documento.psicologo.id
-      } : undefined,
+      psicologo: documento.psicologo
+        ? {
+            id: documento.psicologo.id,
+          }
+        : undefined,
     };
   }
 
@@ -267,7 +303,9 @@ export class DocumentosPsicologoService {
     try {
       // Extraer la clave del archivo desde la URL de Backblaze
       const urlParts = url.split('/');
-      const bucketIndex = urlParts.findIndex(part => part.includes('backblazeb2.com'));
+      const bucketIndex = urlParts.findIndex((part) =>
+        part.includes('backblazeb2.com'),
+      );
       if (bucketIndex !== -1 && bucketIndex + 2 < urlParts.length) {
         return urlParts.slice(bucketIndex + 2).join('/');
       }
@@ -276,4 +314,4 @@ export class DocumentosPsicologoService {
       return null;
     }
   }
-} 
+}

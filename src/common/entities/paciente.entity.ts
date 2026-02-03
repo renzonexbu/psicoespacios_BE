@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('pacientes')
 export class Paciente {
@@ -21,7 +27,7 @@ export class Paciente {
   estado: string | null;
 
   // Sistema de Matching - Perfil del Paciente
-  
+
   // Coincidencias Diagnósticas (35%)
   @Column({ type: 'text', array: true, default: [] })
   diagnosticos_principales: string[];

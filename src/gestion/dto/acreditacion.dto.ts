@@ -25,4 +25,4 @@ export class UpdateAcreditacionDto {
 
   @IsBoolean()
   estado?: boolean;
-} 
+}

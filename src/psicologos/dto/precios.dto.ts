@@ -24,4 +24,4 @@ export class PreciosResponseDto {
   precioPresencial: number | null;
   fonasa: boolean;
   updatedAt: Date;
-} 
+}

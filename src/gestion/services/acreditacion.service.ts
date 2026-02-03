@@ -2,7 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Acreditacion } from '../../common/entities/acreditacion.entity';
-import { CreateAcreditacionDto, UpdateAcreditacionDto } from '../dto/acreditacion.dto';
+import {
+  CreateAcreditacionDto,
+  UpdateAcreditacionDto,
+} from '../dto/acreditacion.dto';
 
 @Injectable()
 export class AcreditacionService {
@@ -21,8 +24,11 @@ export class AcreditacionService {
   }
 
   async findOne(id: string): Promise<Acreditacion> {
-    const acreditacion = await this.acreditacionRepository.findOne({ where: { id } });
-    if (!acreditacion) throw new NotFoundException('Acreditación no encontrada');
+    const acreditacion = await this.acreditacionRepository.findOne({
+      where: { id },
+    });
+    if (!acreditacion)
+      throw new NotFoundException('Acreditación no encontrada');
     return acreditacion;
   }
 
@@ -40,4 +46,4 @@ export class AcreditacionService {
   async findByPsicologo(idPsicologo: string): Promise<Acreditacion[]> {
     return this.acreditacionRepository.find({ where: { idPsicologo } });
   }
-} 
+}

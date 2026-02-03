@@ -27,19 +27,19 @@ export class DebugArchivosController {
   @Roles(Role.ADMIN)
   async debugHistorialPaciente() {
     const registros = await this.historialRepository.find({
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
 
     return {
       total: registros.length,
-      registros: registros.map(r => ({
+      registros: registros.map((r) => ({
         id: r.id,
         tipo: r.tipo,
         idUsuarioPaciente: r.idUsuarioPaciente,
         descripcion: r.descripcion,
         url: r.url,
-        createdAt: r.createdAt
-      }))
+        createdAt: r.createdAt,
+      })),
     };
   }
 
@@ -50,18 +50,18 @@ export class DebugArchivosController {
   @Roles(Role.ADMIN)
   async debugPacientes() {
     const pacientes = await this.pacienteRepository.find({
-      order: { primeraSesionRegistrada: 'DESC' }
+      order: { primeraSesionRegistrada: 'DESC' },
     });
 
     return {
       total: pacientes.length,
-      pacientes: pacientes.map(p => ({
+      pacientes: pacientes.map((p) => ({
         id: p.id,
         idUsuarioPaciente: p.idUsuarioPaciente,
         idUsuarioPsicologo: p.idUsuarioPsicologo,
         estado: p.estado,
-        tag: p.tag
-      }))
+        tag: p.tag,
+      })),
     };
   }
 
@@ -72,50 +72,21 @@ export class DebugArchivosController {
   @Roles(Role.ADMIN)
   async debugArchivosPaciente(@Param('pacienteUserId') pacienteUserId: string) {
     try {
-      const archivos = await this.archivosPacienteService.obtenerArchivosPaciente(pacienteUserId);
+      const archivos =
+        await this.archivosPacienteService.obtenerArchivosPaciente(
+          pacienteUserId,
+        );
       return {
         pacienteUserId,
         totalArchivos: archivos.length,
-        archivos
+        archivos,
       };
     } catch (error) {
       return {
         pacienteUserId,
         error: error.message,
-        archivos: []
+        archivos: [],
       };
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+  JoinColumn,
+} from 'typeorm';
 import { Plan } from './plan.entity';
 import { User } from './user.entity';
 
@@ -6,7 +14,7 @@ export enum EstadoSuscripcion {
   PENDIENTE_PAGO = 'PENDIENTE_PAGO',
   ACTIVA = 'ACTIVA',
   CANCELADA = 'CANCELADA',
-  VENCIDA = 'VENCIDA'
+  VENCIDA = 'VENCIDA',
 }
 
 @Entity('suscripciones')
@@ -20,11 +28,11 @@ export class Suscripcion {
   @Column({ name: 'fechaFin', type: 'timestamp' })
   fechaFin: Date;
 
-  @Column({ 
-    name: 'estado', 
+  @Column({
+    name: 'estado',
     type: 'enum',
     enum: EstadoSuscripcion,
-    default: EstadoSuscripcion.PENDIENTE_PAGO
+    default: EstadoSuscripcion.PENDIENTE_PAGO,
   })
   estado: EstadoSuscripcion;
 
@@ -54,7 +62,11 @@ export class Suscripcion {
   @Column({ name: 'fechaCreacion', type: 'timestamp', default: () => 'now()' })
   fechaCreacion: Date;
 
-  @Column({ name: 'fechaActualizacion', type: 'timestamp', default: () => 'now()' })
+  @Column({
+    name: 'fechaActualizacion',
+    type: 'timestamp',
+    default: () => 'now()',
+  })
   fechaActualizacion: Date;
 
   // Campos adicionales que pueden no estar en la base de datos pero se usan en el código

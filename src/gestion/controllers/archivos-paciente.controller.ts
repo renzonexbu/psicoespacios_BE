@@ -1,4 +1,11 @@
-import { Controller, Get, Param, Query, Request, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -9,7 +16,9 @@ import { FiltrosArchivosPacienteDto } from '../dto/archivos-paciente.dto';
 @Controller('api/v1/pacientes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ArchivosPacienteController {
-  constructor(private readonly archivosPacienteService: ArchivosPacienteService) {}
+  constructor(
+    private readonly archivosPacienteService: ArchivosPacienteService,
+  ) {}
 
   /**
    * Obtener todos los archivos compartidos del paciente autenticado
@@ -19,9 +28,12 @@ export class ArchivosPacienteController {
   @Roles(Role.PACIENTE)
   async obtenerMisArchivos(
     @Query() filtros: FiltrosArchivosPacienteDto,
-    @Request() req
+    @Request() req,
   ) {
-    return this.archivosPacienteService.obtenerArchivosPaciente(req.user.id, filtros);
+    return this.archivosPacienteService.obtenerArchivosPaciente(
+      req.user.id,
+      filtros,
+    );
   }
 
   /**
@@ -32,9 +44,12 @@ export class ArchivosPacienteController {
   @Roles(Role.PACIENTE)
   async obtenerMiArchivo(
     @Param('archivoId') archivoId: string,
-    @Request() req
+    @Request() req,
   ) {
-    return this.archivosPacienteService.obtenerArchivoPaciente(archivoId, req.user.id);
+    return this.archivosPacienteService.obtenerArchivoPaciente(
+      archivoId,
+      req.user.id,
+    );
   }
 
   /**
@@ -44,7 +59,9 @@ export class ArchivosPacienteController {
   @Get('mis-archivos/estadisticas')
   @Roles(Role.PACIENTE)
   async obtenerEstadisticasArchivos(@Request() req) {
-    return this.archivosPacienteService.obtenerEstadisticasArchivos(req.user.id);
+    return this.archivosPacienteService.obtenerEstadisticasArchivos(
+      req.user.id,
+    );
   }
 
   /**
@@ -56,41 +73,12 @@ export class ArchivosPacienteController {
   async obtenerArchivosPaciente(
     @Param('pacienteId') pacienteId: string,
     @Query() filtros: FiltrosArchivosPacienteDto,
-    @Request() req
+    @Request() req,
   ) {
     // TODO: Agregar validación de permisos para psicólogos
-    return this.archivosPacienteService.obtenerArchivosPaciente(pacienteId, filtros);
+    return this.archivosPacienteService.obtenerArchivosPaciente(
+      pacienteId,
+      filtros,
+    );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

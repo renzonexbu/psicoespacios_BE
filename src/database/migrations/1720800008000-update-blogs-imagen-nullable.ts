@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class UpdateBlogsImagenNullable1720800008000 implements MigrationInterface {
+export class UpdateBlogsImagenNullable1720800008000
+  implements MigrationInterface
+{
   name = 'UpdateBlogsImagenNullable1720800008000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -14,4 +16,4 @@ export class UpdateBlogsImagenNullable1720800008000 implements MigrationInterfac
       ALTER TABLE "blogs" ALTER COLUMN "imagen" SET NOT NULL
     `);
   }
-} 
+}

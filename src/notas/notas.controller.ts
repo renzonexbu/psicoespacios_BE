@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { NotasService } from './notas.service';
 import { CreateNotaDto, UpdateNotaDto, QueryNotasDto } from './dto/nota.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -41,7 +52,10 @@ export class NotasController {
    * Obtener notas de un paciente específico
    */
   @Get('paciente/:pacienteId')
-  async findByPaciente(@Param('pacienteId') pacienteId: string, @Request() req) {
+  async findByPaciente(
+    @Param('pacienteId') pacienteId: string,
+    @Request() req,
+  ) {
     return this.notasService.findByPaciente(pacienteId, req.user.id);
   }
 
@@ -52,7 +66,7 @@ export class NotasController {
   async update(
     @Param('id') id: string,
     @Body() updateNotaDto: UpdateNotaDto,
-    @Request() req
+    @Request() req,
   ) {
     return this.notasService.update(id, updateNotaDto, req.user.id);
   }
@@ -81,4 +95,4 @@ export class NotasController {
   getTiposNota() {
     return Object.values(TipoNota);
   }
-} 
+}

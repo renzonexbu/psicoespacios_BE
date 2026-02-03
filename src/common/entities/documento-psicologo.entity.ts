@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Psicologo } from './psicologo.entity';
 
 export enum TipoDocumento {
@@ -7,7 +15,7 @@ export enum TipoDocumento {
   DIPLOMA = 'diploma',
   LICENCIA = 'licencia',
   EXPERIENCIA = 'experiencia',
-  OTRO = 'otro'
+  OTRO = 'otro',
 }
 
 @Entity('documento_psicologo')
@@ -25,7 +33,12 @@ export class DocumentoPsicologo {
   @Column({ type: 'varchar', length: 255 })
   nombre: string;
 
-  @Column({ type: 'varchar', length: 500, nullable: true, name: 'url_documento' })
+  @Column({
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+    name: 'url_documento',
+  })
   urlDocumento: string; // Para almacenar la URL del documento subido
 
   @CreateDateColumn({ name: 'created_at' })
@@ -33,4 +46,4 @@ export class DocumentoPsicologo {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-} 
+}

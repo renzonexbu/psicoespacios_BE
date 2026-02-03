@@ -10,17 +10,3 @@ export class AssignSubrolDto {
   @IsNotEmpty()
   subrol: SubrolPsicologo;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

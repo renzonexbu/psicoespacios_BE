@@ -16,4 +16,4 @@ export class AddSoftDeleteToBoxes1720800015000 implements MigrationInterface {
       DROP COLUMN "deletedAt"
     `);
   }
-} 
+}

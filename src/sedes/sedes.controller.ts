@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Put, Delete, Param, Query, Body, UseGuards, BadRequestException, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  BadRequestException,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { SedesService } from './sedes.service';
 import { CreateSedeDto, UpdateSedeDto, AsignarBoxDto } from './dto/sede.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -76,47 +88,55 @@ export class SedesController {
     if (!fecha) {
       throw new BadRequestException('El parámetro fecha es obligatorio');
     }
-    
+
     if (!horaInicio) {
       throw new BadRequestException('El parámetro hora_inicio es obligatorio');
     }
-    
+
     if (!horaFin) {
       throw new BadRequestException('El parámetro hora_fin es obligatorio');
     }
 
     // Validar el formato de la fecha (YYYY-MM-DD)
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-      throw new BadRequestException('Formato de fecha inválido. Use YYYY-MM-DD');
+      throw new BadRequestException(
+        'Formato de fecha inválido. Use YYYY-MM-DD',
+      );
     }
-    
+
     // Crear objeto de fecha (LOCAL) y validar
     const [yy, mm, dd] = fecha.split('-').map(Number);
     const fechaObj = new Date(yy, (mm || 1) - 1, dd || 1);
     if (isNaN(fechaObj.getTime())) {
       throw new BadRequestException('Fecha inválida');
     }
-    
+
     // Validar que la fecha no sea pasada
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     if (fechaObj < hoy) {
-      throw new BadRequestException('La fecha debe ser igual o posterior a hoy');
+      throw new BadRequestException(
+        'La fecha debe ser igual o posterior a hoy',
+      );
     }
-    
+
     // Validar formato de hora (HH:MM o HH:MM:SS)
     const horaRegex = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
     if (!horaRegex.test(horaInicio)) {
-      throw new BadRequestException(`Formato de hora inicio inválido: ${horaInicio}. Use formato HH:MM o HH:MM:SS`);
+      throw new BadRequestException(
+        `Formato de hora inicio inválido: ${horaInicio}. Use formato HH:MM o HH:MM:SS`,
+      );
     }
-    
+
     if (!horaRegex.test(horaFin)) {
-      throw new BadRequestException(`Formato de hora fin inválido: ${horaFin}. Use formato HH:MM o HH:MM:SS`);
+      throw new BadRequestException(
+        `Formato de hora fin inválido: ${horaFin}. Use formato HH:MM o HH:MM:SS`,
+      );
     }
-    
+
     // Convertir parámetro asignar a boolean
     const asignarBox = asignar === 'true' || asignar === '1';
-    
+
     return this.sedesService.checkBoxAvailability(
       sedeId,
       fechaObj,
@@ -133,18 +153,22 @@ export class SedesController {
   @UseGuards(JwtAuthGuard)
   async asignarBoxAutomaticamente(
     @Param('sede_id', ParseUUIDPipe) sedeId: string,
-    @Body() asignarBoxDto: AsignarBoxDto
+    @Body() asignarBoxDto: AsignarBoxDto,
   ) {
     const { fecha, horaInicio, horaFin } = asignarBoxDto;
-    
+
     // Validar parámetros
     if (!fecha || !horaInicio || !horaFin) {
-      throw new BadRequestException('fecha, horaInicio y horaFin son obligatorios');
+      throw new BadRequestException(
+        'fecha, horaInicio y horaFin son obligatorios',
+      );
     }
 
     // Validar formato de fecha
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-      throw new BadRequestException('Formato de fecha inválido. Use YYYY-MM-DD');
+      throw new BadRequestException(
+        'Formato de fecha inválido. Use YYYY-MM-DD',
+      );
     }
 
     // Validar formato de hora
@@ -155,7 +179,9 @@ export class SedesController {
 
     // Validar que horaFin > horaInicio
     if (horaFin <= horaInicio) {
-      throw new BadRequestException('La hora de fin debe ser posterior a la hora de inicio');
+      throw new BadRequestException(
+        'La hora de fin debe ser posterior a la hora de inicio',
+      );
     }
 
     // Crear fecha LOCAL para evitar desfases de zona horaria
@@ -169,7 +195,9 @@ export class SedesController {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     if (fechaObj < hoy) {
-      throw new BadRequestException('La fecha debe ser igual o posterior a hoy');
+      throw new BadRequestException(
+        'La fecha debe ser igual o posterior a hoy',
+      );
     }
 
     return this.sedesService.asignarBoxAutomaticamente(

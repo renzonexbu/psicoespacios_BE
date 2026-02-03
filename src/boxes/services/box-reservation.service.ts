@@ -1,12 +1,26 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Reserva, EstadoReserva, EstadoPagoReserva } from '../../common/entities/reserva.entity';
+import {
+  Reserva,
+  EstadoReserva,
+  EstadoPagoReserva,
+} from '../../common/entities/reserva.entity';
 import { Box } from '../../common/entities/box.entity';
 import { User } from '../../common/entities/user.entity';
 import { PackAsignacion } from '../../packs/entities/pack-asignacion.entity';
 import { PackHora } from '../../packs/entities/pack-hora.entity';
-import { CreateBoxReservationDto, UpdateBoxReservationDto, UpdateBoxReservationPaymentDto, BoxReservationResponseDto } from '../dto/box-reservation.dto';
+import {
+  CreateBoxReservationDto,
+  UpdateBoxReservationDto,
+  UpdateBoxReservationPaymentDto,
+  BoxReservationResponseDto,
+} from '../dto/box-reservation.dto';
 import { MailService } from '../../mail/mail.service';
 
 @Injectable()
@@ -36,45 +50,62 @@ export class BoxReservationService {
     return endHour > startHour;
   }
 
-  private async checkBoxAvailability(boxId: string, fecha: string, horaInicio: string, horaFin: string, excludeReservationId?: string): Promise<boolean> {
+  private async checkBoxAvailability(
+    boxId: string,
+    fecha: string,
+    horaInicio: string,
+    horaFin: string,
+    excludeReservationId?: string,
+  ): Promise<boolean> {
     const [year, month, day] = fecha.split('-').map(Number);
     const fechaReserva = new Date(year, month - 1, day); // month - 1 porque los meses van de 0-11
-    
+
     const existingReservations = await this.reservaRepository.find({
       where: {
         boxId,
         fecha: fechaReserva,
-        estado: EstadoReserva.CONFIRMADA
-      }
+        estado: EstadoReserva.CONFIRMADA,
+      },
     });
 
     // Filtrar la reserva actual si estamos actualizando
-    const conflictingReservations = existingReservations.filter(reservation => {
-      if (excludeReservationId && reservation.id === excludeReservationId) {
-        return false;
-      }
+    const conflictingReservations = existingReservations.filter(
+      (reservation) => {
+        if (excludeReservationId && reservation.id === excludeReservationId) {
+          return false;
+        }
 
-      const reservationStart = parseInt(reservation.horaInicio.split(':')[0]);
-      const reservationEnd = parseInt(reservation.horaFin.split(':')[0]);
-      const newStart = parseInt(horaInicio.split(':')[0]);
-      const newEnd = parseInt(horaFin.split(':')[0]);
+        const reservationStart = parseInt(reservation.horaInicio.split(':')[0]);
+        const reservationEnd = parseInt(reservation.horaFin.split(':')[0]);
+        const newStart = parseInt(horaInicio.split(':')[0]);
+        const newEnd = parseInt(horaFin.split(':')[0]);
 
-      // Verificar si hay solapamiento
-      return (newStart < reservationEnd && newEnd > reservationStart);
-    });
+        // Verificar si hay solapamiento
+        return newStart < reservationEnd && newEnd > reservationStart;
+      },
+    );
 
     return conflictingReservations.length === 0;
   }
 
-  async createReservation(dto: CreateBoxReservationDto): Promise<BoxReservationResponseDto> {
+  async createReservation(
+    dto: CreateBoxReservationDto,
+  ): Promise<BoxReservationResponseDto> {
     // Validar formato de horas
-    if (!this.validateTimeFormat(dto.horaInicio) || !this.validateTimeFormat(dto.horaFin)) {
-      throw new BadRequestException('Formato de hora inválido. Debe ser "HH:00"');
+    if (
+      !this.validateTimeFormat(dto.horaInicio) ||
+      !this.validateTimeFormat(dto.horaFin)
+    ) {
+      throw new BadRequestException(
+        'Formato de hora inválido. Debe ser "HH:00"',
+      );
     }
 
     // Validar rango de horas
     if (!this.validateTimeRange(dto.horaInicio, dto.horaFin)) {
-      throw new BadRequestException('La hora de fin debe ser posterior a la hora de inicio');
+      throw new BadRequestException(
+        'La hora de fin debe ser posterior a la hora de inicio',
+      );
     }
 
     // Validar que el box existe
@@ -84,21 +115,30 @@ export class BoxReservationService {
     }
 
     // Validar que el psicólogo existe
-    const psicologo = await this.userRepository.findOne({ where: { id: dto.psicologoId } });
+    const psicologo = await this.userRepository.findOne({
+      where: { id: dto.psicologoId },
+    });
     if (!psicologo) {
       throw new NotFoundException('Psicólogo no encontrado');
     }
 
     // Verificar disponibilidad del box
-    const isAvailable = await this.checkBoxAvailability(dto.boxId, dto.fecha, dto.horaInicio, dto.horaFin);
+    const isAvailable = await this.checkBoxAvailability(
+      dto.boxId,
+      dto.fecha,
+      dto.horaInicio,
+      dto.horaFin,
+    );
     if (!isAvailable) {
-      throw new ConflictException('El box no está disponible en el horario solicitado');
+      throw new ConflictException(
+        'El box no está disponible en el horario solicitado',
+      );
     }
 
     // Crear la reserva con fecha correcta
     const [year, month, day] = dto.fecha.split('-').map(Number);
     const fechaReserva = new Date(year, month - 1, day); // month - 1 porque los meses van de 0-11
-    
+
     const reserva = this.reservaRepository.create({
       boxId: dto.boxId,
       psicologoId: dto.psicologoId,
@@ -106,7 +146,7 @@ export class BoxReservationService {
       horaInicio: dto.horaInicio,
       horaFin: dto.horaFin,
       precio: dto.precio,
-      estado: EstadoReserva.CONFIRMADA
+      estado: EstadoReserva.CONFIRMADA,
     });
 
     const savedReserva = await this.reservaRepository.save(reserva);
@@ -115,16 +155,22 @@ export class BoxReservationService {
       await this.mailService.sendReservaBoxConfirmada(
         psicologo.email,
         dto.fecha,
-        dto.horaInicio
+        dto.horaInicio,
       );
     } catch (error) {
       // No bloquear creación por error de email
-      console.error(`Error al enviar email de reserva de box a ${psicologo.email}:`, error);
+      console.error(
+        `Error al enviar email de reserva de box a ${psicologo.email}:`,
+        error,
+      );
     }
     return await this.mapToResponseDto(savedReserva);
   }
 
-  async updateReservationStatus(id: string, dto: UpdateBoxReservationDto): Promise<BoxReservationResponseDto> {
+  async updateReservationStatus(
+    id: string,
+    dto: UpdateBoxReservationDto,
+  ): Promise<BoxReservationResponseDto> {
     const reserva = await this.reservaRepository.findOne({ where: { id } });
     if (!reserva) {
       throw new NotFoundException('Reserva no encontrada');
@@ -135,7 +181,10 @@ export class BoxReservationService {
     return await this.mapToResponseDto(updatedReserva);
   }
 
-  async updateReservationPaymentStatus(id: string, dto: UpdateBoxReservationPaymentDto): Promise<BoxReservationResponseDto> {
+  async updateReservationPaymentStatus(
+    id: string,
+    dto: UpdateBoxReservationPaymentDto,
+  ): Promise<BoxReservationResponseDto> {
     const reserva = await this.reservaRepository.findOne({ where: { id } });
     if (!reserva) {
       throw new NotFoundException('Reserva no encontrada');
@@ -155,25 +204,36 @@ export class BoxReservationService {
     return await this.mapToResponseDto(reserva);
   }
 
-  async getReservationsByPsicologo(psicologoId: string): Promise<BoxReservationResponseDto[]> {
+  async getReservationsByPsicologo(
+    psicologoId: string,
+  ): Promise<BoxReservationResponseDto[]> {
     const reservas = await this.reservaRepository.find({
       where: { psicologoId },
-      order: { fecha: 'ASC', horaInicio: 'ASC' }
+      order: { fecha: 'ASC', horaInicio: 'ASC' },
     });
 
-    return Promise.all(reservas.map(reserva => this.mapToResponseDto(reserva)));
+    return Promise.all(
+      reservas.map((reserva) => this.mapToResponseDto(reserva)),
+    );
   }
 
-  async getReservationsByBox(boxId: string): Promise<BoxReservationResponseDto[]> {
+  async getReservationsByBox(
+    boxId: string,
+  ): Promise<BoxReservationResponseDto[]> {
     const reservas = await this.reservaRepository.find({
       where: { boxId },
-      order: { fecha: 'ASC', horaInicio: 'ASC' }
+      order: { fecha: 'ASC', horaInicio: 'ASC' },
     });
 
-    return Promise.all(reservas.map(reserva => this.mapToResponseDto(reserva)));
+    return Promise.all(
+      reservas.map((reserva) => this.mapToResponseDto(reserva)),
+    );
   }
 
-  async cancelReservation(id: string, canceladaPorAdmin = false): Promise<BoxReservationResponseDto> {
+  async cancelReservation(
+    id: string,
+    canceladaPorAdmin = false,
+  ): Promise<BoxReservationResponseDto> {
     const reserva = await this.reservaRepository.findOne({ where: { id } });
     if (!reserva) {
       throw new NotFoundException('Reserva no encontrada');
@@ -184,7 +244,9 @@ export class BoxReservationService {
     }
 
     if (reserva.estado === EstadoReserva.COMPLETADA) {
-      throw new BadRequestException('No se puede cancelar una reserva completada');
+      throw new BadRequestException(
+        'No se puede cancelar una reserva completada',
+      );
     }
 
     reserva.estado = EstadoReserva.CANCELADA;
@@ -192,7 +254,9 @@ export class BoxReservationService {
 
     // Enviar email al psicólogo informando cancelación de la reserva de box
     try {
-      const psicologo = await this.userRepository.findOne({ where: { id: reserva.psicologoId } });
+      const psicologo = await this.userRepository.findOne({
+        where: { id: reserva.psicologoId },
+      });
       if (psicologo?.email && reserva.fecha) {
         const fechaObj = new Date(reserva.fecha as any);
         const fechaStr = isNaN(fechaObj.getTime())
@@ -207,27 +271,37 @@ export class BoxReservationService {
       }
     } catch (error) {
       // No bloquear la cancelación si falla el email
-      console.error(`Error al enviar email de cancelación de box a psicólogo ${reserva.psicologoId}:`, error);
+      console.error(
+        `Error al enviar email de cancelación de box a psicólogo ${reserva.psicologoId}:`,
+        error,
+      );
     }
 
     return await this.mapToResponseDto(updatedReserva);
   }
 
-  private async mapToResponseDto(reserva: Reserva): Promise<BoxReservationResponseDto> {
-    let packInfo: { id: string; nombre: string; horas: number; precio: number; } | null = null;
-    
+  private async mapToResponseDto(
+    reserva: Reserva,
+  ): Promise<BoxReservationResponseDto> {
+    let packInfo: {
+      id: string;
+      nombre: string;
+      horas: number;
+      precio: number;
+    } | null = null;
+
     if (reserva.packAsignacionId) {
       const asignacion = await this.packAsignacionRepository.findOne({
         where: { id: reserva.packAsignacionId },
-        relations: ['pack']
+        relations: ['pack'],
       });
-      
+
       if (asignacion?.pack) {
         packInfo = {
           id: asignacion.pack.id,
           nombre: asignacion.pack.nombre,
           horas: asignacion.pack.horas,
-          precio: asignacion.pack.precio
+          precio: asignacion.pack.precio,
         };
       }
     }
@@ -245,15 +319,19 @@ export class BoxReservationService {
       packAsignacionId: reserva.packAsignacionId,
       packInfo,
       createdAt: reserva.createdAt,
-      updatedAt: reserva.updatedAt
+      updatedAt: reserva.updatedAt,
     };
   }
 
-  async getBoxAvailability(boxId: string, mes: number, anio: number): Promise<any[]> {
+  async getBoxAvailability(
+    boxId: string,
+    mes: number,
+    anio: number,
+  ): Promise<any[]> {
     // Validar que el box existe y obtener información de la sede
-    const box = await this.boxRepository.findOne({ 
+    const box = await this.boxRepository.findOne({
       where: { id: boxId },
-      relations: ['sede']
+      relations: ['sede'],
     });
     if (!box) {
       throw new NotFoundException('Box no encontrado');
@@ -264,37 +342,52 @@ export class BoxReservationService {
     const resultado: any[] = [];
 
     // Función para obtener el horario de atención de un día específico
-    const getHorarioDia = (fecha: Date): { inicio: string; fin: string; cerrado: boolean } | null => {
+    const getHorarioDia = (
+      fecha: Date,
+    ): { inicio: string; fin: string; cerrado: boolean } | null => {
       if (!box.sede?.horarioAtencion) return null;
-      
+
       // Mapeo de días de la semana (índice 0-6) a los nombres en español con acentos
-      const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const diasSemana = [
+        'Domingo',
+        'Lunes',
+        'Martes',
+        'Miércoles',
+        'Jueves',
+        'Viernes',
+        'Sábado',
+      ];
       const diaSemana = diasSemana[fecha.getDay()];
-      
+
       // Manejar ambos formatos posibles: array directo o objeto con diasHabiles
       let diasHabiles: any[] = [];
-      
+
       if (Array.isArray(box.sede.horarioAtencion)) {
         // Formato: array directo (como en la migración inicial)
         diasHabiles = box.sede.horarioAtencion;
-      } else if (box.sede.horarioAtencion.diasHabiles && Array.isArray(box.sede.horarioAtencion.diasHabiles)) {
+      } else if (
+        box.sede.horarioAtencion.diasHabiles &&
+        Array.isArray(box.sede.horarioAtencion.diasHabiles)
+      ) {
         // Formato: objeto con diasHabiles
         diasHabiles = box.sede.horarioAtencion.diasHabiles;
       }
-      
-      const horarioDia = diasHabiles.find(
-        (dia: any) => dia.dia === diaSemana
-      );
-      
-      return horarioDia ? {
-        inicio: horarioDia.inicio,
-        fin: horarioDia.fin,
-        cerrado: horarioDia.cerrado === true
-      } : null;
+
+      const horarioDia = diasHabiles.find((dia: any) => dia.dia === diaSemana);
+
+      return horarioDia
+        ? {
+            inicio: horarioDia.inicio,
+            fin: horarioDia.fin,
+            cerrado: horarioDia.cerrado === true,
+          }
+        : null;
     };
 
     // Función para generar horas disponibles según el horario del día
-    const generarHorasDisponibles = (horarioDia: { inicio: string; fin: string; cerrado: boolean } | null): string[] => {
+    const generarHorasDisponibles = (
+      horarioDia: { inicio: string; fin: string; cerrado: boolean } | null,
+    ): string[] => {
       if (!horarioDia || horarioDia.cerrado) {
         return [];
       }
@@ -302,11 +395,11 @@ export class BoxReservationService {
       const horas: string[] = [];
       const inicioHora = parseInt(horarioDia.inicio.split(':')[0]);
       const finHora = parseInt(horarioDia.fin.split(':')[0]);
-      
+
       for (let hora = inicioHora; hora < finHora; hora++) {
         horas.push(`${hora.toString().padStart(2, '0')}:00`);
       }
-      
+
       return horas;
     };
 
@@ -316,7 +409,7 @@ export class BoxReservationService {
       // Obtener horario específico del día
       const horarioDia = getHorarioDia(fecha);
       const cerrado = !horarioDia || horarioDia.cerrado;
-      
+
       // Generar horas disponibles según el horario del día
       const horasDisponiblesDia = generarHorasDisponibles(horarioDia);
 
@@ -331,17 +424,21 @@ export class BoxReservationService {
           horarioDia,
           horasDisponiblesDia,
           horarioAtencionRaw: box.sede?.horarioAtencion,
-          horarioAtencionParsed: JSON.stringify(box.sede?.horarioAtencion, null, 2)
+          horarioAtencionParsed: JSON.stringify(
+            box.sede?.horarioAtencion,
+            null,
+            2,
+          ),
         });
       }
 
       // Si el día está cerrado, marcar todas las horas como no disponibles
       if (cerrado) {
-        const disponibilidadHoras = horasDisponiblesDia.map(hora => ({
+        const disponibilidadHoras = horasDisponiblesDia.map((hora) => ({
           hora,
           disponible: false,
           reserva: null,
-          motivo: 'Sede cerrada'
+          motivo: 'Sede cerrada',
         }));
 
         resultado.push({
@@ -353,7 +450,7 @@ export class BoxReservationService {
           disponibilidadHoras,
           horasDisponibles: 0,
           horasOcupadas: horasDisponiblesDia.length,
-          sedeCerrada: true
+          sedeCerrada: true,
         });
         continue;
       }
@@ -363,38 +460,38 @@ export class BoxReservationService {
         where: {
           boxId,
           fecha: fecha,
-          estado: EstadoReserva.CONFIRMADA
+          estado: EstadoReserva.CONFIRMADA,
         },
-        order: { horaInicio: 'ASC' }
+        order: { horaInicio: 'ASC' },
       });
 
       // Mapear las reservas del día
-      const reservasDelDia = reservas.map(reserva => ({
+      const reservasDelDia = reservas.map((reserva) => ({
         id: reserva.id,
         psicologoId: reserva.psicologoId,
         horaInicio: reserva.horaInicio,
         horaFin: reserva.horaFin,
         estado: reserva.estado,
         precio: reserva.precio,
-        packAsignacionId: reserva.packAsignacionId
+        packAsignacionId: reserva.packAsignacionId,
       }));
 
       // Crear array de horas ocupadas
       const horasOcupadas = new Set<string>();
-      reservasDelDia.forEach(reserva => {
+      reservasDelDia.forEach((reserva) => {
         const horaInicio = parseInt(reserva.horaInicio.split(':')[0]);
         const horaFin = parseInt(reserva.horaFin.split(':')[0]);
-        
+
         for (let h = horaInicio; h < horaFin; h++) {
           horasOcupadas.add(`${h.toString().padStart(2, '0')}:00`);
         }
       });
 
       // Generar disponibilidad por horas (solo las horas del horario de la sede)
-      const disponibilidadHoras = horasDisponiblesDia.map(hora => ({
+      const disponibilidadHoras = horasDisponiblesDia.map((hora) => ({
         hora,
         disponible: !horasOcupadas.has(hora),
-        reserva: reservasDelDia.find(r => r.horaInicio === hora) || null
+        reserva: reservasDelDia.find((r) => r.horaInicio === hora) || null,
       }));
 
       resultado.push({
@@ -404,9 +501,10 @@ export class BoxReservationService {
         reservas: reservasDelDia,
         totalReservas: reservasDelDia.length,
         disponibilidadHoras,
-        horasDisponibles: disponibilidadHoras.filter(h => h.disponible).length,
-        horasOcupadas: disponibilidadHoras.filter(h => !h.disponible).length,
-        sedeCerrada: false
+        horasDisponibles: disponibilidadHoras.filter((h) => h.disponible)
+          .length,
+        horasOcupadas: disponibilidadHoras.filter((h) => !h.disponible).length,
+        sedeCerrada: false,
       });
     }
 
@@ -414,40 +512,54 @@ export class BoxReservationService {
   }
 
   // Método auxiliar para obtener horario de un día específico desde la sede
-  private getHorarioDiaFromSede(sede: any, fecha: Date): { inicio: string; fin: string; cerrado: boolean } | null {
+  private getHorarioDiaFromSede(
+    sede: any,
+    fecha: Date,
+  ): { inicio: string; fin: string; cerrado: boolean } | null {
     if (!sede?.horarioAtencion) return null;
-    
+
     // Mapeo de días de la semana (índice 0-6) a los nombres en español con acentos
-    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const diasSemana = [
+      'Domingo',
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+    ];
     const diaSemana = diasSemana[fecha.getDay()];
-    
+
     // Manejar ambos formatos posibles: array directo o objeto con diasHabiles
     let diasHabiles: any[] = [];
-    
+
     if (Array.isArray(sede.horarioAtencion)) {
       // Formato: array directo (como en la migración inicial)
       diasHabiles = sede.horarioAtencion;
-    } else if (sede.horarioAtencion.diasHabiles && Array.isArray(sede.horarioAtencion.diasHabiles)) {
+    } else if (
+      sede.horarioAtencion.diasHabiles &&
+      Array.isArray(sede.horarioAtencion.diasHabiles)
+    ) {
       // Formato: objeto con diasHabiles
       diasHabiles = sede.horarioAtencion.diasHabiles;
     }
-    
-    const horarioDia = diasHabiles.find(
-      (dia: any) => dia.dia === diaSemana
-    );
-    
-    return horarioDia ? {
-      inicio: horarioDia.inicio,
-      fin: horarioDia.fin,
-      cerrado: horarioDia.cerrado === true
-    } : null;
+
+    const horarioDia = diasHabiles.find((dia: any) => dia.dia === diaSemana);
+
+    return horarioDia
+      ? {
+          inicio: horarioDia.inicio,
+          fin: horarioDia.fin,
+          cerrado: horarioDia.cerrado === true,
+        }
+      : null;
   }
 
   async getBoxAvailabilityByDate(boxId: string, fecha: string): Promise<any> {
     // Validar que el box existe y obtener información de la sede
-    const box = await this.boxRepository.findOne({ 
+    const box = await this.boxRepository.findOne({
       where: { id: boxId },
-      relations: ['sede']
+      relations: ['sede'],
     });
     if (!box) {
       throw new NotFoundException('Box no encontrado');
@@ -457,7 +569,9 @@ export class BoxReservationService {
     const [year, month, day] = fecha.split('-').map(Number);
     const fechaObj = new Date(year, month - 1, day); // month - 1 porque los meses van de 0-11
     if (isNaN(fechaObj.getTime())) {
-      throw new BadRequestException('Formato de fecha inválido. Use YYYY-MM-DD');
+      throw new BadRequestException(
+        'Formato de fecha inválido. Use YYYY-MM-DD',
+      );
     }
 
     // Obtener horario específico del día
@@ -471,7 +585,9 @@ export class BoxReservationService {
         fecha,
         precioBox: Number(box.precio),
         diaSemana: fechaObj.toLocaleDateString('es-ES', { weekday: 'long' }),
-        diaSemanaCorto: fechaObj.toLocaleDateString('es-ES', { weekday: 'short' }),
+        diaSemanaCorto: fechaObj.toLocaleDateString('es-ES', {
+          weekday: 'short',
+        }),
         diaNumero: fechaObj.getDay(),
         reservas: [],
         horariosDisponibles: [],
@@ -479,7 +595,7 @@ export class BoxReservationService {
         reservasConfirmadas: 0,
         disponible: false,
         sedeCerrada: true,
-        motivo: 'Sede cerrada'
+        motivo: 'Sede cerrada',
       };
     }
 
@@ -494,8 +610,8 @@ export class BoxReservationService {
     // Generar horarios disponibles según el horario de la sede
     const horariosDisponibles: string[] = [];
     const horariosOcupados = reservas
-      .filter(r => r.estado !== EstadoReserva.CANCELADA) // Considerar todas las reservas excepto canceladas
-      .map(r => ({ inicio: r.horaInicio, fin: r.horaFin }));
+      .filter((r) => r.estado !== EstadoReserva.CANCELADA) // Considerar todas las reservas excepto canceladas
+      .map((r) => ({ inicio: r.horaInicio, fin: r.horaFin }));
 
     // Generar horarios según el horario de la sede
     const inicioHora = parseInt(horarioDia.inicio.split(':')[0]);
@@ -503,9 +619,9 @@ export class BoxReservationService {
 
     for (let hora = inicioHora; hora < finHora; hora++) {
       const horario = `${hora.toString().padStart(2, '0')}:00-${(hora + 1).toString().padStart(2, '0')}:00`;
-      
+
       // Verificar si el horario está ocupado
-      const estaOcupado = horariosOcupados.some(ocupado => {
+      const estaOcupado = horariosOcupados.some((ocupado) => {
         const inicioOcupado = parseInt(ocupado.inicio.split(':')[0]);
         const finOcupado = parseInt(ocupado.fin.split(':')[0]);
         return hora >= inicioOcupado && hora < finOcupado;
@@ -521,25 +637,31 @@ export class BoxReservationService {
       fecha,
       precioBox: Number(box.precio),
       diaSemana: fechaObj.toLocaleDateString('es-ES', { weekday: 'long' }),
-      diaSemanaCorto: fechaObj.toLocaleDateString('es-ES', { weekday: 'short' }),
+      diaSemanaCorto: fechaObj.toLocaleDateString('es-ES', {
+        weekday: 'short',
+      }),
       diaNumero: fechaObj.getDay(), // 0 = domingo, 1 = lunes, etc.
-      reservas: reservas.map(reserva => ({
+      reservas: reservas.map((reserva) => ({
         id: reserva.id,
         psicologoId: reserva.psicologoId,
         horaInicio: reserva.horaInicio,
         horaFin: reserva.horaFin,
         estado: reserva.estado,
-        precio: reserva.precio
+        precio: reserva.precio,
       })),
       horariosDisponibles,
       totalReservas: reservas.length,
-      reservasConfirmadas: reservas.filter(r => r.estado === EstadoReserva.CONFIRMADA).length,
-      disponible: reservas.filter(r => r.estado === EstadoReserva.CONFIRMADA).length === 0,
+      reservasConfirmadas: reservas.filter(
+        (r) => r.estado === EstadoReserva.CONFIRMADA,
+      ).length,
+      disponible:
+        reservas.filter((r) => r.estado === EstadoReserva.CONFIRMADA).length ===
+        0,
       sedeCerrada: false,
       horarioSede: {
         inicio: horarioDia.inicio,
-        fin: horarioDia.fin
-      }
+        fin: horarioDia.fin,
+      },
     };
   }
 
@@ -555,13 +677,15 @@ export class BoxReservationService {
     const [year, month, day] = fecha.split('-').map(Number);
     const fechaObj = new Date(year, month - 1, day); // month - 1 porque los meses van de 0-11
     if (isNaN(fechaObj.getTime())) {
-      throw new BadRequestException('Formato de fecha inválido. Use YYYY-MM-DD');
+      throw new BadRequestException(
+        'Formato de fecha inválido. Use YYYY-MM-DD',
+      );
     }
 
     // 1. Buscar TODAS las reservas del box (sin filtro de fecha)
     const todasLasReservas = await this.reservaRepository.find({
       where: { boxId },
-      order: { fecha: 'ASC', horaInicio: 'ASC' }
+      order: { fecha: 'ASC', horaInicio: 'ASC' },
     });
 
     // 2. Buscar reservas para la fecha específica con query builder
@@ -576,47 +700,47 @@ export class BoxReservationService {
     const reservasFind = await this.reservaRepository.find({
       where: {
         boxId,
-        fecha: fechaObj
+        fecha: fechaObj,
       },
-      order: { horaInicio: 'ASC' }
+      order: { horaInicio: 'ASC' },
     });
 
     return {
       boxId,
       fechaSolicitada: fecha,
       fechaObj: fechaObj.toISOString(),
-      
+
       // Resultados de diferentes consultas
       todasLasReservas: todasLasReservas.length,
       reservasQueryBuilder: reservasQueryBuilder.length,
       reservasFind: reservasFind.length,
-      
+
       // Detalles de las consultas
-      reservasQueryBuilderDetalle: reservasQueryBuilder.map(r => ({
+      reservasQueryBuilderDetalle: reservasQueryBuilder.map((r) => ({
         id: r.id,
         estado: r.estado,
         horaInicio: r.horaInicio,
         horaFin: r.horaFin,
-        fecha: r.fecha
+        fecha: r.fecha,
       })),
-      
-      reservasFindDetalle: reservasFind.map(r => ({
+
+      reservasFindDetalle: reservasFind.map((r) => ({
         id: r.id,
         estado: r.estado,
         horaInicio: r.horaInicio,
         horaFin: r.horaFin,
-        fecha: r.fecha
+        fecha: r.fecha,
       })),
-      
+
       // Análisis de todas las reservas del box
-      todasLasReservasDetalle: todasLasReservas.map(r => ({
+      todasLasReservasDetalle: todasLasReservas.map((r) => ({
         id: r.id,
         estado: r.estado,
         fecha: r.fecha,
         fechaISO: new Date(r.fecha).toISOString().split('T')[0],
         horaInicio: r.horaInicio,
-        horaFin: r.horaFin
-      }))
+        horaFin: r.horaFin,
+      })),
     };
   }
-} 
+}

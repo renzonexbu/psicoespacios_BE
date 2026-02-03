@@ -19,4 +19,7 @@ export { ConfiguracionSistema } from './configuracion-sistema.entity';
 export { HistorialPaciente } from './historial-paciente.entity';
 export { Acreditacion } from './acreditacion.entity';
 export { RefreshToken } from './refresh-token.entity';
-export { DocumentoPsicologo, TipoDocumento } from './documento-psicologo.entity';
+export {
+  DocumentoPsicologo,
+  TipoDocumento,
+} from './documento-psicologo.entity';

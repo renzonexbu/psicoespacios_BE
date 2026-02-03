@@ -13,9 +13,19 @@ import { PackHora } from '../packs/entities/pack-hora.entity';
 import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Box, Sede, Reserva, User, PackAsignacion, PackHora]), MailModule],
+  imports: [
+    TypeOrmModule.forFeature([
+      Box,
+      Sede,
+      Reserva,
+      User,
+      PackAsignacion,
+      PackHora,
+    ]),
+    MailModule,
+  ],
   controllers: [BoxesController, BoxReservationController],
   providers: [BoxesService, BoxReservationService],
   exports: [BoxesService, BoxReservationService],
 })
-export class BoxesModule {} 
+export class BoxesModule {}

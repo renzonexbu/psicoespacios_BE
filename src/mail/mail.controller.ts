@@ -14,43 +14,52 @@ export class MailController {
   // ========================================
   // ⚠️  IMPORTANTE: Estos endpoints son solo para testing
   //     Remover antes de producción
-  
+
   @Post('test/bienvenida-public')
-  async testBienvenidaPublic(@Body() data: {
-    email: string;
-    nombre: string;
-    role?: string;
-    fromAccount?: 'default' | 'alt';
-  }) {
+  async testBienvenidaPublic(
+    @Body()
+    data: {
+      email: string;
+      nombre: string;
+      role?: string;
+      fromAccount?: 'default' | 'alt';
+    },
+  ) {
     console.log('📧 Enviando email de bienvenida público a:', data.email);
-    
+
     const result = await this.mailService.sendBienvenida(
       data.email,
       data.nombre,
       data.role,
-      data.fromAccount
+      data.fromAccount,
     );
-    
+
     return {
       success: result,
       message: result ? 'Email enviado exitosamente' : 'Error al enviar email',
       data: data,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @Post('test/reserva-confirmada-public')
-  async testReservaConfirmadaPublic(@Body() data: {
-    email: string;
-    psicologoNombre: string;
-    fecha: string;
-    hora: string;
-    modalidad: string;
-    ubicacion?: string;
-    fromAccount?: 'default' | 'alt';
-  }) {
-    console.log('📧 Enviando email de reserva confirmada público a:', data.email);
-    
+  async testReservaConfirmadaPublic(
+    @Body()
+    data: {
+      email: string;
+      psicologoNombre: string;
+      fecha: string;
+      hora: string;
+      modalidad: string;
+      ubicacion?: string;
+      fromAccount?: 'default' | 'alt';
+    },
+  ) {
+    console.log(
+      '📧 Enviando email de reserva confirmada público a:',
+      data.email,
+    );
+
     const result = await this.mailService.sendReservaConfirmada(
       data.email,
       data.psicologoNombre,
@@ -58,61 +67,67 @@ export class MailController {
       data.hora,
       data.modalidad,
       data.ubicacion,
-      data.fromAccount
+      data.fromAccount,
     );
-    
+
     return {
       success: result,
       message: result ? 'Email enviado exitosamente' : 'Error al enviar email',
       data: data,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @Post('test/pago-exitoso-public')
-  async testPagoExitosoPublic(@Body() data: {
-    email: string;
-    monto: number;
-    fecha: string;
-    psicologoNombre: string;
-    fromAccount?: 'default' | 'alt';
-  }) {
+  async testPagoExitosoPublic(
+    @Body()
+    data: {
+      email: string;
+      monto: number;
+      fecha: string;
+      psicologoNombre: string;
+      fromAccount?: 'default' | 'alt';
+    },
+  ) {
     console.log('📧 Enviando email de pago exitoso público a:', data.email);
-    
+
     const result = await this.mailService.sendPagoExitoso(
       data.email,
       data.monto,
       data.fecha,
       data.psicologoNombre,
-      data.fromAccount
+      data.fromAccount,
     );
-    
+
     return {
       success: result,
       message: result ? 'Email enviado exitosamente' : 'Error al enviar email',
       data: data,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @Post('test/sesion-cancelada-public')
-  async testSesionCanceladaPublic(@Body() data: {
-    email: string;
-    nombreDestinatario?: string;
-    nombrePaciente?: string;
-    psicologoNombre: string;
-    fecha: string;
-    hora: string;
-    modalidad: string;
-    motivoCancelacion: string;
-    especialidad?: string;
-    emailPsicologo?: string;
-    ubicacion?: string;
-    audiencia?: 'paciente' | 'psicologo';
-    fromAccount?: 'default' | 'alt';
-  }) {
+  async testSesionCanceladaPublic(
+    @Body()
+    data: {
+      email: string;
+      nombreDestinatario?: string;
+      nombrePaciente?: string;
+      psicologoNombre: string;
+      fecha: string;
+      hora: string;
+      modalidad: string;
+      motivoCancelacion: string;
+      especialidad?: string;
+      emailPsicologo?: string;
+      ubicacion?: string;
+      audiencia?: 'paciente' | 'psicologo';
+      fromAccount?: 'default' | 'alt';
+    },
+  ) {
     console.log('📧 Enviando email de sesión cancelada público a:', data.email);
-    
+
     const result = await this.mailService.sendSesionCancelada({
       to: data.email,
       nombreDestinatario: data.nombreDestinatario,
@@ -128,27 +143,30 @@ export class MailController {
       audiencia: data.audiencia,
       fromAccount: data.fromAccount,
     });
-    
+
     return {
       success: result,
       message: result ? 'Email enviado exitosamente' : 'Error al enviar email',
       data: data,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @Post('test/recordatorio-public')
-  async testRecordatorioPublic(@Body() data: {
-    email: string;
-    psicologoNombre: string;
-    fecha: string;
-    hora: string;
-    modalidad: string;
-    ubicacion?: string;
-    fromAccount?: 'default' | 'alt';
-  }) {
+  async testRecordatorioPublic(
+    @Body()
+    data: {
+      email: string;
+      psicologoNombre: string;
+      fecha: string;
+      hora: string;
+      modalidad: string;
+      ubicacion?: string;
+      fromAccount?: 'default' | 'alt';
+    },
+  ) {
     console.log('📧 Enviando email de recordatorio público a:', data.email);
-    
+
     const result = await this.mailService.sendRecordatorioSesion(
       data.email,
       data.psicologoNombre,
@@ -156,147 +174,154 @@ export class MailController {
       data.hora,
       data.modalidad,
       data.ubicacion,
-      data.fromAccount
+      data.fromAccount,
     );
-    
+
     return {
       success: result,
       message: result ? 'Email enviado exitosamente' : 'Error al enviar email',
       data: data,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @Post('test/reserva-confirmada')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  async testReservaConfirmada(@Body() data: {
-    email: string;
-    psicologoNombre: string;
-    fecha: string;
-    hora: string;
-    modalidad: string;
-    ubicacion?: string;
-  }) {
+  async testReservaConfirmada(
+    @Body()
+    data: {
+      email: string;
+      psicologoNombre: string;
+      fecha: string;
+      hora: string;
+      modalidad: string;
+      ubicacion?: string;
+    },
+  ) {
     const result = await this.mailService.sendReservaConfirmada(
       data.email,
       data.psicologoNombre,
       data.fecha,
       data.hora,
       data.modalidad,
-      data.ubicacion
+      data.ubicacion,
     );
-    
+
     return {
       success: result,
       message: result ? 'Email enviado exitosamente' : 'Error al enviar email',
-      data: data
+      data: data,
     };
   }
 
   @Post('test/pago-exitoso')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  async testPagoExitoso(@Body() data: {
-    email: string;
-    monto: number;
-    fecha: string;
-    psicologoNombre: string;
-  }) {
+  async testPagoExitoso(
+    @Body()
+    data: {
+      email: string;
+      monto: number;
+      fecha: string;
+      psicologoNombre: string;
+    },
+  ) {
     const result = await this.mailService.sendPagoExitoso(
       data.email,
       data.monto,
       data.fecha,
-      data.psicologoNombre
+      data.psicologoNombre,
     );
-    
+
     return {
       success: result,
       message: result ? 'Email enviado exitosamente' : 'Error al enviar email',
-      data: data
+      data: data,
     };
   }
 
   @Post('test/cupon-aplicado')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  async testCuponAplicado(@Body() data: {
-    email: string;
-    codigoCupon: string;
-    descuento: number;
-    psicologoNombre: string;
-  }) {
+  async testCuponAplicado(
+    @Body()
+    data: {
+      email: string;
+      codigoCupon: string;
+      descuento: number;
+      psicologoNombre: string;
+    },
+  ) {
     const result = await this.mailService.sendCuponAplicado(
       data.email,
       data.codigoCupon,
       data.descuento,
-      data.psicologoNombre
+      data.psicologoNombre,
     );
-    
+
     return {
       success: result,
       message: result ? 'Email enviado exitosamente' : 'Error al enviar email',
-      data: data
+      data: data,
     };
   }
 
   @Post('test/bienvenida')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  async testBienvenida(@Body() data: {
-    email: string;
-    nombre: string;
-  }) {
+  async testBienvenida(@Body() data: { email: string; nombre: string }) {
     const result = await this.mailService.sendBienvenida(
       data.email,
-      data.nombre
+      data.nombre,
     );
-    
+
     return {
       success: result,
       message: result ? 'Email enviado exitosamente' : 'Error al enviar email',
-      data: data
+      data: data,
     };
   }
 
   @Post('test/nueva-nota')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  async testNuevaNota(@Body() data: {
-    email: string;
-    psicologoNombre: string;
-    fecha: string;
-  }) {
+  async testNuevaNota(
+    @Body() data: { email: string; psicologoNombre: string; fecha: string },
+  ) {
     const result = await this.mailService.sendNuevaNota(
       data.email,
       data.psicologoNombre,
-      data.fecha
+      data.fecha,
     );
-    
+
     return {
       success: result,
       message: result ? 'Email enviado exitosamente' : 'Error al enviar email',
-      data: data
+      data: data,
     };
   }
 
   @Post('test/sesion-cancelada')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  async testSesionCancelada(@Body() data: {
-    email: string;
-    nombreDestinatario?: string;
-    nombrePaciente?: string;
-    psicologoNombre: string;
-    fecha: string;
-    hora: string;
-    modalidad: string;
-    motivoCancelacion: string;
-    especialidad?: string;
-    emailPsicologo?: string;
-    ubicacion?: string;
-    audiencia?: 'paciente' | 'psicologo';
-  }) {
+  async testSesionCancelada(
+    @Body()
+    data: {
+      email: string;
+      nombreDestinatario?: string;
+      nombrePaciente?: string;
+      psicologoNombre: string;
+      fecha: string;
+      hora: string;
+      modalidad: string;
+      motivoCancelacion: string;
+      especialidad?: string;
+      emailPsicologo?: string;
+      ubicacion?: string;
+      audiencia?: 'paciente' | 'psicologo';
+    },
+  ) {
     const result = await this.mailService.sendSesionCancelada({
       to: data.email,
       nombreDestinatario: data.nombreDestinatario,
@@ -311,38 +336,41 @@ export class MailController {
       ubicacion: data.ubicacion,
       audiencia: data.audiencia,
     });
-    
+
     return {
       success: result,
       message: result ? 'Email enviado exitosamente' : 'Error al enviar email',
-      data: data
+      data: data,
     };
   }
 
   @Post('test/recordatorio')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  async testRecordatorio(@Body() data: {
-    email: string;
-    psicologoNombre: string;
-    fecha: string;
-    hora: string;
-    modalidad: string;
-    ubicacion?: string;
-  }) {
+  async testRecordatorio(
+    @Body()
+    data: {
+      email: string;
+      psicologoNombre: string;
+      fecha: string;
+      hora: string;
+      modalidad: string;
+      ubicacion?: string;
+    },
+  ) {
     const result = await this.mailService.sendRecordatorioSesion(
       data.email,
       data.psicologoNombre,
       data.fecha,
       data.hora,
       data.modalidad,
-      data.ubicacion
+      data.ubicacion,
     );
-    
+
     return {
       success: result,
       message: result ? 'Email enviado exitosamente' : 'Error al enviar email',
-      data: data
+      data: data,
     };
   }
 
@@ -351,8 +379,7 @@ export class MailController {
     return {
       status: 'ok',
       service: 'Mail Service',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 }
-

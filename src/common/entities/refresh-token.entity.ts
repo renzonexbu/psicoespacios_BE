@@ -1,4 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+} from 'typeorm';
 
 @Entity('refresh_tokens')
 export class RefreshToken {
@@ -19,4 +24,4 @@ export class RefreshToken {
 
   @CreateDateColumn()
   createdAt: Date;
-} 
+}

@@ -1,0 +1,32 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  Index,
+} from 'typeorm';
+
+@Entity('password_reset_tokens')
+export class PasswordResetToken {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Index()
+  @Column({ type: 'uuid' })
+  userId: string;
+
+  /**
+   * SHA-256 hex (64 chars) of the raw token that is emailed.
+   */
+  @Column({ type: 'varchar', length: 64, unique: true })
+  tokenHash: string;
+
+  @Column({ type: 'timestamp' })
+  expiresAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  usedAt: Date | null;
+
+  @CreateDateColumn()
+  createdAt: Date;
+}

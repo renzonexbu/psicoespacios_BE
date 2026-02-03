@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class RemoveUnusedPsicologosTable1720800015002 implements MigrationInterface {
+export class RemoveUnusedPsicologosTable1720800015002
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Eliminar tabla psicologos si existe (no se usa)
     console.log('Eliminando tabla psicologos innecesaria...');
@@ -13,4 +15,3 @@ export class RemoveUnusedPsicologosTable1720800015002 implements MigrationInterf
     console.log('No se puede revertir la eliminación de la tabla psicologos');
   }
 }
-

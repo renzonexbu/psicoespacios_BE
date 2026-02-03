@@ -8,4 +8,4 @@ export class BlogResponseDto {
   contenido: string;
   createdAt?: Date;
   updatedAt?: Date;
-} 
+}

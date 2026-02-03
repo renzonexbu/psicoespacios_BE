@@ -122,8 +122,12 @@ export class CreateReservasSesiones1720800010000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Eliminar índices
-    await queryRunner.query(`DROP INDEX "IDX_reservas_sesiones_box_disponibilidad"`);
-    await queryRunner.query(`DROP INDEX "IDX_reservas_sesiones_disponibilidad"`);
+    await queryRunner.query(
+      `DROP INDEX "IDX_reservas_sesiones_box_disponibilidad"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "IDX_reservas_sesiones_disponibilidad"`,
+    );
     await queryRunner.query(`DROP INDEX "IDX_reservas_sesiones_modalidad"`);
     await queryRunner.query(`DROP INDEX "IDX_reservas_sesiones_estado"`);
     await queryRunner.query(`DROP INDEX "IDX_reservas_sesiones_box_id"`);
@@ -132,15 +136,23 @@ export class CreateReservasSesiones1720800010000 implements MigrationInterface {
     await queryRunner.query(`DROP INDEX "IDX_reservas_sesiones_psicologo_id"`);
 
     // Eliminar foreign keys
-    await queryRunner.query(`ALTER TABLE "reservas_sesiones" DROP CONSTRAINT "FK_reservas_sesiones_box"`);
-    await queryRunner.query(`ALTER TABLE "reservas_sesiones" DROP CONSTRAINT "FK_reservas_sesiones_paciente"`);
-    await queryRunner.query(`ALTER TABLE "reservas_sesiones" DROP CONSTRAINT "FK_reservas_sesiones_psicologo"`);
+    await queryRunner.query(
+      `ALTER TABLE "reservas_sesiones" DROP CONSTRAINT "FK_reservas_sesiones_box"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "reservas_sesiones" DROP CONSTRAINT "FK_reservas_sesiones_paciente"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "reservas_sesiones" DROP CONSTRAINT "FK_reservas_sesiones_psicologo"`,
+    );
 
     // Eliminar tabla
     await queryRunner.query(`DROP TABLE "reservas_sesiones"`);
 
     // Eliminar enums
     await queryRunner.query(`DROP TYPE "public"."modalidad_sesion_enum"`);
-    await queryRunner.query(`DROP TYPE "public"."estado_reserva_psicologo_enum"`);
+    await queryRunner.query(
+      `DROP TYPE "public"."estado_reserva_psicologo_enum"`,
+    );
   }
-} 
+}

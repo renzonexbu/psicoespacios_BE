@@ -20,7 +20,9 @@ export class UserResponseDto {
   telefono: string;
 
   @Expose()
-  @Transform(({ value }) => value ? new Date(value).toISOString().split('T')[0] : null)
+  @Transform(({ value }) =>
+    value ? new Date(value).toISOString().split('T')[0] : null,
+  )
   fechaNacimiento: Date;
 
   @Expose()
@@ -45,10 +47,10 @@ export class UserResponseDto {
   estado: string;
 
   @Expose()
-  @Transform(({ value }) => value ? new Date(value).toISOString() : null)
+  @Transform(({ value }) => (value ? new Date(value).toISOString() : null))
   createdAt: Date;
 
   @Expose()
-  @Transform(({ value }) => value ? new Date(value).toISOString() : null)
+  @Transform(({ value }) => (value ? new Date(value).toISOString() : null))
   updatedAt: Date;
-} 
+}

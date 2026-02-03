@@ -1,6 +1,9 @@
 import { Controller, Post, Get, Body, Param, UseGuards } from '@nestjs/common';
 import { DisponibilidadService } from '../services/disponibilidad.service';
-import { AvailabilityDataDto, AvailabilityResponseDto } from '../dto/disponibilidad.dto';
+import {
+  AvailabilityDataDto,
+  AvailabilityResponseDto,
+} from '../dto/disponibilidad.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -14,7 +17,7 @@ export class DisponibilidadController {
   @Roles('PSICOLOGO', 'ADMIN')
   async saveAvailability(
     @Param('userId') userId: string,
-    @Body() data: AvailabilityDataDto
+    @Body() data: AvailabilityDataDto,
   ): Promise<AvailabilityResponseDto> {
     return this.disponibilidadService.saveAvailability(userId, data);
   }
@@ -22,8 +25,8 @@ export class DisponibilidadController {
   @Get(':userId/disponibilidad')
   @Roles('PSICOLOGO', 'ADMIN')
   async getAvailability(
-    @Param('userId') userId: string
+    @Param('userId') userId: string,
   ): Promise<AvailabilityResponseDto> {
     return this.disponibilidadService.getAvailability(userId);
   }
-} 
+}

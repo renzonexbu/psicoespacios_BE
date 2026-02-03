@@ -2,7 +2,12 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../common/entities/user.entity';
-import { Pago, TipoPago, EstadoPago, MetodoPago } from '../../common/entities/pago.entity';
+import {
+  Pago,
+  TipoPago,
+  EstadoPago,
+  MetodoPago,
+} from '../../common/entities/pago.entity';
 import { Reserva, EstadoReserva } from '../../common/entities/reserva.entity';
 import { Psicologo } from '../../common/entities/psicologo.entity';
 import { Box } from '../../common/entities/box.entity';
@@ -30,7 +35,9 @@ export class SimulatePaymentService {
 
     try {
       // 1. Verificar que el usuario existe
-      const user = await this.userRepository.findOne({ where: { id: simulateDto.userId } });
+      const user = await this.userRepository.findOne({
+        where: { id: simulateDto.userId },
+      });
       if (!user) {
         throw new BadRequestException('Usuario no encontrado');
       }
@@ -39,9 +46,9 @@ export class SimulatePaymentService {
       let psicologo: Psicologo | null = null;
       let psicologoUser: User | null = null;
       if (simulateDto.psicologoId) {
-        psicologo = await this.psicologoRepository.findOne({ 
+        psicologo = await this.psicologoRepository.findOne({
           where: { id: simulateDto.psicologoId },
-          relations: ['usuario']
+          relations: ['usuario'],
         });
         if (!psicologo) {
           throw new BadRequestException('Psicólogo no encontrado');
@@ -54,7 +61,7 @@ export class SimulatePaymentService {
       pago.usuario = user;
       pago.tipo = simulateDto.tipo;
       pago.monto = simulateDto.amount;
-      
+
       // Determinar estado basado en simulateStatus
       const status = simulateDto.simulateStatus || 'success';
       switch (status) {
@@ -79,7 +86,7 @@ export class SimulatePaymentService {
       pago.datosTransaccion = {
         metodoPago: MetodoPago.TARJETA,
         referencia: `SIM-${Date.now()}`,
-        fechaTransaccion: new Date()
+        fechaTransaccion: new Date(),
       };
 
       pago.metadatos = {
@@ -87,7 +94,7 @@ export class SimulatePaymentService {
         originalOrderId: simulateDto.orderId,
         subject: simulateDto.subject,
         simulateStatus: status,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       // Guardar pago
@@ -96,8 +103,17 @@ export class SimulatePaymentService {
 
       // 4. Crear reserva si el pago fue exitoso y se proporcionan datos de reserva
       let reserva: Reserva | null = null;
-      if (status === 'success' && psicologoUser && simulateDto.fechaReserva && simulateDto.horaReserva) {
-        reserva = await this.createReserva(simulateDto, psicologoUser, savedPago);
+      if (
+        status === 'success' &&
+        psicologoUser &&
+        simulateDto.fechaReserva &&
+        simulateDto.horaReserva
+      ) {
+        reserva = await this.createReserva(
+          simulateDto,
+          psicologoUser,
+          savedPago,
+        );
       }
 
       // 5. Preparar respuesta
@@ -111,34 +127,39 @@ export class SimulatePaymentService {
           fechaCreacion: savedPago.createdAt,
           fechaCompletado: savedPago.fechaCompletado,
           datosTransaccion: savedPago.datosTransaccion,
-          metadatos: savedPago.metadatos
+          metadatos: savedPago.metadatos,
         },
         usuario: {
           id: user.id,
           email: user.email,
-          nombre: `${user.nombre} ${user.apellido}`
+          nombre: `${user.nombre} ${user.apellido}`,
         },
-        reserva: reserva ? {
-          id: reserva.id,
-          fecha: reserva.fecha,
-          horaInicio: reserva.horaInicio,
-          horaFin: reserva.horaFin,
-          estado: reserva.estado,
-          precio: reserva.precio
-        } : null,
-        mensaje: this.getStatusMessage(status)
+        reserva: reserva
+          ? {
+              id: reserva.id,
+              fecha: reserva.fecha,
+              horaInicio: reserva.horaInicio,
+              horaFin: reserva.horaFin,
+              estado: reserva.estado,
+              precio: reserva.precio,
+            }
+          : null,
+        mensaje: this.getStatusMessage(status),
       };
 
       this.logger.log(`Simulación completada exitosamente. Estado: ${status}`);
       return response;
-
     } catch (error) {
       this.logger.error(`Error en simulación de pago: ${error.message}`);
       throw error;
     }
   }
 
-  private async createReserva(simulateDto: SimulatePaymentDto, psicologoUser: User, pago: Pago) {
+  private async createReserva(
+    simulateDto: SimulatePaymentDto,
+    psicologoUser: User,
+    pago: Pago,
+  ) {
     try {
       // Validar que tenemos los datos necesarios
       if (!simulateDto.fechaReserva || !simulateDto.horaReserva) {
@@ -158,7 +179,7 @@ export class SimulatePaymentService {
       // Buscar un box disponible para la reserva
       const availableBox = await this.boxRepository.findOne({
         where: { estado: 'DISPONIBLE' },
-        order: { createdAt: 'ASC' }
+        order: { createdAt: 'ASC' },
       });
 
       if (!availableBox) {
@@ -176,10 +197,11 @@ export class SimulatePaymentService {
       reserva.precio = simulateDto.amount;
 
       const savedReserva = await this.reservaRepository.save(reserva);
-      this.logger.log(`Reserva creada automáticamente con ID: ${savedReserva.id}`);
+      this.logger.log(
+        `Reserva creada automáticamente con ID: ${savedReserva.id}`,
+      );
 
       return savedReserva;
-
     } catch (error) {
       this.logger.error(`Error creando reserva automática: ${error.message}`);
       // No lanzar error para no fallar toda la simulación
@@ -205,28 +227,31 @@ export class SimulatePaymentService {
   // Método para obtener estadísticas de simulaciones
   async getSimulationStats() {
     const totalSimulaciones = await this.pagoRepository.count({
-      where: { metadatos: { simulated: true } }
+      where: { metadatos: { simulated: true } },
     });
 
     const simulacionesExitosas = await this.pagoRepository.count({
-      where: { 
+      where: {
         metadatos: { simulated: true },
-        estado: EstadoPago.COMPLETADO
-      }
+        estado: EstadoPago.COMPLETADO,
+      },
     });
 
     const simulacionesFallidas = await this.pagoRepository.count({
-      where: { 
+      where: {
         metadatos: { simulated: true },
-        estado: EstadoPago.FALLIDO
-      }
+        estado: EstadoPago.FALLIDO,
+      },
     });
 
     return {
       totalSimulaciones,
       simulacionesExitosas,
       simulacionesFallidas,
-      tasaExito: totalSimulaciones > 0 ? (simulacionesExitosas / totalSimulaciones * 100).toFixed(2) + '%' : '0%'
+      tasaExito:
+        totalSimulaciones > 0
+          ? ((simulacionesExitosas / totalSimulaciones) * 100).toFixed(2) + '%'
+          : '0%',
     };
   }
-} 
+}

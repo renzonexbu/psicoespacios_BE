@@ -29,4 +29,3 @@ export class AddTagToPacientes1734567890000 implements MigrationInterface {
     `);
   }
 }
-

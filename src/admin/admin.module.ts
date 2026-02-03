@@ -6,9 +6,7 @@ import { ConfiguracionSistema } from '../common/entities/configuracion-sistema.e
 import { User } from '../common/entities/user.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([ConfiguracionSistema, User]),
-  ],
+  imports: [TypeOrmModule.forFeature([ConfiguracionSistema, User])],
   controllers: [AdminController],
   providers: [AdminService],
   exports: [AdminService],

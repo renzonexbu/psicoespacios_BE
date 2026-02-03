@@ -87,8 +87,12 @@ export class CreateNotasTable1720800008000 implements MigrationInterface {
     await queryRunner.query(`DROP INDEX "IDX_notas_psicologo_id"`);
 
     // Eliminar foreign keys
-    await queryRunner.query(`ALTER TABLE "notas" DROP CONSTRAINT "FK_notas_paciente"`);
-    await queryRunner.query(`ALTER TABLE "notas" DROP CONSTRAINT "FK_notas_psicologo"`);
+    await queryRunner.query(
+      `ALTER TABLE "notas" DROP CONSTRAINT "FK_notas_paciente"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "notas" DROP CONSTRAINT "FK_notas_psicologo"`,
+    );
 
     // Eliminar tabla
     await queryRunner.query(`DROP TABLE "notas"`);
@@ -96,4 +100,4 @@ export class CreateNotasTable1720800008000 implements MigrationInterface {
     // Eliminar enum
     await queryRunner.query(`DROP TYPE "public"."tipo_nota_enum"`);
   }
-} 
+}

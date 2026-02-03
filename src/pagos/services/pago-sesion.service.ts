@@ -1,4 +1,10 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Pago } from '../../common/entities/pago.entity';
@@ -8,9 +14,20 @@ import { Psicologo } from '../../common/entities/psicologo.entity';
 import { User } from '../../common/entities/user.entity';
 import { Paciente } from '../../common/entities/paciente.entity';
 import { Box } from '../../common/entities/box.entity';
-import { EstadoReservaPsicologo, ModalidadSesion } from '../../common/entities/reserva-psicologo.entity';
-import { TipoPago, EstadoPago, MetodoPago } from '../../common/entities/pago.entity';
-import { Reserva, EstadoReserva, EstadoPagoReserva } from '../../common/entities/reserva.entity';
+import {
+  EstadoReservaPsicologo,
+  ModalidadSesion,
+} from '../../common/entities/reserva-psicologo.entity';
+import {
+  TipoPago,
+  EstadoPago,
+  MetodoPago,
+} from '../../common/entities/pago.entity';
+import {
+  Reserva,
+  EstadoReserva,
+  EstadoPagoReserva,
+} from '../../common/entities/reserva.entity';
 import { MailService } from '../../mail/mail.service';
 import { FlowService } from './flow.service';
 
@@ -152,7 +169,9 @@ export class PagoSesionService {
    * Crear orden en Flow y reserva temporal
    */
   async crearOrdenFlow(dto: CrearOrdenFlowDto): Promise<OrdenFlowResponse> {
-    this.logger.log(`Creando orden Flow: psicólogo ${dto.psicologoId}, paciente ${dto.pacienteId}`);
+    this.logger.log(
+      `Creando orden Flow: psicólogo ${dto.psicologoId}, paciente ${dto.pacienteId}`,
+    );
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -164,8 +183,15 @@ export class PagoSesionService {
       let descuentoAplicado = 0;
 
       if (dto.cuponId) {
-        cupon = await this.validarYUsarCupon(dto.cuponId, queryRunner, dto.modalidad);
-        descuentoAplicado = this.calcularDescuento(dto.precio, cupon.porcentaje);
+        cupon = await this.validarYUsarCupon(
+          dto.cuponId,
+          queryRunner,
+          dto.modalidad,
+        );
+        descuentoAplicado = this.calcularDescuento(
+          dto.precio,
+          cupon.porcentaje,
+        );
       }
 
       const montoFinal = dto.precio - descuentoAplicado;
@@ -176,29 +202,43 @@ export class PagoSesionService {
         dto.fecha,
         dto.horaInicio,
         dto.horaFin,
-        queryRunner
+        queryRunner,
       );
 
       // 3. Validar box para sesiones presenciales
       if (dto.modalidad === ModalidadSesion.PRESENCIAL) {
         if (!dto.boxId) {
-          throw new BadRequestException('boxId es requerido para sesiones presenciales');
+          throw new BadRequestException(
+            'boxId es requerido para sesiones presenciales',
+          );
         }
-        await this.validarBoxDisponible(dto.boxId, dto.fecha, dto.horaInicio, dto.horaFin, queryRunner);
+        await this.validarBoxDisponible(
+          dto.boxId,
+          dto.fecha,
+          dto.horaInicio,
+          dto.horaFin,
+          queryRunner,
+        );
       }
 
       // 4. Crear o actualizar paciente
-      await this.crearOActualizarPaciente(dto.pacienteId, dto.psicologoId, queryRunner);
+      await this.crearOActualizarPaciente(
+        dto.pacienteId,
+        dto.psicologoId,
+        queryRunner,
+      );
 
       // 5. Crear reserva temporal con estado PENDIENTE_PAGO
       // Corregir problema de timezone: crear fecha en zona horaria local
       // Usar el mismo método que en confirmarSesion para evitar problemas de timezone
       const fechaLocal = new Date(dto.fecha + 'T00:00:00');
-      
+
       // Log para debugging de fechas
       this.logger.log(`📅 [crearOrdenFlow] Fecha recibida: ${dto.fecha}`);
-      this.logger.log(`📅 [crearOrdenFlow] Fecha procesada: ${fechaLocal.toISOString()}`);
-      
+      this.logger.log(
+        `📅 [crearOrdenFlow] Fecha procesada: ${fechaLocal.toISOString()}`,
+      );
+
       const reservaTemporal = queryRunner.manager.create(ReservaPsicologo, {
         psicologo: { id: dto.psicologoId },
         paciente: { id: dto.pacienteId },
@@ -214,21 +254,26 @@ export class PagoSesionService {
         descuentoAplicado,
         metadatos: {
           precio: dto.precio,
-          cuponInfo: cupon ? {
-            id: cupon.id,
-            nombre: cupon.nombre,
-            porcentaje: cupon.porcentaje,
-            modalidad: cupon.modalidad,
-          } : undefined,
+          cuponInfo: cupon
+            ? {
+                id: cupon.id,
+                nombre: cupon.nombre,
+                porcentaje: cupon.porcentaje,
+                modalidad: cupon.modalidad,
+              }
+            : undefined,
           esTemporal: true,
-        }
+        },
       });
 
-      const reservaGuardada = await queryRunner.manager.save(ReservaPsicologo, reservaTemporal);
+      const reservaGuardada = await queryRunner.manager.save(
+        ReservaPsicologo,
+        reservaTemporal,
+      );
 
       // 6. Obtener email del paciente para crear orden en Flow
       const paciente = await queryRunner.manager.findOne(User, {
-        where: { id: dto.pacienteId }
+        where: { id: dto.pacienteId },
       });
 
       if (!paciente || !paciente.email) {
@@ -242,20 +287,22 @@ export class PagoSesionService {
       const timestampCorto = Date.now().toString().slice(-8); // Últimos 8 dígitos
       const orderId = `${uuidSinGuiones}${timestampCorto}`; // 40 caracteres, dentro del límite
       const subject = `Sesión psicológica - ${dto.modalidad === ModalidadSesion.PRESENCIAL ? 'Presencial' : 'Online'}`;
-      
+
       // Validar y limpiar el email antes de enviarlo a Flow
       const emailPaciente = paciente.email?.trim();
       if (!emailPaciente) {
-        throw new BadRequestException('El paciente debe tener un email válido para procesar el pago');
+        throw new BadRequestException(
+          'El paciente debe tener un email válido para procesar el pago',
+        );
       }
-      
+
       this.logger.log(`Creando orden Flow con email: ${emailPaciente}`);
-      
+
       const flowResult = await this.flowService.createPayment(
         montoFinal,
         orderId,
         subject,
-        emailPaciente
+        emailPaciente,
       );
 
       const flowOrderId = flowResult.flowOrder;
@@ -272,7 +319,9 @@ export class PagoSesionService {
 
       await queryRunner.commitTransaction();
 
-      this.logger.log(`Orden Flow creada: ${flowOrderId}, reserva temporal: ${reservaGuardada.id}`);
+      this.logger.log(
+        `Orden Flow creada: ${flowOrderId}, reserva temporal: ${reservaGuardada.id}`,
+      );
 
       return {
         flowOrderId,
@@ -280,14 +329,15 @@ export class PagoSesionService {
         monto: dto.precio,
         descuentoAplicado,
         montoFinal,
-        cupon: cupon ? {
-          id: cupon.id,
-          nombre: cupon.nombre,
-          porcentaje: cupon.porcentaje,
-        } : undefined,
+        cupon: cupon
+          ? {
+              id: cupon.id,
+              nombre: cupon.nombre,
+              porcentaje: cupon.porcentaje,
+            }
+          : undefined,
         reservaTemporalId: reservaGuardada.id,
       };
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.logger.error(`Error al crear orden Flow: ${error.message}`);
@@ -300,7 +350,10 @@ export class PagoSesionService {
   /**
    * Confirmar pago directamente por ID de reserva (más eficiente cuando ya tenemos la reserva)
    */
-  async confirmarPagoPorReservaId(reservaId: string, datosPago: any): Promise<SesionConfirmadaResponse> {
+  async confirmarPagoPorReservaId(
+    reservaId: string,
+    datosPago: any,
+  ): Promise<SesionConfirmadaResponse> {
     this.logger.log(`Confirmando pago por reservaId: ${reservaId}`);
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -309,42 +362,55 @@ export class PagoSesionService {
 
     try {
       // 1. Buscar reserva directamente por ID
-      const reservaTemporal = await queryRunner.manager.findOne(ReservaPsicologo, {
-        where: { id: reservaId },
-        relations: ['psicologo', 'psicologo.usuario', 'paciente']
-      });
+      const reservaTemporal = await queryRunner.manager.findOne(
+        ReservaPsicologo,
+        {
+          where: { id: reservaId },
+          relations: ['psicologo', 'psicologo.usuario', 'paciente'],
+        },
+      );
 
       if (!reservaTemporal) {
         this.logger.error(`Reserva no encontrada para id: ${reservaId}`);
-        throw new NotFoundException(`Reserva no encontrada para id: ${reservaId}`);
+        throw new NotFoundException(
+          `Reserva no encontrada para id: ${reservaId}`,
+        );
       }
 
       // Verificar que esté pendiente de pago
       if (reservaTemporal.estado !== EstadoReservaPsicologo.PENDIENTE_PAGO) {
-        this.logger.warn(`Reserva ${reservaId} no está pendiente de pago, estado actual: ${reservaTemporal.estado}`);
+        this.logger.warn(
+          `Reserva ${reservaId} no está pendiente de pago, estado actual: ${reservaTemporal.estado}`,
+        );
         // Si ya está confirmada, retornar la información actual
         if (reservaTemporal.estado === EstadoReservaPsicologo.CONFIRMADA) {
           const pagoId = reservaTemporal.metadatos?.pagoId;
-          const pago = pagoId ? await queryRunner.manager.findOne(Pago, { where: { id: pagoId } }) : null;
-          
+          const pago = pagoId
+            ? await queryRunner.manager.findOne(Pago, { where: { id: pagoId } })
+            : null;
+
           return {
-            pago: pago ? {
-              id: pago.id,
-              monto: pago.monto,
-              descuentoAplicado: pago.descuentoAplicado,
-              montoFinal: pago.montoFinal,
-              estado: pago.estado,
-              cuponId: pago.cuponId,
-              datosTransaccion: pago.datosTransaccion,
-            } : {
-              id: '',
-              monto: reservaTemporal.metadatos?.precio || 0,
-              descuentoAplicado: reservaTemporal.descuentoAplicado || 0,
-              montoFinal: (reservaTemporal.metadatos?.precio || 0) - (reservaTemporal.descuentoAplicado || 0),
-              estado: EstadoPago.COMPLETADO,
-              cuponId: reservaTemporal.cuponId,
-              datosTransaccion: undefined,
-            },
+            pago: pago
+              ? {
+                  id: pago.id,
+                  monto: pago.monto,
+                  descuentoAplicado: pago.descuentoAplicado,
+                  montoFinal: pago.montoFinal,
+                  estado: pago.estado,
+                  cuponId: pago.cuponId,
+                  datosTransaccion: pago.datosTransaccion,
+                }
+              : {
+                  id: '',
+                  monto: reservaTemporal.metadatos?.precio || 0,
+                  descuentoAplicado: reservaTemporal.descuentoAplicado || 0,
+                  montoFinal:
+                    (reservaTemporal.metadatos?.precio || 0) -
+                    (reservaTemporal.descuentoAplicado || 0),
+                  estado: EstadoPago.COMPLETADO,
+                  cuponId: reservaTemporal.cuponId,
+                  datosTransaccion: undefined,
+                },
             reserva: {
               id: reservaTemporal.id,
               fecha: reservaTemporal.fecha,
@@ -361,10 +427,14 @@ export class PagoSesionService {
             cupon: undefined,
           };
         }
-        throw new BadRequestException(`Reserva ${reservaId} no está en estado pendiente de pago`);
+        throw new BadRequestException(
+          `Reserva ${reservaId} no está en estado pendiente de pago`,
+        );
       }
-      
-      this.logger.log(`Reserva encontrada para confirmar: ${reservaTemporal.id}, estado actual: ${reservaTemporal.estado}`);
+
+      this.logger.log(
+        `Reserva encontrada para confirmar: ${reservaTemporal.id}, estado actual: ${reservaTemporal.estado}`,
+      );
 
       // 2. Crear el pago
       const precio = reservaTemporal.metadatos?.precio || 0;
@@ -379,12 +449,18 @@ export class PagoSesionService {
         montoFinal: montoFinal,
         estado: EstadoPago.COMPLETADO,
         datosTransaccion: {
-          metodoPago: datosPago.paymentMethod === 'credit_card' ? MetodoPago.TARJETA : MetodoPago.TRANSFERENCIA,
-          referencia: datosPago.transactionId || reservaTemporal.metadatos?.flowOrderId,
-          datosTarjeta: datosPago.cardLast4 ? {
-            ultimos4: datosPago.cardLast4,
-            marca: datosPago.cardBrand || 'unknown',
-          } : undefined,
+          metodoPago:
+            datosPago.paymentMethod === 'credit_card'
+              ? MetodoPago.TARJETA
+              : MetodoPago.TRANSFERENCIA,
+          referencia:
+            datosPago.transactionId || reservaTemporal.metadatos?.flowOrderId,
+          datosTarjeta: datosPago.cardLast4
+            ? {
+                ultimos4: datosPago.cardLast4,
+                marca: datosPago.cardBrand || 'unknown',
+              }
+            : undefined,
           fechaTransaccion: new Date(),
         },
         fechaCompletado: new Date(),
@@ -398,7 +474,7 @@ export class PagoSesionService {
           modalidad: reservaTemporal.modalidad,
           boxId: reservaTemporal.boxId,
           flowOrderId: reservaTemporal.metadatos?.flowOrderId,
-        }
+        },
       });
 
       const pagoGuardado = await queryRunner.manager.save(Pago, pago);
@@ -416,7 +492,7 @@ export class PagoSesionService {
       // 4. Incrementar uso del cupón si existe
       if (reservaTemporal.cuponId) {
         const cupon = await queryRunner.manager.findOne(Voucher, {
-          where: { id: reservaTemporal.cuponId }
+          where: { id: reservaTemporal.cuponId },
         });
         if (cupon) {
           cupon.usosActuales += 1;
@@ -426,7 +502,9 @@ export class PagoSesionService {
 
       await queryRunner.commitTransaction();
 
-      this.logger.log(`✅ Pago confirmado por reservaId: pago ${pagoGuardado.id}, reserva ${reservaTemporal.id}`);
+      this.logger.log(
+        `✅ Pago confirmado por reservaId: pago ${pagoGuardado.id}, reserva ${reservaTemporal.id}`,
+      );
 
       // Enviar email de confirmación (cuenta ALT) al paciente
       try {
@@ -451,7 +529,9 @@ export class PagoSesionService {
             nombrePaciente || 'Paciente',
             reservaTemporal.psicologo?.usuario?.especialidad,
             reservaTemporal.psicologo?.usuario?.email,
-            reservaTemporal.modalidad === ModalidadSesion.PRESENCIAL ? reservaTemporal.metadatos?.ubicacion : undefined,
+            reservaTemporal.modalidad === ModalidadSesion.PRESENCIAL
+              ? reservaTemporal.metadatos?.ubicacion
+              : undefined,
           );
         }
 
@@ -464,11 +544,15 @@ export class PagoSesionService {
             fechaStr,
             reservaTemporal.horaInicio,
             modalidad,
-            reservaTemporal.modalidad === ModalidadSesion.PRESENCIAL ? reservaTemporal.metadatos?.ubicacion : undefined,
+            reservaTemporal.modalidad === ModalidadSesion.PRESENCIAL
+              ? reservaTemporal.metadatos?.ubicacion
+              : undefined,
           );
         }
       } catch (error) {
-        this.logger.warn(`No se pudo enviar email de confirmación: ${error?.message || error}`);
+        this.logger.warn(
+          `No se pudo enviar email de confirmación: ${error?.message || error}`,
+        );
       }
 
       return {
@@ -494,16 +578,19 @@ export class PagoSesionService {
           psicologoId: reservaTemporal.psicologo.id,
           pacienteId: reservaTemporal.paciente.id,
         },
-        cupon: reservaTemporal.cuponId ? {
-          id: reservaTemporal.cuponId,
-          nombre: 'Cupón aplicado',
-          porcentaje: 0,
-        } : undefined,
+        cupon: reservaTemporal.cuponId
+          ? {
+              id: reservaTemporal.cuponId,
+              nombre: 'Cupón aplicado',
+              porcentaje: 0,
+            }
+          : undefined,
       };
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.logger.error(`Error al confirmar pago por reservaId: ${error.message}`);
+      this.logger.error(
+        `Error al confirmar pago por reservaId: ${error.message}`,
+      );
       throw error;
     } finally {
       await queryRunner.release();
@@ -513,7 +600,10 @@ export class PagoSesionService {
   /**
    * Confirmar pago desde webhook de Flow y activar reserva
    */
-  async confirmarPagoFlow(flowOrderId: string, datosPago: any): Promise<SesionConfirmadaResponse> {
+  async confirmarPagoFlow(
+    flowOrderId: string,
+    datosPago: any,
+  ): Promise<SesionConfirmadaResponse> {
     this.logger.log(`Confirmando pago Flow: ${flowOrderId}`);
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -524,19 +614,29 @@ export class PagoSesionService {
       // 1. Buscar reserva temporal por flowOrderId usando query builder para buscar en JSONB
       const reservaTemporal = await queryRunner.manager
         .createQueryBuilder(ReservaPsicologo, 'reserva')
-        .where('reserva.estado = :estado', { estado: EstadoReservaPsicologo.PENDIENTE_PAGO })
-        .andWhere("reserva.metadatos->>'flowOrderId' = :flowOrderId", { flowOrderId })
+        .where('reserva.estado = :estado', {
+          estado: EstadoReservaPsicologo.PENDIENTE_PAGO,
+        })
+        .andWhere("reserva.metadatos->>'flowOrderId' = :flowOrderId", {
+          flowOrderId,
+        })
         .leftJoinAndSelect('reserva.psicologo', 'psicologo')
         .leftJoinAndSelect('psicologo.usuario', 'usuario')
         .leftJoinAndSelect('reserva.paciente', 'paciente')
         .getOne();
 
       if (!reservaTemporal) {
-        this.logger.error(`Reserva temporal no encontrada para flowOrderId: ${flowOrderId}`);
-        throw new NotFoundException(`Reserva temporal no encontrada para flowOrderId: ${flowOrderId}`);
+        this.logger.error(
+          `Reserva temporal no encontrada para flowOrderId: ${flowOrderId}`,
+        );
+        throw new NotFoundException(
+          `Reserva temporal no encontrada para flowOrderId: ${flowOrderId}`,
+        );
       }
-      
-      this.logger.log(`Reserva encontrada para confirmar: ${reservaTemporal.id}, estado actual: ${reservaTemporal.estado}`);
+
+      this.logger.log(
+        `Reserva encontrada para confirmar: ${reservaTemporal.id}, estado actual: ${reservaTemporal.estado}`,
+      );
 
       if (!reservaTemporal) {
         throw new NotFoundException('Reserva temporal no encontrada');
@@ -555,12 +655,17 @@ export class PagoSesionService {
         montoFinal: montoFinal,
         estado: EstadoPago.COMPLETADO,
         datosTransaccion: {
-          metodoPago: datosPago.paymentMethod === 'credit_card' ? MetodoPago.TARJETA : MetodoPago.TRANSFERENCIA,
+          metodoPago:
+            datosPago.paymentMethod === 'credit_card'
+              ? MetodoPago.TARJETA
+              : MetodoPago.TRANSFERENCIA,
           referencia: flowOrderId,
-          datosTarjeta: datosPago.cardLast4 ? {
-            ultimos4: datosPago.cardLast4,
-            marca: datosPago.cardBrand || 'unknown',
-          } : undefined,
+          datosTarjeta: datosPago.cardLast4
+            ? {
+                ultimos4: datosPago.cardLast4,
+                marca: datosPago.cardBrand || 'unknown',
+              }
+            : undefined,
           fechaTransaccion: new Date(),
         },
         fechaCompletado: new Date(),
@@ -574,7 +679,7 @@ export class PagoSesionService {
           modalidad: reservaTemporal.modalidad,
           boxId: reservaTemporal.boxId,
           flowOrderId,
-        }
+        },
       });
 
       const pagoGuardado = await queryRunner.manager.save(Pago, pago);
@@ -592,7 +697,7 @@ export class PagoSesionService {
       // 4. Incrementar uso del cupón si existe
       if (reservaTemporal.cuponId) {
         const cupon = await queryRunner.manager.findOne(Voucher, {
-          where: { id: reservaTemporal.cuponId }
+          where: { id: reservaTemporal.cuponId },
         });
         if (cupon) {
           cupon.usosActuales += 1;
@@ -602,7 +707,9 @@ export class PagoSesionService {
 
       await queryRunner.commitTransaction();
 
-      this.logger.log(`Pago Flow confirmado: pago ${pagoGuardado.id}, reserva ${reservaTemporal.id}`);
+      this.logger.log(
+        `Pago Flow confirmado: pago ${pagoGuardado.id}, reserva ${reservaTemporal.id}`,
+      );
 
       // Enviar email de confirmación (cuenta ALT) al paciente
       try {
@@ -628,7 +735,9 @@ export class PagoSesionService {
         const emailPsicologo = reservaTemporal.psicologo?.usuario?.email;
         const ubicacion =
           modalidad === 'presencial'
-            ? (reservaTemporal.metadatos && reservaTemporal.metadatos.ubicacion) || undefined
+            ? (reservaTemporal.metadatos &&
+                reservaTemporal.metadatos.ubicacion) ||
+              undefined
             : undefined;
 
         if (pacienteEmail) {
@@ -658,7 +767,9 @@ export class PagoSesionService {
           );
         }
       } catch (error) {
-        this.logger.warn(`No se pudo enviar email de confirmación de sesión (Flow): ${error?.message || error}`);
+        this.logger.warn(
+          `No se pudo enviar email de confirmación de sesión (Flow): ${error?.message || error}`,
+        );
       }
 
       return {
@@ -684,13 +795,14 @@ export class PagoSesionService {
           psicologoId: reservaTemporal.psicologo.id,
           pacienteId: reservaTemporal.paciente.id,
         },
-        cupon: reservaTemporal.cuponId ? {
-          id: reservaTemporal.cuponId,
-          nombre: reservaTemporal.metadatos.cuponInfo?.nombre || 'Cupón',
-          porcentaje: reservaTemporal.metadatos.cuponInfo?.porcentaje || 0,
-        } : undefined,
+        cupon: reservaTemporal.cuponId
+          ? {
+              id: reservaTemporal.cuponId,
+              nombre: reservaTemporal.metadatos.cuponInfo?.nombre || 'Cupón',
+              porcentaje: reservaTemporal.metadatos.cuponInfo?.porcentaje || 0,
+            }
+          : undefined,
       };
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.logger.error(`Error al confirmar pago Flow: ${error.message}`);
@@ -703,8 +815,12 @@ export class PagoSesionService {
   /**
    * Confirmar pago y crear reserva de sesión en una sola transacción
    */
-  async confirmarSesion(dto: ConfirmarSesionDto): Promise<SesionConfirmadaResponse> {
-    this.logger.log(`Confirmando sesión: psicólogo ${dto.psicologoId}, paciente ${dto.pacienteId}`);
+  async confirmarSesion(
+    dto: ConfirmarSesionDto,
+  ): Promise<SesionConfirmadaResponse> {
+    this.logger.log(
+      `Confirmando sesión: psicólogo ${dto.psicologoId}, paciente ${dto.pacienteId}`,
+    );
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -716,8 +832,15 @@ export class PagoSesionService {
       let descuentoAplicado = 0;
 
       if (dto.cuponId) {
-        cupon = await this.validarYUsarCupon(dto.cuponId, queryRunner, dto.modalidad);
-        descuentoAplicado = this.calcularDescuento(dto.precio, cupon.porcentaje);
+        cupon = await this.validarYUsarCupon(
+          dto.cuponId,
+          queryRunner,
+          dto.modalidad,
+        );
+        descuentoAplicado = this.calcularDescuento(
+          dto.precio,
+          cupon.porcentaje,
+        );
       }
 
       const montoFinal = dto.precio - descuentoAplicado;
@@ -728,21 +851,29 @@ export class PagoSesionService {
         dto.fecha,
         dto.horaInicio,
         dto.horaFin,
-        queryRunner
+        queryRunner,
       );
 
       // 3. Validar box para sesiones presenciales
       if (dto.modalidad === ModalidadSesion.PRESENCIAL) {
         if (!dto.boxId) {
-          throw new BadRequestException('boxId es requerido para sesiones presenciales');
+          throw new BadRequestException(
+            'boxId es requerido para sesiones presenciales',
+          );
         }
-        await this.validarBoxDisponible(dto.boxId, dto.fecha, dto.horaInicio, dto.horaFin, queryRunner);
+        await this.validarBoxDisponible(
+          dto.boxId,
+          dto.fecha,
+          dto.horaInicio,
+          dto.horaFin,
+          queryRunner,
+        );
       }
 
       // 4. Obtener información del psicólogo
       const psicologo = await queryRunner.manager.findOne(Psicologo, {
         where: { id: dto.psicologoId },
-        relations: ['usuario']
+        relations: ['usuario'],
       });
 
       if (!psicologo) {
@@ -750,7 +881,11 @@ export class PagoSesionService {
       }
 
       // 5. Crear o actualizar paciente
-      await this.crearOActualizarPaciente(dto.pacienteId, dto.psicologoId, queryRunner);
+      await this.crearOActualizarPaciente(
+        dto.pacienteId,
+        dto.psicologoId,
+        queryRunner,
+      );
 
       // 6. Crear el pago
       const pago = queryRunner.manager.create(Pago, {
@@ -771,7 +906,7 @@ export class PagoSesionService {
           horaFin: dto.horaFin,
           modalidad: dto.modalidad,
           boxId: dto.boxId,
-        }
+        },
       });
 
       const pagoGuardado = await queryRunner.manager.save(Pago, pago);
@@ -779,12 +914,16 @@ export class PagoSesionService {
       // 7. Crear la reserva
       // Corregir problema de timezone: crear fecha en zona horaria local
       const fechaLocal = new Date(dto.fecha + 'T00:00:00');
-      
+
       // Log para debugging de fechas
       this.logger.log(`📅 [confirmarSesion] Fecha recibida: ${dto.fecha}`);
-      this.logger.log(`📅 [confirmarSesion] Fecha procesada: ${fechaLocal.toISOString()}`);
-      this.logger.log(`📅 [confirmarSesion] Hora inicio: ${dto.horaInicio}, Hora fin: ${dto.horaFin}`);
-      
+      this.logger.log(
+        `📅 [confirmarSesion] Fecha procesada: ${fechaLocal.toISOString()}`,
+      );
+      this.logger.log(
+        `📅 [confirmarSesion] Hora inicio: ${dto.horaInicio}, Hora fin: ${dto.horaFin}`,
+      );
+
       const reserva = queryRunner.manager.create(ReservaPsicologo, {
         psicologo: { id: dto.psicologoId },
         paciente: { id: dto.pacienteId },
@@ -801,38 +940,53 @@ export class PagoSesionService {
         metadatos: {
           pagoId: pagoGuardado.id,
           precio: dto.precio,
-          cuponInfo: cupon ? {
-            id: cupon.id,
-            nombre: cupon.nombre,
-            porcentaje: cupon.porcentaje,
-            modalidad: cupon.modalidad,
-          } : undefined,
-        }
+          cuponInfo: cupon
+            ? {
+                id: cupon.id,
+                nombre: cupon.nombre,
+                porcentaje: cupon.porcentaje,
+                modalidad: cupon.modalidad,
+              }
+            : undefined,
+        },
       });
 
-      const reservaGuardada = await queryRunner.manager.save(ReservaPsicologo, reserva);
+      const reservaGuardada = await queryRunner.manager.save(
+        ReservaPsicologo,
+        reserva,
+      );
 
       // 8. Crear reserva de box automáticamente para sesiones presenciales
       this.logger.log(`🔍 Verificando condiciones para reserva de box:`);
       this.logger.log(`   - Modalidad: ${dto.modalidad}`);
-      this.logger.log(`   - ModalidadSesion.PRESENCIAL: ${ModalidadSesion.PRESENCIAL}`);
+      this.logger.log(
+        `   - ModalidadSesion.PRESENCIAL: ${ModalidadSesion.PRESENCIAL}`,
+      );
       this.logger.log(`   - boxId: ${dto.boxId}`);
-      this.logger.log(`   - Condición modalidad: ${dto.modalidad === ModalidadSesion.PRESENCIAL}`);
+      this.logger.log(
+        `   - Condición modalidad: ${dto.modalidad === ModalidadSesion.PRESENCIAL}`,
+      );
       this.logger.log(`   - Condición boxId: ${!!dto.boxId}`);
-      
+
       if (dto.modalidad === ModalidadSesion.PRESENCIAL && dto.boxId) {
-        this.logger.log(`✅ Creando reserva de box automática para sesión presencial`);
-        
+        this.logger.log(
+          `✅ Creando reserva de box automática para sesión presencial`,
+        );
+
         // Obtener información del box para calcular precio
         const box = await queryRunner.manager.findOne(Box, {
           where: { id: dto.boxId },
-          relations: ['sede']
+          relations: ['sede'],
         });
 
         if (box) {
           // Calcular precio del box
-          const precioBox = this.calcularPrecioBox(box, dto.horaInicio, dto.horaFin);
-          
+          const precioBox = this.calcularPrecioBox(
+            box,
+            dto.horaInicio,
+            dto.horaFin,
+          );
+
           // Crear reserva de box en la tabla reservas
           const reservaBox = queryRunner.manager.create(Reserva, {
             boxId: dto.boxId,
@@ -842,36 +996,47 @@ export class PagoSesionService {
             horaFin: dto.horaFin,
             precio: precioBox,
             estado: EstadoReserva.CONFIRMADA,
-            estadoPago: EstadoPagoReserva.PENDIENTE_PAGO // El box debe estar pendiente de pago por separado
+            estadoPago: EstadoPagoReserva.PENDIENTE_PAGO, // El box debe estar pendiente de pago por separado
           });
 
-          const savedReservaBox = await queryRunner.manager.save(Reserva, reservaBox);
-          this.logger.log(`Reserva de box creada con ID: ${savedReservaBox.id} - Precio: $${precioBox}`);
-          
+          const savedReservaBox = await queryRunner.manager.save(
+            Reserva,
+            reservaBox,
+          );
+          this.logger.log(
+            `Reserva de box creada con ID: ${savedReservaBox.id} - Precio: $${precioBox}`,
+          );
+
           // Actualizar metadatos de la sesión con información del box
           reservaGuardada.metadatos = {
             ...reservaGuardada.metadatos,
             reservaBoxId: savedReservaBox.id,
             precioBox: precioBox,
-            ubicacion: `${box.sede?.nombre || 'Sede'} - ${box.sede?.direccion || ''}${box.sede?.ciudad ? ', ' + box.sede.ciudad : ''} - Box ${box.numero}`
+            ubicacion: `${box.sede?.nombre || 'Sede'} - ${box.sede?.direccion || ''}${box.sede?.ciudad ? ', ' + box.sede.ciudad : ''} - Box ${box.numero}`,
           };
-          
+
           await queryRunner.manager.save(ReservaPsicologo, reservaGuardada);
         } else {
           this.logger.warn(`❌ Box no encontrado con ID: ${dto.boxId}`);
         }
       } else {
-        this.logger.log(`❌ No se creará reserva de box - Modalidad: ${dto.modalidad}, boxId: ${dto.boxId}`);
+        this.logger.log(
+          `❌ No se creará reserva de box - Modalidad: ${dto.modalidad}, boxId: ${dto.boxId}`,
+        );
       }
 
       // 9. El uso del cupón ya se incrementó en validarYUsarCupon
       await queryRunner.commitTransaction();
 
-      this.logger.log(`Sesión confirmada: pago ${pagoGuardado.id}, reserva ${reservaGuardada.id}`);
+      this.logger.log(
+        `Sesión confirmada: pago ${pagoGuardado.id}, reserva ${reservaGuardada.id}`,
+      );
 
       // Enviar email de confirmación (cuenta ALT) al paciente
       try {
-        const paciente = await this.userRepository.findOne({ where: { id: dto.pacienteId } });
+        const paciente = await this.userRepository.findOne({
+          where: { id: dto.pacienteId },
+        });
         const nombrePaciente = paciente
           ? `${paciente.nombre} ${paciente.apellido || ''}`.trim()
           : undefined;
@@ -892,7 +1057,9 @@ export class PagoSesionService {
         const emailPsicologo = psicologo?.usuario?.email;
         const ubicacion =
           modalidad === 'presencial'
-            ? (reservaGuardada.metadatos && reservaGuardada.metadatos.ubicacion) || undefined
+            ? (reservaGuardada.metadatos &&
+                reservaGuardada.metadatos.ubicacion) ||
+              undefined
             : undefined;
 
         if (paciente?.email) {
@@ -922,7 +1089,9 @@ export class PagoSesionService {
           );
         }
       } catch (error) {
-        this.logger.warn(`No se pudo enviar email de confirmación de sesión: ${error?.message || error}`);
+        this.logger.warn(
+          `No se pudo enviar email de confirmación de sesión: ${error?.message || error}`,
+        );
       }
 
       return {
@@ -948,13 +1117,14 @@ export class PagoSesionService {
           psicologoId: dto.psicologoId,
           pacienteId: dto.pacienteId,
         },
-        cupon: cupon ? {
-          id: cupon.id,
-          nombre: cupon.nombre,
-          porcentaje: cupon.porcentaje,
-        } : undefined,
+        cupon: cupon
+          ? {
+              id: cupon.id,
+              nombre: cupon.nombre,
+              porcentaje: cupon.porcentaje,
+            }
+          : undefined,
       };
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.logger.error(`Error al confirmar sesión: ${error.message}`);
@@ -967,11 +1137,11 @@ export class PagoSesionService {
   private async validarYUsarCupon(
     cuponId: string,
     queryRunner: any,
-    modalidadSesion?: ModalidadSesion
+    modalidadSesion?: ModalidadSesion,
   ): Promise<Voucher> {
     const cupon = await queryRunner.manager.findOne(Voucher, {
       where: { id: cuponId },
-      relations: ['psicologo', 'psicologo.usuario']
+      relations: ['psicologo', 'psicologo.usuario'],
     });
 
     if (!cupon) {
@@ -990,17 +1160,22 @@ export class PagoSesionService {
     if (modalidadSesion) {
       const modalidadCupon = (cupon.modalidad || '').toLowerCase();
       const modalidadSesionStr = String(modalidadSesion).toLowerCase();
-      const aplica = modalidadCupon === 'ambas' || modalidadCupon === modalidadSesionStr;
+      const aplica =
+        modalidadCupon === 'ambas' || modalidadCupon === modalidadSesionStr;
       if (!aplica) {
-        throw new BadRequestException(`El cupón no aplica para la modalidad ${modalidadSesionStr}`);
+        throw new BadRequestException(
+          `El cupón no aplica para la modalidad ${modalidadSesionStr}`,
+        );
       }
     }
 
     // Incrementar uso del cupón ANTES de retornarlo
     cupon.usosActuales += 1;
     await queryRunner.manager.save(Voucher, cupon);
-    
-    this.logger.log(`Cupón ${cupon.nombre} usado. Usos actuales: ${cupon.usosActuales}`);
+
+    this.logger.log(
+      `Cupón ${cupon.nombre} usado. Usos actuales: ${cupon.usosActuales}`,
+    );
 
     return cupon;
   }
@@ -1014,7 +1189,7 @@ export class PagoSesionService {
     fecha: string,
     horaInicio: string,
     horaFin: string,
-    queryRunner: any
+    queryRunner: any,
   ): Promise<void> {
     // Normalizar fecha a LOCAL (YYYY-MM-DD) para evitar desfases por timezone
     const [yy, mm, dd] = (fecha || '').split('-').map(Number);
@@ -1030,12 +1205,19 @@ export class PagoSesionService {
       .where('rs.psicologo_id = :psicologoId', { psicologoId })
       .andWhere('rs.fecha = :fecha', { fecha: fechaStr })
       // Solo bloquear si hay reservas ya confirmadas (evita error con enums no existentes)
-      .andWhere('rs.estado IN (:...estados)', { estados: [EstadoReservaPsicologo.CONFIRMADA] })
-      .andWhere('(rs.hora_inicio < :horaFin AND rs.hora_fin > :horaInicio)', { horaInicio, horaFin })
+      .andWhere('rs.estado IN (:...estados)', {
+        estados: [EstadoReservaPsicologo.CONFIRMADA],
+      })
+      .andWhere('(rs.hora_inicio < :horaFin AND rs.hora_fin > :horaInicio)', {
+        horaInicio,
+        horaFin,
+      })
       .getCount();
 
     if (conflictos > 0) {
-      throw new BadRequestException('Ya existe una reserva en ese horario para este psicólogo');
+      throw new BadRequestException(
+        'Ya existe una reserva en ese horario para este psicólogo',
+      );
     }
   }
 
@@ -1044,10 +1226,10 @@ export class PagoSesionService {
     fecha: string,
     horaInicio: string,
     horaFin: string,
-    queryRunner: any
+    queryRunner: any,
   ): Promise<void> {
     const box = await queryRunner.manager.findOne(Box, {
-      where: { id: boxId }
+      where: { id: boxId },
     });
 
     if (!box) {
@@ -1066,9 +1248,19 @@ export class PagoSesionService {
     const conflictoSesion = await queryRunner.manager
       .createQueryBuilder(ReservaPsicologo, 'rs')
       .where('rs.boxId = :boxId', { boxId })
-      .andWhere('rs.fecha = :fecha', { fecha: fechaLocal.toISOString().split('T')[0] })
-      .andWhere('rs.estado IN (:...estados)', { estados: [EstadoReservaPsicologo.CONFIRMADA, EstadoReservaPsicologo.PENDIENTE] })
-      .andWhere('(rs.horaInicio < :horaFin AND rs.horaFin > :horaInicio)', { horaInicio, horaFin })
+      .andWhere('rs.fecha = :fecha', {
+        fecha: fechaLocal.toISOString().split('T')[0],
+      })
+      .andWhere('rs.estado IN (:...estados)', {
+        estados: [
+          EstadoReservaPsicologo.CONFIRMADA,
+          EstadoReservaPsicologo.PENDIENTE,
+        ],
+      })
+      .andWhere('(rs.horaInicio < :horaFin AND rs.horaFin > :horaInicio)', {
+        horaInicio,
+        horaFin,
+      })
       .getCount();
 
     if (conflictoSesion > 0) {
@@ -1079,9 +1271,16 @@ export class PagoSesionService {
     const conflictoBox = await queryRunner.manager
       .createQueryBuilder(Reserva, 'rb')
       .where('rb.boxId = :boxId', { boxId })
-      .andWhere('rb.fecha = :fecha', { fecha: fechaLocal.toISOString().split('T')[0] })
-      .andWhere('rb.estado IN (:...estados)', { estados: [EstadoReserva.CONFIRMADA, EstadoReserva.PENDIENTE] })
-      .andWhere('(rb.horaInicio < :horaFin AND rb.horaFin > :horaInicio)', { horaInicio, horaFin })
+      .andWhere('rb.fecha = :fecha', {
+        fecha: fechaLocal.toISOString().split('T')[0],
+      })
+      .andWhere('rb.estado IN (:...estados)', {
+        estados: [EstadoReserva.CONFIRMADA, EstadoReserva.PENDIENTE],
+      })
+      .andWhere('(rb.horaInicio < :horaFin AND rb.horaFin > :horaInicio)', {
+        horaInicio,
+        horaFin,
+      })
       .getCount();
 
     if (conflictoBox > 0) {
@@ -1092,10 +1291,10 @@ export class PagoSesionService {
   private async crearOActualizarPaciente(
     pacienteId: string,
     psicologoId: string,
-    queryRunner: any
+    queryRunner: any,
   ): Promise<void> {
     let pacienteRecord = await queryRunner.manager.findOne(Paciente, {
-      where: { idUsuarioPaciente: pacienteId }
+      where: { idUsuarioPaciente: pacienteId },
     });
 
     if (pacienteRecord) {
@@ -1117,7 +1316,7 @@ export class PagoSesionService {
         enfoque_teorico_preferido: [],
         afinidad_personal_preferida: [],
         modalidad_preferida: [],
-        genero_psicologo_preferido: []
+        genero_psicologo_preferido: [],
       });
     }
 
@@ -1128,7 +1327,7 @@ export class PagoSesionService {
    * Verificar estado de una reserva temporal después del pago en Flow
    * Útil cuando el usuario regresa de Flow y queremos verificar si ya se confirmó
    * Devuelve toda la información de la sesión, similar a confirmarSesion
-   * 
+   *
    * @param reservaTemporalId ID de la reserva a verificar
    * @param usuarioId ID del usuario autenticado (para validar que sea el paciente)
    * @param usuarioRole Rol del usuario autenticado (ADMIN puede ver cualquier reserva)
@@ -1136,23 +1335,25 @@ export class PagoSesionService {
   async verificarEstadoReserva(
     reservaTemporalId: string,
     usuarioId?: string,
-    usuarioRole?: string
-  ): Promise<SesionConfirmadaResponse & {
-    confirmada: boolean;
-    flowOrderId?: string;
-    psicologo?: {
-      id: string;
-      nombre: string;
-      apellido: string;
-      email: string;
-      especialidad?: string;
-    };
-    mensaje: string;
-  }> {
+    usuarioRole?: string,
+  ): Promise<
+    SesionConfirmadaResponse & {
+      confirmada: boolean;
+      flowOrderId?: string;
+      psicologo?: {
+        id: string;
+        nombre: string;
+        apellido: string;
+        email: string;
+        especialidad?: string;
+      };
+      mensaje: string;
+    }
+  > {
     // Cargar relaciones necesarias, incluyendo box y sede si es presencial
     const reserva = await this.reservaRepository.findOne({
       where: { id: reservaTemporalId },
-      relations: ['psicologo', 'psicologo.usuario', 'paciente']
+      relations: ['psicologo', 'psicologo.usuario', 'paciente'],
     });
 
     if (!reserva) {
@@ -1162,8 +1363,12 @@ export class PagoSesionService {
     // Validar que el usuario autenticado sea el paciente de la reserva (o ADMIN)
     if (usuarioId && usuarioRole !== 'ADMIN') {
       if (reserva.paciente.id !== usuarioId) {
-        this.logger.warn(`Intento de acceso no autorizado: usuario ${usuarioId} intentó ver reserva ${reservaTemporalId} del paciente ${reserva.paciente.id}`);
-        throw new ForbiddenException('No tienes permiso para ver esta reserva. Solo puedes ver tus propias reservas.');
+        this.logger.warn(
+          `Intento de acceso no autorizado: usuario ${usuarioId} intentó ver reserva ${reservaTemporalId} del paciente ${reserva.paciente.id}`,
+        );
+        throw new ForbiddenException(
+          'No tienes permiso para ver esta reserva. Solo puedes ver tus propias reservas.',
+        );
       }
     }
 
@@ -1178,7 +1383,7 @@ export class PagoSesionService {
     if (pagoId) {
       pago = await this.pagoRepository.findOne({
         where: { id: pagoId },
-        relations: ['cupon']
+        relations: ['cupon'],
       });
 
       // Si hay cupón en la relación, usarlo directamente
@@ -1187,7 +1392,7 @@ export class PagoSesionService {
       } else if (pago?.cuponId) {
         // Si no está cargado en la relación, buscarlo
         cupon = await this.voucherRepository.findOne({
-          where: { id: pago.cuponId }
+          where: { id: pago.cuponId },
         });
       }
     }
@@ -1195,22 +1400,25 @@ export class PagoSesionService {
     // Si no hay pago pero hay cupón en la reserva, buscarlo
     if (!cupon && reserva.cuponId) {
       cupon = await this.voucherRepository.findOne({
-        where: { id: reserva.cuponId }
+        where: { id: reserva.cuponId },
       });
     }
 
     // Información del psicólogo
-    const psicologoInfo = reserva.psicologo?.usuario ? {
-      id: reserva.psicologo.id,
-      nombre: reserva.psicologo.usuario.nombre,
-      apellido: reserva.psicologo.usuario.apellido || '',
-      email: reserva.psicologo.usuario.email,
-      especialidad: reserva.psicologo.usuario.especialidad,
-    } : undefined;
+    const psicologoInfo = reserva.psicologo?.usuario
+      ? {
+          id: reserva.psicologo.id,
+          nombre: reserva.psicologo.usuario.nombre,
+          apellido: reserva.psicologo.usuario.apellido || '',
+          email: reserva.psicologo.usuario.email,
+          especialidad: reserva.psicologo.usuario.especialidad,
+        }
+      : undefined;
 
     // Precio desde metadatos o desde el pago
     const precio = reserva.metadatos?.precio || pago?.monto || 0;
-    const descuentoAplicado = reserva.descuentoAplicado || pago?.descuentoAplicado || 0;
+    const descuentoAplicado =
+      reserva.descuentoAplicado || pago?.descuentoAplicado || 0;
     const montoFinal = precio - descuentoAplicado;
 
     // Si es presencial, cargar información del box y sede
@@ -1230,7 +1438,7 @@ export class PagoSesionService {
     if (reserva.modalidad === ModalidadSesion.PRESENCIAL && reserva.boxId) {
       const box = await this.boxRepository.findOne({
         where: { id: reserva.boxId },
-        relations: ['sede']
+        relations: ['sede'],
       });
 
       if (box) {
@@ -1238,14 +1446,16 @@ export class PagoSesionService {
           id: box.id,
           numero: box.numero,
           nombre: box.nombre || `Box ${box.numero}`,
-          sede: box.sede ? {
-            id: box.sede.id,
-            nombre: box.sede.nombre,
-            direccion: box.sede.direccion,
-            ciudad: box.sede.ciudad,
-            telefono: box.sede.telefono,
-            email: box.sede.email,
-          } : null,
+          sede: box.sede
+            ? {
+                id: box.sede.id,
+                nombre: box.sede.nombre,
+                direccion: box.sede.direccion,
+                ciudad: box.sede.ciudad,
+                telefono: box.sede.telefono,
+                email: box.sede.email,
+              }
+            : null,
         };
       }
     }
@@ -1266,47 +1476,53 @@ export class PagoSesionService {
         // Información del box y sede si es presencial
         box: boxInfo,
       },
-      pago: pago ? {
-        id: pago.id,
-        monto: pago.monto,
-        descuentoAplicado: pago.descuentoAplicado,
-        montoFinal: pago.montoFinal,
-        estado: pago.estado,
-        cuponId: pago.cuponId,
-        datosTransaccion: pago.datosTransaccion,
-      } : {
-        id: '',
-        monto: precio,
-        descuentoAplicado: descuentoAplicado,
-        montoFinal: montoFinal,
-        estado: EstadoPago.PENDIENTE,
-        cuponId: reserva.cuponId,
-        datosTransaccion: undefined,
-      },
-      cupon: cupon ? {
-        id: cupon.id,
-        nombre: cupon.nombre,
-        porcentaje: cupon.porcentaje,
-      } : (reserva.cuponId ? {
-        id: reserva.cuponId,
-        nombre: 'Cupón aplicado',
-        porcentaje: 0,
-      } : undefined),
+      pago: pago
+        ? {
+            id: pago.id,
+            monto: pago.monto,
+            descuentoAplicado: pago.descuentoAplicado,
+            montoFinal: pago.montoFinal,
+            estado: pago.estado,
+            cuponId: pago.cuponId,
+            datosTransaccion: pago.datosTransaccion,
+          }
+        : {
+            id: '',
+            monto: precio,
+            descuentoAplicado: descuentoAplicado,
+            montoFinal: montoFinal,
+            estado: EstadoPago.PENDIENTE,
+            cuponId: reserva.cuponId,
+            datosTransaccion: undefined,
+          },
+      cupon: cupon
+        ? {
+            id: cupon.id,
+            nombre: cupon.nombre,
+            porcentaje: cupon.porcentaje,
+          }
+        : reserva.cuponId
+          ? {
+              id: reserva.cuponId,
+              nombre: 'Cupón aplicado',
+              porcentaje: 0,
+            }
+          : undefined,
       confirmada,
       flowOrderId,
       psicologo: psicologoInfo,
       mensaje: confirmada
         ? 'Reserva confirmada exitosamente'
         : reserva.estado === EstadoReservaPsicologo.PENDIENTE_PAGO
-        ? 'Reserva pendiente de pago. El callback de Flow procesará el pago automáticamente.'
-        : `Estado actual: ${reserva.estado}`
+          ? 'Reserva pendiente de pago. El callback de Flow procesará el pago automáticamente.'
+          : `Estado actual: ${reserva.estado}`,
     };
   }
 
   /**
    * Verificar estado de una reserva por flowOrder
    * Busca la reserva por flowOrderId en los metadatos y luego verifica su estado
-   * 
+   *
    * @param flowOrder FlowOrder de la reserva a verificar
    * @param usuarioId ID del usuario autenticado (para validar que sea el paciente)
    * @param usuarioRole Rol del usuario autenticado (ADMIN puede ver cualquier reserva)
@@ -1314,40 +1530,54 @@ export class PagoSesionService {
   async verificarEstadoReservaPorFlowOrder(
     flowOrder: string,
     usuarioId?: string,
-    usuarioRole?: string
-  ): Promise<SesionConfirmadaResponse & {
-    confirmada: boolean;
-    flowOrderId?: string;
-    psicologo?: {
-      id: string;
-      nombre: string;
-      apellido: string;
-      email: string;
-      especialidad?: string;
-    };
-    mensaje: string;
-  }> {
+    usuarioRole?: string,
+  ): Promise<
+    SesionConfirmadaResponse & {
+      confirmada: boolean;
+      flowOrderId?: string;
+      psicologo?: {
+        id: string;
+        nombre: string;
+        apellido: string;
+        email: string;
+        especialidad?: string;
+      };
+      mensaje: string;
+    }
+  > {
     // Buscar la reserva por flowOrderId en los metadatos usando query builder
     const reserva = await this.reservaRepository
       .createQueryBuilder('reserva')
       .where('reserva.estado IN (:...estados)', {
-        estados: [EstadoReservaPsicologo.PENDIENTE_PAGO, EstadoReservaPsicologo.CONFIRMADA]
+        estados: [
+          EstadoReservaPsicologo.PENDIENTE_PAGO,
+          EstadoReservaPsicologo.CONFIRMADA,
+        ],
       })
-      .andWhere("(reserva.metadatos->>'flowOrderId' = :flowOrder OR reserva.metadatos->>'flowToken' = :flowOrder)", { flowOrder })
+      .andWhere(
+        "(reserva.metadatos->>'flowOrderId' = :flowOrder OR reserva.metadatos->>'flowToken' = :flowOrder)",
+        { flowOrder },
+      )
       .leftJoinAndSelect('reserva.psicologo', 'psicologo')
       .leftJoinAndSelect('psicologo.usuario', 'usuario')
       .leftJoinAndSelect('reserva.paciente', 'paciente')
       .getOne();
 
     if (!reserva) {
-      throw new NotFoundException(`Reserva no encontrada para flowOrder: ${flowOrder}`);
+      throw new NotFoundException(
+        `Reserva no encontrada para flowOrder: ${flowOrder}`,
+      );
     }
 
     // Validar que el usuario autenticado sea el paciente de la reserva (o ADMIN)
     if (usuarioId && usuarioRole !== 'ADMIN') {
       if (reserva.paciente.id !== usuarioId) {
-        this.logger.warn(`Intento de acceso no autorizado: usuario ${usuarioId} intentó ver reserva con flowOrder ${flowOrder} del paciente ${reserva.paciente.id}`);
-        throw new ForbiddenException('No tienes permiso para ver esta reserva. Solo puedes ver tus propias reservas.');
+        this.logger.warn(
+          `Intento de acceso no autorizado: usuario ${usuarioId} intentó ver reserva con flowOrder ${flowOrder} del paciente ${reserva.paciente.id}`,
+        );
+        throw new ForbiddenException(
+          'No tienes permiso para ver esta reserva. Solo puedes ver tus propias reservas.',
+        );
       }
     }
 
@@ -1358,10 +1588,14 @@ export class PagoSesionService {
   /**
    * Calcular precio del box basado en duración y capacidad
    */
-  private calcularPrecioBox(box: Box, horaInicio: string, horaFin: string): number {
+  private calcularPrecioBox(
+    box: Box,
+    horaInicio: string,
+    horaFin: string,
+  ): number {
     const [horaIni, minIni] = horaInicio.split(':').map(Number);
     const [horaFinNum, minFin] = horaFin.split(':').map(Number);
-    
+
     const inicioMinutos = horaIni * 60 + minIni;
     const finMinutos = horaFinNum * 60 + minFin;
     const duracionMinutos = finMinutos - inicioMinutos;
@@ -1376,7 +1610,9 @@ export class PagoSesionService {
     }
 
     const precioTotal = Math.round(precioPorHora * duracionHoras);
-    this.logger.log(`Precio calculado para Box ${box.numero}: $${precioTotal} (${duracionHoras}h × $${precioPorHora}/h)`);
+    this.logger.log(
+      `Precio calculado para Box ${box.numero}: $${precioTotal} (${duracionHoras}h × $${precioPorHora}/h)`,
+    );
     return precioTotal;
   }
 }

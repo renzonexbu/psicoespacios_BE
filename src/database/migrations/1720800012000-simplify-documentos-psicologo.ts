@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class SimplifyDocumentosPsicologo1720800012000 implements MigrationInterface {
+export class SimplifyDocumentosPsicologo1720800012000
+  implements MigrationInterface
+{
   name = 'SimplifyDocumentosPsicologo1720800012000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -75,4 +77,4 @@ export class SimplifyDocumentosPsicologo1720800012000 implements MigrationInterf
       DROP TYPE "public"."tipo_documento_enum"
     `);
   }
-} 
+}

@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PagosService } from '../services/pagos.service';
 import { CreatePagoDto, UpdatePagoDto } from '../dto/pago.dto';
@@ -9,12 +17,18 @@ export class PagosController {
   constructor(private readonly pagosService: PagosService) {}
 
   @Post('suscripcion')
-  async createPagoSuscripcion(@Body() createPagoDto: CreatePagoDto, @Request() req) {
+  async createPagoSuscripcion(
+    @Body() createPagoDto: CreatePagoDto,
+    @Request() req,
+  ) {
     return this.pagosService.createPagoSuscripcion(createPagoDto, req.user.id);
   }
 
   @Post('derivacion')
-  async createPagoDerivacion(@Body() createPagoDto: CreatePagoDto, @Request() req) {
+  async createPagoDerivacion(
+    @Body() createPagoDto: CreatePagoDto,
+    @Request() req,
+  ) {
     return this.pagosService.createPagoDerivacion(createPagoDto, req.user.id);
   }
 

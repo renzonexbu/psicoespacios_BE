@@ -1,4 +1,9 @@
-import { Module, OnModuleInit, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import {
+  Module,
+  OnModuleInit,
+  MiddlewareConsumer,
+  NestModule,
+} from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -41,7 +46,8 @@ import { PacksModule } from './packs/packs.module';
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {        // Si existe DATABASE_URL, usar esa configuración (para producción/Fly.io)
+      useFactory: (configService: ConfigService) => {
+        // Si existe DATABASE_URL, usar esa configuración (para producción/Fly.io)
         if (process.env.DATABASE_URL) {
           const config: any = {
             type: 'postgres',
@@ -124,8 +130,6 @@ export class AppModule implements OnModuleInit, NestModule {
   // Configuración de middlewares
   configure(consumer: MiddlewareConsumer) {
     // Aplicar el middleware de manejo de errores JSON a todas las rutas
-    consumer
-      .apply(JsonParsingErrorMiddleware)
-      .forRoutes('*');
+    consumer.apply(JsonParsingErrorMiddleware).forRoutes('*');
   }
 }

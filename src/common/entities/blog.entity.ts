@@ -1,4 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+} from 'typeorm';
 
 @Entity('blogs')
 export class Blog {
@@ -22,4 +27,4 @@ export class Blog {
 
   @Column({ type: 'text' })
   contenido: string; // Permitir HTML
-} 
+}

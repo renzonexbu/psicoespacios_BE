@@ -31,4 +31,4 @@ export class UpdateHistorialPacienteDto {
   @IsString()
   @IsOptional()
   url?: string;
-} 
+}

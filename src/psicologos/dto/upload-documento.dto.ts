@@ -10,4 +10,4 @@ export class UploadDocumentoDto {
 
   @IsUrl()
   urlDocumento: string;
-} 
+}

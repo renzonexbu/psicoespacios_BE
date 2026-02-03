@@ -1,4 +1,11 @@
-import { IsString, IsNumber, IsBoolean, IsOptional, IsArray, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsOptional,
+  IsArray,
+  IsEnum,
+} from 'class-validator';
 import { TipoPlan } from '../../common/entities/plan.entity';
 
 export class CreatePlanDto {

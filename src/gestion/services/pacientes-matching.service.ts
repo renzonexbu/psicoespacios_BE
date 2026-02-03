@@ -1,9 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Paciente } from '../../common/entities/paciente.entity';
 import { User } from '../../common/entities/user.entity';
-import { CreatePacienteMatchingDto, UpdatePacienteMatchingDto } from '../../common/dto/paciente.dto';
+import {
+  CreatePacienteMatchingDto,
+  UpdatePacienteMatchingDto,
+} from '../../common/dto/paciente.dto';
 
 @Injectable()
 export class PacientesMatchingService {
@@ -14,27 +21,33 @@ export class PacientesMatchingService {
     private userRepository: Repository<User>,
   ) {}
 
-  async create(createPacienteDto: CreatePacienteMatchingDto): Promise<Paciente> {
+  async create(
+    createPacienteDto: CreatePacienteMatchingDto,
+  ): Promise<Paciente> {
     // Verificar que el usuario existe y tiene rol PACIENTE
     const usuario = await this.userRepository.findOne({
-      where: { id: createPacienteDto.idUsuarioPaciente, role: 'PACIENTE' }
+      where: { id: createPacienteDto.idUsuarioPaciente, role: 'PACIENTE' },
     });
 
     if (!usuario) {
-      throw new BadRequestException('El usuario no existe o no tiene rol PACIENTE');
+      throw new BadRequestException(
+        'El usuario no existe o no tiene rol PACIENTE',
+      );
     }
 
     // Verificar que no existe ya un perfil de paciente para este usuario
     const existingPaciente = await this.pacienteRepository.findOne({
-      where: { idUsuarioPaciente: createPacienteDto.idUsuarioPaciente }
+      where: { idUsuarioPaciente: createPacienteDto.idUsuarioPaciente },
     });
 
     if (existingPaciente) {
-      throw new BadRequestException('Ya existe un perfil de paciente para este usuario');
+      throw new BadRequestException(
+        'Ya existe un perfil de paciente para este usuario',
+      );
     }
 
     const paciente = this.pacienteRepository.create({
-      ...createPacienteDto
+      ...createPacienteDto,
     });
 
     return await this.pacienteRepository.save(paciente);
@@ -46,7 +59,7 @@ export class PacientesMatchingService {
 
   async findOne(id: string): Promise<Paciente> {
     const paciente = await this.pacienteRepository.findOne({
-      where: { id }
+      where: { id },
     });
 
     if (!paciente) {
@@ -58,17 +71,22 @@ export class PacientesMatchingService {
 
   async findByUserId(idUsuarioPaciente: string): Promise<Paciente> {
     const paciente = await this.pacienteRepository.findOne({
-      where: { idUsuarioPaciente }
+      where: { idUsuarioPaciente },
     });
 
     if (!paciente) {
-      throw new NotFoundException('Perfil de paciente no encontrado para este usuario');
+      throw new NotFoundException(
+        'Perfil de paciente no encontrado para este usuario',
+      );
     }
 
     return paciente;
   }
 
-  async update(id: string, updatePacienteDto: UpdatePacienteMatchingDto): Promise<Paciente> {
+  async update(
+    id: string,
+    updatePacienteDto: UpdatePacienteMatchingDto,
+  ): Promise<Paciente> {
     const paciente = await this.findOne(id);
     Object.assign(paciente, updatePacienteDto);
     return await this.pacienteRepository.save(paciente);

@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+  JoinColumn,
+} from 'typeorm';
 import { User } from './user.entity';
 import { Suscripcion } from './suscripcion.entity';
 import { SolicitudDerivacion } from './solicitud-derivacion.entity';
@@ -8,7 +16,7 @@ export enum TipoPago {
   SUSCRIPCION = 'SUSCRIPCION',
   DERIVACION = 'DERIVACION',
   SESION = 'SESION',
-  RESERVA = 'RESERVA'
+  RESERVA = 'RESERVA',
 }
 
 export enum EstadoPago {
@@ -16,12 +24,12 @@ export enum EstadoPago {
   PROCESANDO = 'PROCESANDO',
   COMPLETADO = 'COMPLETADO',
   FALLIDO = 'FALLIDO',
-  REEMBOLSADO = 'REEMBOLSADO'
+  REEMBOLSADO = 'REEMBOLSADO',
 }
 
 export enum MetodoPago {
   TARJETA = 'TARJETA',
-  TRANSFERENCIA = 'TRANSFERENCIA'
+  TRANSFERENCIA = 'TRANSFERENCIA',
 }
 
 export interface DatosTarjeta {
@@ -69,44 +77,44 @@ export class Pago {
   })
   tipo: TipoPago;
 
-  @Column({ 
-    type: 'decimal', 
-    precision: 10, 
+  @Column({
+    type: 'decimal',
+    precision: 10,
     scale: 2,
     transformer: {
       to: (value: number) => value,
       from: (value: string) => parseFloat(value),
-    }
+    },
   })
   monto: number;
 
-  @Column({ 
-    type: 'decimal', 
-    precision: 10, 
+  @Column({
+    type: 'decimal',
+    precision: 10,
     scale: 2,
     default: 0,
     transformer: {
       to: (value: number) => value,
       from: (value: string) => parseFloat(value),
-    }
+    },
   })
   descuentoAplicado: number;
 
-  @Column({ 
-    type: 'decimal', 
-    precision: 10, 
+  @Column({
+    type: 'decimal',
+    precision: 10,
     scale: 2,
     transformer: {
       to: (value: number) => value,
       from: (value: string) => parseFloat(value),
-    }
+    },
   })
   montoFinal: number;
 
   @Column({
     type: 'enum',
     enum: EstadoPago,
-    default: EstadoPago.PENDIENTE
+    default: EstadoPago.PENDIENTE,
   })
   estado: EstadoPago;
 

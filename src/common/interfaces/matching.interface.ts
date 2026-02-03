@@ -3,19 +3,19 @@
 export interface PerfilMatchingPsicologo {
   // Coincidencias Diagnósticas (35%)
   diagnosticos_experiencia: string[];
-  
+
   // Coincidencias Temáticas (25%)
   temas_experiencia: string[];
-  
+
   // Coincidencias de Estilo Terapéutico (20%)
   estilo_terapeutico: string[];
-  
+
   // Enfoque teórico (10%)
   enfoque_teorico: string[];
-  
+
   // Afinidad Personal (10%)
   afinidad_paciente_preferida: string[];
-  
+
   // Filtros Logísticos
   genero: string;
   modalidad_atencion: string[];
@@ -24,19 +24,19 @@ export interface PerfilMatchingPsicologo {
 export interface PerfilMatchingPaciente {
   // Coincidencias Diagnósticas (35%)
   diagnosticos_principales: string[];
-  
+
   // Coincidencias Temáticas (25%)
   temas_principales: string[];
-  
+
   // Coincidencias de Estilo Terapéutico (20%)
   estilo_terapeutico_preferido: string[];
-  
+
   // Enfoque teórico (10%)
   enfoque_teorico_preferido: string[];
-  
+
   // Afinidad Personal (10%)
   afinidad_personal_preferida: string[];
-  
+
   // Filtros Logísticos
   genero: string;
   modalidad_preferida: string[];
@@ -85,4 +85,3 @@ export interface ConfiguracionMatching {
   mapeosEnfoque: MapeoCoincidencias[];
   mapeosAfinidad: MapeoCoincidencias[];
 }
-

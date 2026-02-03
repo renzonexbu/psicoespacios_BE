@@ -12,10 +12,19 @@ import { UsersController } from './users.controller';
 import { RefreshToken } from '../common/entities/refresh-token.entity';
 import { Suscripcion } from '../common/entities/suscripcion.entity';
 import { MailModule } from '../mail/mail.module';
+import { PasswordResetToken } from '../common/entities/password-reset-token.entity';
+import { RecaptchaService } from '../common/recaptcha/recaptcha.service';
+import { RecaptchaGuard } from '../common/recaptcha/recaptcha.guard';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Psicologo, RefreshToken, Suscripcion]),
+    TypeOrmModule.forFeature([
+      User,
+      Psicologo,
+      RefreshToken,
+      Suscripcion,
+      PasswordResetToken,
+    ]),
     PassportModule,
     MailModule,
     JwtModule.registerAsync({
@@ -28,7 +37,7 @@ import { MailModule } from '../mail/mail.module';
       }),
     }),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, RecaptchaService, RecaptchaGuard],
   controllers: [AuthController, UsersController],
   exports: [AuthService],
 })

@@ -6,7 +6,9 @@ import { SimulatePaymentDto } from '../dto/simulate-payment.dto';
 export class SimulatePaymentController {
   private readonly logger = new Logger(SimulatePaymentController.name);
 
-  constructor(private readonly simulatePaymentService: SimulatePaymentService) {}
+  constructor(
+    private readonly simulatePaymentService: SimulatePaymentService,
+  ) {}
 
   @Post('payment')
   async simulatePayment(@Body() simulateDto: SimulatePaymentDto) {
@@ -25,7 +27,7 @@ export class SimulatePaymentController {
     this.logger.log(`Simulando pago exitoso`);
     return this.simulatePaymentService.simulatePayment({
       ...simulateDto,
-      simulateStatus: 'success'
+      simulateStatus: 'success',
     });
   }
 
@@ -34,7 +36,7 @@ export class SimulatePaymentController {
     this.logger.log(`Simulando pago fallido`);
     return this.simulatePaymentService.simulatePayment({
       ...simulateDto,
-      simulateStatus: 'failed'
+      simulateStatus: 'failed',
     });
   }
 
@@ -43,7 +45,7 @@ export class SimulatePaymentController {
     this.logger.log(`Simulando pago pendiente`);
     return this.simulatePaymentService.simulatePayment({
       ...simulateDto,
-      simulateStatus: 'pending'
+      simulateStatus: 'pending',
     });
   }
 
@@ -52,7 +54,7 @@ export class SimulatePaymentController {
     this.logger.log(`Simulando pago cancelado`);
     return this.simulatePaymentService.simulatePayment({
       ...simulateDto,
-      simulateStatus: 'cancelled'
+      simulateStatus: 'cancelled',
     });
   }
-} 
+}

@@ -7,4 +7,4 @@ import { BackblazeService } from './services/backblaze.service';
   providers: [BackblazeService],
   exports: [BackblazeService],
 })
-export class UploadsModule {} 
+export class UploadsModule {}

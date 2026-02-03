@@ -1,4 +1,11 @@
-import { IsString, IsBoolean, IsArray, IsOptional, ValidateNested, IsIn } from 'class-validator';
+import {
+  IsString,
+  IsBoolean,
+  IsArray,
+  IsOptional,
+  ValidateNested,
+  IsIn,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class DiaPresencialBlockDto {
@@ -12,7 +19,15 @@ export class DiaPresencialBlockDto {
 
 export class WeeklyDayDto {
   @IsString()
-  @IsIn(['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
+  @IsIn([
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+    'Domingo',
+  ])
   day: string;
 
   @IsBoolean()
@@ -55,4 +70,4 @@ export class AvailabilityResponseDto {
   weeklySchedule: WeeklyDayDto[];
   worksOnHolidays: boolean;
   updatedAt: string;
-} 
+}

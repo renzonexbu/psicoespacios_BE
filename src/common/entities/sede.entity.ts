@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('sedes')
 export class Sede {
@@ -54,9 +61,9 @@ export class Sede {
   @Column({ default: 'ACTIVA' })
   estado: string;
 
-  @OneToMany('Box', 'sede', { 
+  @OneToMany('Box', 'sede', {
     cascade: true,
-    eager: false 
+    eager: false,
   })
   boxes: any[];
 

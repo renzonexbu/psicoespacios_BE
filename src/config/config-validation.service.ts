@@ -7,11 +7,7 @@ export class ConfigValidationService implements OnModuleInit {
 
   async onModuleInit() {
     // Validar variables de entorno críticas
-    const requiredEnvVars = [
-      'DATABASE_URL',
-      'JWT_SECRET',
-      'FRONT_URL',
-    ];
+    const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'FRONT_URL'];
 
     const missingVars = requiredEnvVars.filter(
       (envVar) => !this.configService.get(envVar),
@@ -27,7 +23,7 @@ export class ConfigValidationService implements OnModuleInit {
     try {
       const dbUrl = this.configService.get('DATABASE_URL');
       console.log('Database URL configurada:', dbUrl ? 'Sí' : 'No');
-      
+
       if (dbUrl) {
         const urlParts = new URL(dbUrl);
         console.log('Host de la base de datos:', urlParts.hostname);
@@ -35,7 +31,10 @@ export class ConfigValidationService implements OnModuleInit {
         console.log('Nombre de la base de datos:', urlParts.pathname.slice(1));
       }
     } catch (error) {
-      console.error('Error al validar la URL de la base de datos:', error.message);
+      console.error(
+        'Error al validar la URL de la base de datos:',
+        error.message,
+      );
       throw error;
     }
   }

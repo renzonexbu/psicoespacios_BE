@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Reserva, EstadoReserva } from '../common/entities/reserva.entity';
@@ -6,7 +11,12 @@ import { User } from '../common/entities/user.entity';
 import { Box } from '../common/entities/box.entity';
 import { PackAsignacion } from '../packs/entities/pack-asignacion.entity';
 import { PackHora } from '../packs/entities/pack-hora.entity';
-import { CreateReservaDto, UpdateReservaDto, UpdateEstadoPagoDto, BulkUpdateEstadoPagoDto } from './dto/reserva.dto';
+import {
+  CreateReservaDto,
+  UpdateReservaDto,
+  UpdateEstadoPagoDto,
+  BulkUpdateEstadoPagoDto,
+} from './dto/reserva.dto';
 import { MailService } from '../mail/mail.service';
 
 @Injectable()
@@ -44,38 +54,52 @@ export class ReservasService {
     return reserva;
   }
 
-  async cancel(id: string, updateDto: UpdateReservaDto, userId: string): Promise<Reserva> {
+  async cancel(
+    id: string,
+    updateDto: UpdateReservaDto,
+    userId: string,
+  ): Promise<Reserva> {
     const reserva = await this.findOne(id);
     if (reserva.psicologoId !== userId) {
-      throw new ForbiddenException('No tienes permiso para cancelar esta reserva');
+      throw new ForbiddenException(
+        'No tienes permiso para cancelar esta reserva',
+      );
     }
     reserva.estado = updateDto.estado || EstadoReserva.CANCELADA;
     const saved = await this.reservaRepository.save(reserva);
     // Enviar email de cancelación al psicólogo (cuenta default)
     try {
-      const usuario = await this.userRepository.findOne({ where: { id: saved.psicologoId } });
+      const usuario = await this.userRepository.findOne({
+        where: { id: saved.psicologoId },
+      });
       if (usuario?.email) {
         const fechaStr = new Date(saved.fecha).toISOString().split('T')[0];
         await this.mailService.sendReservaBoxCancelada(
           usuario.email,
           fechaStr,
-          saved.horaInicio
+          saved.horaInicio,
         );
       }
     } catch (error) {
       // No bloquear por error de email
-      console.error(`Error al enviar email de cancelación de box a psicólogo ${saved.psicologoId}:`, error);
+      console.error(
+        `Error al enviar email de cancelación de box a psicólogo ${saved.psicologoId}:`,
+        error,
+      );
     }
     return saved;
   }
 
-  async findByPsicologoAndFecha(psicologoId: string, fecha: string): Promise<any[]> {
+  async findByPsicologoAndFecha(
+    psicologoId: string,
+    fecha: string,
+  ): Promise<any[]> {
     const reservas = await this.reservaRepository.find({
       where: { psicologoId, fecha: new Date(fecha) },
     });
-    
+
     // Mapear reservas con info del psicólogo
-    return reservas.map(reserva => {
+    return reservas.map((reserva) => {
       return {
         ...reserva,
         psicologo: {
@@ -102,7 +126,7 @@ export class ReservasService {
       .getMany();
 
     // Mapear reservas con información completa incluyendo pack
-    return reservas.map(reserva => {
+    return reservas.map((reserva) => {
       const reservaData = {
         id: reserva.id,
         boxId: reserva.boxId,
@@ -125,16 +149,16 @@ export class ReservasService {
             nombre: reserva.box?.sede?.nombre,
             direccion: reserva.box?.sede?.direccion,
             telefono: reserva.box?.sede?.telefono,
-            email: reserva.box?.sede?.email
-          }
+            email: reserva.box?.sede?.email,
+          },
         },
         psicologo: {
           id: reserva.psicologo?.id,
           nombre: reserva.psicologo?.nombre,
           apellido: reserva.psicologo?.apellido,
           email: reserva.psicologo?.email,
-          telefono: reserva.psicologo?.telefono
-        }
+          telefono: reserva.psicologo?.telefono,
+        },
       };
 
       // Agregar información del pack si la reserva pertenece a un pack
@@ -147,7 +171,7 @@ export class ReservasService {
           packPrecio: reserva.packAsignacion.pack?.precio,
           estadoAsignacion: reserva.packAsignacion.estado,
           recurrente: reserva.packAsignacion.recurrente,
-          fechaAsignacion: reserva.packAsignacion.createdAt
+          fechaAsignacion: reserva.packAsignacion.createdAt,
         };
       } else {
         reservaData['pack'] = null;
@@ -163,7 +187,7 @@ export class ReservasService {
   async findByUsuario(usuarioId: string): Promise<any[]> {
     // Verificar que el usuario existe
     const usuario = await this.userRepository.findOne({
-      where: { id: usuarioId }
+      where: { id: usuarioId },
     });
 
     if (!usuario) {
@@ -183,7 +207,7 @@ export class ReservasService {
       .getMany();
 
     // Mapear reservas con información completa incluyendo pack
-    return reservas.map(reserva => {
+    return reservas.map((reserva) => {
       const reservaData = {
         id: reserva.id,
         boxId: reserva.boxId,
@@ -206,16 +230,16 @@ export class ReservasService {
             nombre: reserva.box?.sede?.nombre,
             direccion: reserva.box?.sede?.direccion,
             telefono: reserva.box?.sede?.telefono,
-            email: reserva.box?.sede?.email
-          }
+            email: reserva.box?.sede?.email,
+          },
         },
         psicologo: {
           id: reserva.psicologo?.id,
           nombre: reserva.psicologo?.nombre,
           apellido: reserva.psicologo?.apellido,
           email: reserva.psicologo?.email,
-          telefono: reserva.psicologo?.telefono
-        }
+          telefono: reserva.psicologo?.telefono,
+        },
       };
 
       // Agregar información del pack si la reserva pertenece a un pack
@@ -228,7 +252,7 @@ export class ReservasService {
           packPrecio: reserva.packAsignacion.pack?.precio,
           estadoAsignacion: reserva.packAsignacion.estado,
           recurrente: reserva.packAsignacion.recurrente,
-          fechaAsignacion: reserva.packAsignacion.createdAt
+          fechaAsignacion: reserva.packAsignacion.createdAt,
         };
       } else {
         reservaData['pack'] = null;
@@ -241,10 +265,19 @@ export class ReservasService {
   /**
    * Actualizar el estado de pago de una reserva
    */
-  async updateEstadoPago(reservaId: string, updateEstadoPagoDto: UpdateEstadoPagoDto): Promise<any> {
+  async updateEstadoPago(
+    reservaId: string,
+    updateEstadoPagoDto: UpdateEstadoPagoDto,
+  ): Promise<any> {
     const reserva = await this.reservaRepository.findOne({
       where: { id: reservaId },
-      relations: ['box', 'box.sede', 'psicologo', 'packAsignacion', 'packAsignacion.pack']
+      relations: [
+        'box',
+        'box.sede',
+        'psicologo',
+        'packAsignacion',
+        'packAsignacion.pack',
+      ],
     });
 
     if (!reserva) {
@@ -280,17 +313,17 @@ export class ReservasService {
           nombre: reserva.box?.sede?.nombre,
           direccion: reserva.box?.sede?.direccion,
           telefono: reserva.box?.sede?.telefono,
-          email: reserva.box?.sede?.email
-        }
+          email: reserva.box?.sede?.email,
+        },
       },
       psicologo: {
         id: reserva.psicologo?.id,
         nombre: reserva.psicologo?.nombre,
         apellido: reserva.psicologo?.apellido,
         email: reserva.psicologo?.email,
-        telefono: reserva.psicologo?.telefono
+        telefono: reserva.psicologo?.telefono,
       },
-      pack: null
+      pack: null,
     };
 
     // Agregar información del pack si existe
@@ -303,7 +336,7 @@ export class ReservasService {
         packPrecio: reserva.packAsignacion.pack?.precio,
         estadoAsignacion: reserva.packAsignacion.estado,
         recurrente: reserva.packAsignacion.recurrente,
-        fechaAsignacion: reserva.packAsignacion.createdAt
+        fechaAsignacion: reserva.packAsignacion.createdAt,
       };
     }
 
@@ -311,13 +344,16 @@ export class ReservasService {
       message: 'Estado de pago actualizado correctamente',
       reserva: response,
       actualizacion: {
-        estadoPagoAnterior: updateEstadoPagoDto.estadoPago === 'pagado' ? 'pendiente_pago' : 'pagado',
+        estadoPagoAnterior:
+          updateEstadoPagoDto.estadoPago === 'pagado'
+            ? 'pendiente_pago'
+            : 'pagado',
         estadoPagoNuevo: updateEstadoPagoDto.estadoPago,
         observaciones: updateEstadoPagoDto.observaciones,
         metodoPago: updateEstadoPagoDto.metodoPago,
         referenciaPago: updateEstadoPagoDto.referenciaPago,
-        fechaActualizacion: new Date()
-      }
+        fechaActualizacion: new Date(),
+      },
     };
   }
 
@@ -327,7 +363,7 @@ export class ReservasService {
   async getHistorialPago(reservaId: string): Promise<any> {
     const reserva = await this.reservaRepository.findOne({
       where: { id: reservaId },
-      relations: ['box', 'box.sede', 'psicologo']
+      relations: ['box', 'box.sede', 'psicologo'],
     });
 
     if (!reserva) {
@@ -339,12 +375,12 @@ export class ReservasService {
       psicologo: {
         id: reserva.psicologo?.id,
         nombre: reserva.psicologo?.nombre,
-        apellido: reserva.psicologo?.apellido
+        apellido: reserva.psicologo?.apellido,
       },
       box: {
         id: reserva.box?.id,
         numero: reserva.box?.numero,
-        sede: reserva.box?.sede?.nombre
+        sede: reserva.box?.sede?.nombre,
       },
       fecha: reserva.fecha,
       horaInicio: reserva.horaInicio,
@@ -354,16 +390,19 @@ export class ReservasService {
       estadoPagoActual: reserva.estadoPago,
       fechaCreacion: reserva.createdAt,
       ultimaActualizacion: reserva.updatedAt,
-      mensaje: 'Para un historial completo de cambios, se recomienda implementar una tabla de auditoría'
+      mensaje:
+        'Para un historial completo de cambios, se recomienda implementar una tabla de auditoría',
     };
   }
 
   /**
    * Actualizar múltiples estados de pago de reservas de manera masiva
    */
-  async bulkUpdateEstadoPago(bulkUpdateDto: BulkUpdateEstadoPagoDto): Promise<any> {
+  async bulkUpdateEstadoPago(
+    bulkUpdateDto: BulkUpdateEstadoPagoDto,
+  ): Promise<any> {
     const queryRunner = this.dataSource.createQueryRunner();
-    
+
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
@@ -376,13 +415,19 @@ export class ReservasService {
           // Verificar que la reserva existe
           const reserva = await queryRunner.manager.findOne(Reserva, {
             where: { id: actualizacion.reservaId },
-            relations: ['box', 'box.sede', 'psicologo', 'packAsignacion', 'packAsignacion.pack']
+            relations: [
+              'box',
+              'box.sede',
+              'psicologo',
+              'packAsignacion',
+              'packAsignacion.pack',
+            ],
           });
 
           if (!reserva) {
             errores.push({
               reservaId: actualizacion.reservaId,
-              error: 'Reserva no encontrada'
+              error: 'Reserva no encontrada',
             });
             continue;
           }
@@ -419,17 +464,17 @@ export class ReservasService {
                 nombre: reserva.box?.sede?.nombre,
                 direccion: reserva.box?.sede?.direccion,
                 telefono: reserva.box?.sede?.telefono,
-                email: reserva.box?.sede?.email
-              }
+                email: reserva.box?.sede?.email,
+              },
             },
             psicologo: {
               id: reserva.psicologo?.id,
               nombre: reserva.psicologo?.nombre,
               apellido: reserva.psicologo?.apellido,
               email: reserva.psicologo?.email,
-              telefono: reserva.psicologo?.telefono
+              telefono: reserva.psicologo?.telefono,
             },
-            pack: null
+            pack: null,
           };
 
           // Agregar información del pack si existe
@@ -442,7 +487,7 @@ export class ReservasService {
               packPrecio: reserva.packAsignacion.pack?.precio,
               estadoAsignacion: reserva.packAsignacion.estado,
               recurrente: reserva.packAsignacion.recurrente,
-              fechaAsignacion: reserva.packAsignacion.createdAt
+              fechaAsignacion: reserva.packAsignacion.createdAt,
             };
           }
 
@@ -454,14 +499,13 @@ export class ReservasService {
               observaciones: actualizacion.observaciones,
               metodoPago: actualizacion.metodoPago,
               referenciaPago: actualizacion.referenciaPago,
-              fechaActualizacion: new Date()
-            }
+              fechaActualizacion: new Date(),
+            },
           });
-
         } catch (error) {
           errores.push({
             reservaId: actualizacion.reservaId,
-            error: error.message || 'Error desconocido'
+            error: error.message || 'Error desconocido',
           });
         }
       }
@@ -473,15 +517,16 @@ export class ReservasService {
         resumen: {
           totalProcesadas: bulkUpdateDto.actualizaciones.length,
           exitosas: resultados.length,
-          errores: errores.length
+          errores: errores.length,
         },
         resultados,
-        errores: errores.length > 0 ? errores : undefined
+        errores: errores.length > 0 ? errores : undefined,
       };
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new BadRequestException(`Error en actualización masiva: ${error.message}`);
+      throw new BadRequestException(
+        `Error en actualización masiva: ${error.message}`,
+      );
     } finally {
       await queryRunner.release();
     }

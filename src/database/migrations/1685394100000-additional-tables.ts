@@ -131,7 +131,7 @@ export class AdditionalTables1685394100000 implements MigrationInterface {
     `);
 
     // await queryRunner.query(`
-    //   ALTER TABLE "reservas" ADD CONSTRAINT "FK_v7b3cf6a0bf49af33a4c2cb7dc7" 
+    //   ALTER TABLE "reservas" ADD CONSTRAINT "FK_v7b3cf6a0bf49af33a4c2cb7dc7"
     //   FOREIGN KEY ("suscripcionId") REFERENCES "suscripciones"("id") ON DELETE SET NULL ON UPDATE NO ACTION
     // `);
 
@@ -150,18 +150,40 @@ export class AdditionalTables1685394100000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Eliminar relaciones
-    await queryRunner.query(`ALTER TABLE "pagos" DROP CONSTRAINT IF EXISTS "FK_x7b3cf6a0bf49af33a4c2cb7dc7"`);
-    await queryRunner.query(`ALTER TABLE "fichas_sesion" DROP CONSTRAINT IF EXISTS "FK_w7b3cf6a0bf49af33a4c2cb7dc7"`);
-    await queryRunner.query(`ALTER TABLE "reservas" DROP CONSTRAINT IF EXISTS "FK_v7b3cf6a0bf49af33a4c2cb7dc7"`);
-    await queryRunner.query(`ALTER TABLE "reservas" DROP CONSTRAINT IF EXISTS "FK_u7b3cf6a0bf49af33a4c2cb7dc7"`);
-    await queryRunner.query(`ALTER TABLE "reservas" DROP CONSTRAINT IF EXISTS "FK_t7b3cf6a0bf49af33a4c2cb7dc7"`);
-    await queryRunner.query(`ALTER TABLE "fichas_sesion" DROP CONSTRAINT IF EXISTS "FK_r7b3cf6a0bf49af33a4c2cb7dc7"`);
-    await queryRunner.query(`ALTER TABLE "fichas_sesion" DROP CONSTRAINT IF EXISTS "FK_q7b3cf6a0bf49af33a4c2cb7dc7"`);
-    await queryRunner.query(`ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_527cf4cc7783936d28724db2b75"`);
-    await queryRunner.query(`ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_l7b3cf6a0bf49af33a4c2cb7dc7"`);
-    await queryRunner.query(`ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_k7b3cf6a0bf49af33a4c2cb7dc7"`);
-    await queryRunner.query(`ALTER TABLE "perfiles_derivacion" DROP CONSTRAINT IF EXISTS "FK_43ab843e5cbb23fa71dd2789013"`);
-    
+    await queryRunner.query(
+      `ALTER TABLE "pagos" DROP CONSTRAINT IF EXISTS "FK_x7b3cf6a0bf49af33a4c2cb7dc7"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "fichas_sesion" DROP CONSTRAINT IF EXISTS "FK_w7b3cf6a0bf49af33a4c2cb7dc7"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "reservas" DROP CONSTRAINT IF EXISTS "FK_v7b3cf6a0bf49af33a4c2cb7dc7"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "reservas" DROP CONSTRAINT IF EXISTS "FK_u7b3cf6a0bf49af33a4c2cb7dc7"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "reservas" DROP CONSTRAINT IF EXISTS "FK_t7b3cf6a0bf49af33a4c2cb7dc7"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "fichas_sesion" DROP CONSTRAINT IF EXISTS "FK_r7b3cf6a0bf49af33a4c2cb7dc7"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "fichas_sesion" DROP CONSTRAINT IF EXISTS "FK_q7b3cf6a0bf49af33a4c2cb7dc7"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_527cf4cc7783936d28724db2b75"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_l7b3cf6a0bf49af33a4c2cb7dc7"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "solicitudes_derivacion" DROP CONSTRAINT IF EXISTS "FK_k7b3cf6a0bf49af33a4c2cb7dc7"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "perfiles_derivacion" DROP CONSTRAINT IF EXISTS "FK_43ab843e5cbb23fa71dd2789013"`,
+    );
+
     // Eliminar tablas
     await queryRunner.query(`DROP TABLE IF EXISTS "reservas"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "fichas_sesion"`);

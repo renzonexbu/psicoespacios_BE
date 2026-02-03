@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateHistorialPaciente1720800000000 implements MigrationInterface {
+export class CreateHistorialPaciente1720800000000
+  implements MigrationInterface
+{
   name = 'CreateHistorialPaciente1720800000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -19,4 +21,4 @@ export class CreateHistorialPaciente1720800000000 implements MigrationInterface 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP TABLE IF EXISTS "historial_paciente"`);
   }
-} 
+}

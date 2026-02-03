@@ -2,7 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PerfilDerivacion } from '../../common/entities/perfil-derivacion.entity';
-import { CreatePerfilDerivacionDto, UpdatePerfilDerivacionDto, SearchPerfilDerivacionDto } from '../dto/perfil-derivacion.dto';
+import {
+  CreatePerfilDerivacionDto,
+  UpdatePerfilDerivacionDto,
+  SearchPerfilDerivacionDto,
+} from '../dto/perfil-derivacion.dto';
 import { User } from '../../common/entities/user.entity';
 
 @Injectable()
@@ -74,9 +78,12 @@ export class PerfilesDerivacionService {
     return this.perfilRepository.save(perfil);
   }
 
-  async createOrUpdate(createDto: CreatePerfilDerivacionDto, userId: string): Promise<PerfilDerivacion> {
+  async createOrUpdate(
+    createDto: CreatePerfilDerivacionDto,
+    userId: string,
+  ): Promise<PerfilDerivacion> {
     const psicologo = await this.userRepository.findOne({
-      where: { id: userId }
+      where: { id: userId },
     });
 
     if (!psicologo) {
@@ -84,7 +91,7 @@ export class PerfilesDerivacionService {
     }
 
     let perfil = await this.perfilRepository.findOne({
-      where: { psicologo: { id: userId } }
+      where: { psicologo: { id: userId } },
     });
 
     if (!perfil) {
@@ -93,9 +100,9 @@ export class PerfilesDerivacionService {
 
     Object.assign(perfil, {
       ...createDto,
-      psicologo
+      psicologo,
     });
-    
+
     return await this.perfilRepository.save(perfil);
   }
 }

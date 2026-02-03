@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsString, IsUUID, IsOptional, IsNumber, IsDateString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  IsOptional,
+  IsNumber,
+  IsDateString,
+} from 'class-validator';
 
 export class CreateSolicitudDerivacionDto {
   @IsUUID()

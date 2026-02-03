@@ -25,11 +25,13 @@ export class VouchersService {
       // Buscar el psicólogo por su userId
       psicologo = await this.psicologoRepository.findOne({
         where: { usuario: { id: createVoucherDto.psicologoUserId } },
-        relations: ['usuario']
+        relations: ['usuario'],
       });
-      
+
       if (!psicologo) {
-        throw new NotFoundException('Psicólogo no encontrado para este usuario');
+        throw new NotFoundException(
+          'Psicólogo no encontrado para este usuario',
+        );
       }
       psicologoId = psicologo.id;
     }
@@ -43,26 +45,32 @@ export class VouchersService {
       limiteUsos: createVoucherDto.limiteUsos,
       esGlobal,
       psicologoId,
-      psicologo: psicologo || undefined
+      psicologo: psicologo || undefined,
     });
-    
+
     return this.voucherRepository.save(voucher);
   }
 
   async findAll(): Promise<Voucher[]> {
-    return this.voucherRepository.find({ 
+    return this.voucherRepository.find({
       where: { deletedAt: IsNull() }, // Solo vouchers no eliminados
-      relations: ['psicologo', 'psicologo.usuario'] 
+      relations: ['psicologo', 'psicologo.usuario'],
     });
   }
 
   async findOne(id: string): Promise<Voucher> {
-    const voucher = await this.voucherRepository.findOne({ where: { id }, relations: ['psicologo'] });
+    const voucher = await this.voucherRepository.findOne({
+      where: { id },
+      relations: ['psicologo'],
+    });
     if (!voucher) throw new NotFoundException('Voucher no encontrado');
     return voucher;
   }
 
-  async update(id: string, updateVoucherDto: UpdateVoucherDto): Promise<Voucher> {
+  async update(
+    id: string,
+    updateVoucherDto: UpdateVoucherDto,
+  ): Promise<Voucher> {
     const voucher = await this.findOne(id);
     Object.assign(voucher, updateVoucherDto);
     return this.voucherRepository.save(voucher);
@@ -76,14 +84,14 @@ export class VouchersService {
   }
 
   async restore(id: string): Promise<Voucher> {
-    const voucher = await this.voucherRepository.findOne({ 
-      where: { id, deletedAt: IsNull() } 
+    const voucher = await this.voucherRepository.findOne({
+      where: { id, deletedAt: IsNull() },
     });
-    
+
     if (!voucher) {
       throw new NotFoundException('Voucher no encontrado o ya está activo');
     }
-    
+
     // Restaurar el voucher
     voucher.deletedAt = null;
     return this.voucherRepository.save(voucher);
@@ -93,7 +101,7 @@ export class VouchersService {
     // Buscar el psicólogo por su userId
     const psicologo = await this.psicologoRepository.findOne({
       where: { usuario: { id: psicologoUserId } },
-      relations: ['usuario']
+      relations: ['usuario'],
     });
 
     if (!psicologo) {
@@ -102,12 +110,12 @@ export class VouchersService {
 
     // Buscar todos los vouchers del psicólogo (solo los no eliminados)
     return this.voucherRepository.find({
-      where: { 
+      where: {
         psicologoId: psicologo.id,
-        deletedAt: IsNull() // Solo vouchers no eliminados
+        deletedAt: IsNull(), // Solo vouchers no eliminados
       },
       relations: ['psicologo', 'psicologo.usuario'],
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -115,18 +123,18 @@ export class VouchersService {
     try {
       // Buscar el voucher por nombre (código)
       const voucher = await this.voucherRepository.findOne({
-        where: { 
+        where: {
           nombre: codigo,
-          deletedAt: IsNull() // Solo vouchers no eliminados
+          deletedAt: IsNull(), // Solo vouchers no eliminados
         },
-        relations: ['psicologo', 'psicologo.usuario']
+        relations: ['psicologo', 'psicologo.usuario'],
       });
 
       if (!voucher) {
         return {
           valido: false,
           mensaje: 'Cupón no encontrado',
-          error: 'CUPON_NO_EXISTE'
+          error: 'CUPON_NO_EXISTE',
         };
       }
 
@@ -136,7 +144,7 @@ export class VouchersService {
         return {
           valido: false,
           mensaje: 'Cupón expirado',
-          error: 'CUPON_EXPIRADO'
+          error: 'CUPON_EXPIRADO',
         };
       }
 
@@ -145,7 +153,7 @@ export class VouchersService {
         return {
           valido: false,
           mensaje: 'Cupón agotado',
-          error: 'CUPON_AGOTADO'
+          error: 'CUPON_AGOTADO',
         };
       }
 
@@ -158,16 +166,15 @@ export class VouchersService {
         modalidad: voucher.modalidad,
         psicologoNombre: voucher.psicologo?.usuario
           ? `${voucher.psicologo.usuario.nombre} ${voucher.psicologo.usuario.apellido}`
-          : 'PsicoEspacios (Global)'
+          : 'PsicoEspacios (Global)',
       };
-
     } catch (error) {
       console.error('Error al validar cupón:', error);
       return {
         valido: false,
         mensaje: 'Error al validar cupón',
-        error: 'ERROR_VALIDACION'
+        error: 'ERROR_VALIDACION',
       };
     }
   }
-} 
+}

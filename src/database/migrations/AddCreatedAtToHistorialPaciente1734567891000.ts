@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddCreatedAtToHistorialPaciente1734567891000 implements MigrationInterface {
+export class AddCreatedAtToHistorialPaciente1734567891000
+  implements MigrationInterface
+{
   name = 'AddCreatedAtToHistorialPaciente1734567891000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -29,35 +31,3 @@ export class AddCreatedAtToHistorialPaciente1734567891000 implements MigrationIn
     `);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

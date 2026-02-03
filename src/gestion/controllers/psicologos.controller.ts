@@ -1,6 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Request, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Query,
+  Request,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PsicologosService } from '../services/psicologos.service';
-import { CreatePsicologoDto, UpdatePsicologoDto } from '../../common/dto/psicologo.dto';
+import {
+  CreatePsicologoDto,
+  UpdatePsicologoDto,
+} from '../../common/dto/psicologo.dto';
 import { UpdatePreciosDto } from '../../psicologos/dto/precios.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -37,7 +52,10 @@ export class PsicologosController {
   @Get('usuario/:usuarioId/descripcion')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
-  async getDescripcionByUserId(@Param('usuarioId') usuarioId: string, @Request() req) {
+  async getDescripcionByUserId(
+    @Param('usuarioId') usuarioId: string,
+    @Request() req,
+  ) {
     // Verificar que el psicólogo solo puede ver su propia descripción
     if (req.user.role === Role.PSICOLOGO && req.user.id !== usuarioId) {
       throw new ForbiddenException('Solo puedes ver tu propia descripción');
@@ -51,7 +69,7 @@ export class PsicologosController {
   @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
   async getPreciosByUserId(
     @Param('usuarioId') usuarioId: string,
-    @Request() req
+    @Request() req,
   ) {
     // Verificar que el psicólogo solo puede ver sus propios precios
     if (req.user.role === Role.PSICOLOGO && req.user.id !== usuarioId) {
@@ -66,11 +84,13 @@ export class PsicologosController {
   async updatePreciosByUserId(
     @Param('usuarioId') usuarioId: string,
     @Body() updatePreciosDto: UpdatePreciosDto,
-    @Request() req
+    @Request() req,
   ) {
     // Verificar que el psicólogo solo puede actualizar sus propios precios
     if (req.user.role === Role.PSICOLOGO && req.user.id !== usuarioId) {
-      throw new ForbiddenException('Solo puedes actualizar tus propios precios');
+      throw new ForbiddenException(
+        'Solo puedes actualizar tus propios precios',
+      );
     }
     return this.psicologosService.updatePrecios(usuarioId, updatePreciosDto);
   }
@@ -82,7 +102,7 @@ export class PsicologosController {
     @Param('id') id: string,
     @Query('mes') mes: number,
     @Query('anio') anio: number,
-    @Request() req
+    @Request() req,
   ) {
     // Verificar que el psicólogo solo puede ver su propia disponibilidad
     if (req.user.role === Role.PSICOLOGO && req.user.id !== id) {
@@ -97,7 +117,7 @@ export class PsicologosController {
   async disponibilidadHorarios(
     @Param('id') id: string,
     @Query('fecha') fecha: string,
-    @Request() req
+    @Request() req,
   ) {
     // Verificar que el psicólogo solo puede ver su propia disponibilidad
     if (req.user.role === Role.PSICOLOGO && req.user.id !== id) {
@@ -111,22 +131,30 @@ export class PsicologosController {
   @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
   async getPacientesAsignados(
     @Param('psicologoId') psicologoId: string,
-    @Request() req
+    @Request() req,
   ) {
     // Debug: mostrar información del usuario y parámetros
     console.log('[DEBUG] Usuario del token:', {
       id: req.user.id,
       role: req.user.role,
-      psicologoId: req.user.psicologoId
+      psicologoId: req.user.psicologoId,
     });
     console.log('[DEBUG] Parámetro psicologoId:', psicologoId);
-    
+
     // Verificar que el psicólogo solo puede ver sus propios pacientes
-    if (req.user.role === Role.PSICOLOGO && req.user.psicologoId !== psicologoId) {
-      console.log('[DEBUG] Acceso denegado - psicologoId del token:', req.user.psicologoId, 'vs parámetro:', psicologoId);
+    if (
+      req.user.role === Role.PSICOLOGO &&
+      req.user.psicologoId !== psicologoId
+    ) {
+      console.log(
+        '[DEBUG] Acceso denegado - psicologoId del token:',
+        req.user.psicologoId,
+        'vs parámetro:',
+        psicologoId,
+      );
       throw new ForbiddenException('Solo puedes ver tus propios pacientes');
     }
-    
+
     console.log('[DEBUG] Acceso permitido');
     return this.psicologosService.getPacientesAsignados(psicologoId);
   }
@@ -156,8 +184,16 @@ export class PsicologosController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.TERAPEUTA)
-  update(@Param('id') id: string, @Body() updatePsicologoDto: UpdatePsicologoDto) {
-    console.log('[PsicologosController] PATCH recibido - id:', id, 'body:', updatePsicologoDto);
+  update(
+    @Param('id') id: string,
+    @Body() updatePsicologoDto: UpdatePsicologoDto,
+  ) {
+    console.log(
+      '[PsicologosController] PATCH recibido - id:',
+      id,
+      'body:',
+      updatePsicologoDto,
+    );
     return this.psicologosService.update(id, updatePsicologoDto);
   }
 
@@ -165,9 +201,9 @@ export class PsicologosController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
   async updateByUserId(
-    @Param('usuarioId') usuarioId: string, 
+    @Param('usuarioId') usuarioId: string,
     @Body() updatePsicologoDto: UpdatePsicologoDto,
-    @Request() req
+    @Request() req,
   ) {
     // Verificar que el psicólogo solo puede actualizar su propio perfil
     if (req.user.role === Role.PSICOLOGO && req.user.id !== usuarioId) {

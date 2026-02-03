@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+} from 'typeorm';
 import { PackAsignacion } from './pack-asignacion.entity';
 import { User } from '../../common/entities/user.entity';
 
@@ -6,7 +15,7 @@ export enum EstadoPagoPackMensual {
   PENDIENTE_PAGO = 'pendiente_pago',
   PAGADO = 'pagado',
   REEMBOLSADO = 'reembolsado',
-  CANCELADO = 'cancelado'
+  CANCELADO = 'cancelado',
 }
 
 @Entity('packs_pagos_mensuales')
@@ -44,10 +53,10 @@ export class PackPagoMensual {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   montoReembolsado: number; // Monto reembolsado si aplica
 
-  @Column({ 
-    type: 'enum', 
-    enum: EstadoPagoPackMensual, 
-    default: EstadoPagoPackMensual.PENDIENTE_PAGO 
+  @Column({
+    type: 'enum',
+    enum: EstadoPagoPackMensual,
+    default: EstadoPagoPackMensual.PENDIENTE_PAGO,
   })
   estado: EstadoPagoPackMensual;
 

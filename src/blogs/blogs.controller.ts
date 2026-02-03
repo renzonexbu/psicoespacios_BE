@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { BlogsService } from './blogs.service';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
@@ -24,7 +34,9 @@ export class BlogsController {
   }
 
   @Get('category/:categoria')
-  findByCategory(@Param('categoria') categoria: string): Promise<BlogResponseDto[]> {
+  findByCategory(
+    @Param('categoria') categoria: string,
+  ): Promise<BlogResponseDto[]> {
     return this.blogsService.findByCategory(categoria);
   }
 
@@ -44,7 +56,10 @@ export class BlogsController {
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  update(@Param('id') id: number, @Body() updateBlogDto: UpdateBlogDto): Promise<BlogResponseDto> {
+  update(
+    @Param('id') id: number,
+    @Body() updateBlogDto: UpdateBlogDto,
+  ): Promise<BlogResponseDto> {
     return this.blogsService.update(id, updateBlogDto);
   }
 
@@ -54,4 +69,4 @@ export class BlogsController {
   remove(@Param('id') id: number): Promise<void> {
     return this.blogsService.remove(id);
   }
-} 
+}

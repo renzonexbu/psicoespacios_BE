@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddEsGlobalAndNullablePsicologoIdToVoucher1735501000000 implements MigrationInterface {
+export class AddEsGlobalAndNullablePsicologoIdToVoucher1735501000000
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Agregar columna esGlobal (boolean, default false, not null)
     await queryRunner.query(`
@@ -29,5 +31,3 @@ export class AddEsGlobalAndNullablePsicologoIdToVoucher1735501000000 implements 
     `);
   }
 }
-
-

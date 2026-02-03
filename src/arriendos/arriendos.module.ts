@@ -13,4 +13,4 @@ import { MailModule } from '../mail/mail.module';
   providers: [ArriendosService],
   exports: [ArriendosService],
 })
-export class ArriendosModule {} 
+export class ArriendosModule {}

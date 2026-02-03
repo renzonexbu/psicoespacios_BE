@@ -11,4 +11,4 @@ import { VouchersController } from './vouchers.controller';
   controllers: [VouchersController],
   exports: [VouchersService],
 })
-export class VouchersModule {} 
+export class VouchersModule {}

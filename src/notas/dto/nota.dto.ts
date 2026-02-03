@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, IsUUID, IsOptional, IsEnum, IsBoolean, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsUUID,
+  IsOptional,
+  IsEnum,
+  IsBoolean,
+  IsObject,
+} from 'class-validator';
 import { TipoNota } from '../../common/entities/nota.entity';
 
 export class CreateNotaDto {
@@ -102,4 +110,4 @@ export class QueryNotasDto {
   @IsOptional()
   @IsString()
   estado?: 'borrador' | 'completada' | 'archivada';
-} 
+}

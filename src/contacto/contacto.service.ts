@@ -18,16 +18,18 @@ export class ContactoService {
   async create(createContactoDto: CreateContactoDto): Promise<Contacto> {
     const contacto = this.contactoRepository.create(createContactoDto);
     const contactoGuardado = await this.contactoRepository.save(contacto);
-    
+
     // Enviar email de confirmación automáticamente
     try {
       await this.enviarEmailConfirmacion(contactoGuardado);
       console.log(`✅ Email de confirmación enviado a: ${contacto.email}`);
     } catch (error) {
-      console.error(`❌ Error enviando email de confirmación: ${error.message}`);
+      console.error(
+        `❌ Error enviando email de confirmación: ${error.message}`,
+      );
       // No fallar la operación principal si el email falla
     }
-    
+
     return contactoGuardado;
   }
 
@@ -47,7 +49,10 @@ export class ContactoService {
     return contacto;
   }
 
-  async update(id: string, updateContactoDto: UpdateContactoDto): Promise<Contacto> {
+  async update(
+    id: string,
+    updateContactoDto: UpdateContactoDto,
+  ): Promise<Contacto> {
     const contacto = await this.findOne(id);
     const updated = Object.assign(contacto, updateContactoDto);
     return this.contactoRepository.save(updated);
@@ -60,16 +65,19 @@ export class ContactoService {
     }
   }
 
-  async responder(id: string, responderContactoDto: ResponderContactoDto): Promise<Contacto> {
+  async responder(
+    id: string,
+    responderContactoDto: ResponderContactoDto,
+  ): Promise<Contacto> {
     const contacto = await this.findOne(id);
-    
+
     // Guardar estado anterior para comparar
     const estadoAnterior = contacto.estado;
-    
+
     // Actualizar respuesta y fecha de respuesta
     contacto.respuesta = responderContactoDto.respuesta;
     contacto.fechaRespuesta = new Date();
-    
+
     // Si se proporciona un nuevo estado, actualizarlo
     if (responderContactoDto.estado) {
       contacto.estado = responderContactoDto.estado;
@@ -77,12 +85,15 @@ export class ContactoService {
       // Si no se especifica estado, marcar como CONTACTADO por defecto
       contacto.estado = ContactoEstado.CONTACTADO;
     }
-    
+
     // Guardar el contacto actualizado
     const contactoActualizado = await this.contactoRepository.save(contacto);
-    
+
     // Si el estado cambió a RESUELTO, enviar email automáticamente
-    if (responderContactoDto.estado === ContactoEstado.RESUELTO && estadoAnterior !== ContactoEstado.RESUELTO) {
+    if (
+      responderContactoDto.estado === ContactoEstado.RESUELTO &&
+      estadoAnterior !== ContactoEstado.RESUELTO
+    ) {
       try {
         await this.enviarEmailRespuesta(contactoActualizado);
         console.log(`✅ Email de respuesta enviado a: ${contacto.email}`);
@@ -91,7 +102,7 @@ export class ContactoService {
         // No fallar la operación principal si el email falla
       }
     }
-    
+
     return contactoActualizado;
   }
 
@@ -109,9 +120,9 @@ export class ContactoService {
           month: 'long',
           day: 'numeric',
           hour: '2-digit',
-          minute: '2-digit'
-        })
-      }
+          minute: '2-digit',
+        }),
+      },
     });
   }
 
@@ -130,9 +141,9 @@ export class ContactoService {
           month: 'long',
           day: 'numeric',
           hour: '2-digit',
-          minute: '2-digit'
-        })
-      }
+          minute: '2-digit',
+        }),
+      },
     });
   }
 }

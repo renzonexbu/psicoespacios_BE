@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Blog } from '../common/entities/blog.entity';
@@ -15,9 +19,9 @@ export class BlogsService {
 
   async findAll(): Promise<BlogResponseDto[]> {
     const blogs = await this.blogRepository.find({
-      order: { fecha: 'DESC', id: 'DESC' }
+      order: { fecha: 'DESC', id: 'DESC' },
     });
-    return blogs.map(blog => this.mapToResponseDto(blog));
+    return blogs.map((blog) => this.mapToResponseDto(blog));
   }
 
   async findOne(id: number): Promise<BlogResponseDto> {
@@ -31,7 +35,7 @@ export class BlogsService {
   async create(createBlogDto: CreateBlogDto): Promise<BlogResponseDto> {
     // Validar que no exista un blog con el mismo título
     const existingBlog = await this.blogRepository.findOne({
-      where: { titulo: createBlogDto.titulo }
+      where: { titulo: createBlogDto.titulo },
     });
 
     if (existingBlog) {
@@ -44,14 +48,17 @@ export class BlogsService {
     const blog = this.blogRepository.create({
       ...createBlogDto,
       fecha,
-      imagen: createBlogDto.imagen || undefined
+      imagen: createBlogDto.imagen || undefined,
     });
 
     const savedBlog = await this.blogRepository.save(blog);
     return this.mapToResponseDto(savedBlog);
   }
 
-  async update(id: number, updateBlogDto: UpdateBlogDto): Promise<BlogResponseDto> {
+  async update(
+    id: number,
+    updateBlogDto: UpdateBlogDto,
+  ): Promise<BlogResponseDto> {
     const blog = await this.blogRepository.findOneBy({ id });
     if (!blog) {
       throw new NotFoundException(`Blog con ID ${id} no encontrado`);
@@ -60,7 +67,7 @@ export class BlogsService {
     // Si se está actualizando el título, verificar que no exista otro blog con el mismo título
     if (updateBlogDto.titulo && updateBlogDto.titulo !== blog.titulo) {
       const existingBlog = await this.blogRepository.findOne({
-        where: { titulo: updateBlogDto.titulo }
+        where: { titulo: updateBlogDto.titulo },
       });
 
       if (existingBlog) {
@@ -71,7 +78,9 @@ export class BlogsService {
     await this.blogRepository.update(id, updateBlogDto);
     const updatedBlog = await this.blogRepository.findOneBy({ id });
     if (!updatedBlog) {
-      throw new NotFoundException(`Blog con ID ${id} no encontrado después de la actualización`);
+      throw new NotFoundException(
+        `Blog con ID ${id} no encontrado después de la actualización`,
+      );
     }
     return this.mapToResponseDto(updatedBlog);
   }
@@ -88,22 +97,25 @@ export class BlogsService {
   async findByCategory(categoria: string): Promise<BlogResponseDto[]> {
     const blogs = await this.blogRepository.find({
       where: { categoria },
-      order: { fecha: 'DESC', id: 'DESC' }
+      order: { fecha: 'DESC', id: 'DESC' },
     });
-    return blogs.map(blog => this.mapToResponseDto(blog));
+    return blogs.map((blog) => this.mapToResponseDto(blog));
   }
 
   async searchBlogs(searchTerm: string): Promise<BlogResponseDto[]> {
     const blogs = await this.blogRepository
       .createQueryBuilder('blog')
-      .where('blog.titulo ILIKE :searchTerm OR blog.descripcion ILIKE :searchTerm OR blog.contenido ILIKE :searchTerm', {
-        searchTerm: `%${searchTerm}%`
-      })
+      .where(
+        'blog.titulo ILIKE :searchTerm OR blog.descripcion ILIKE :searchTerm OR blog.contenido ILIKE :searchTerm',
+        {
+          searchTerm: `%${searchTerm}%`,
+        },
+      )
       .orderBy('blog.fecha', 'DESC')
       .addOrderBy('blog.id', 'DESC')
       .getMany();
 
-    return blogs.map(blog => this.mapToResponseDto(blog));
+    return blogs.map((blog) => this.mapToResponseDto(blog));
   }
 
   private mapToResponseDto(blog: Blog): BlogResponseDto {
@@ -114,7 +126,7 @@ export class BlogsService {
       imagen: blog.imagen,
       fecha: blog.fecha,
       categoria: blog.categoria,
-      contenido: blog.contenido
+      contenido: blog.contenido,
     };
   }
-} 
+}

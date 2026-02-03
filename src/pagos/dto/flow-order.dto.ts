@@ -1,4 +1,10 @@
-import { IsNumber, IsString, IsNotEmpty, IsUUID, IsEnum } from 'class-validator';
+import {
+  IsNumber,
+  IsString,
+  IsNotEmpty,
+  IsUUID,
+  IsEnum,
+} from 'class-validator';
 import { TipoPago } from '../../common/entities/pago.entity';
 
 export class CreateFlowOrderDto {
@@ -21,4 +27,4 @@ export class CreateFlowOrderDto {
   @IsEnum(TipoPago)
   @IsNotEmpty()
   tipo: TipoPago;
-} 
+}

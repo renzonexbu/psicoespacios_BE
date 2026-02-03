@@ -8,8 +8,11 @@ export class PsicologosTables1716911400000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Verificar si ya existe la tabla de psicólogos
-    const psicologosTableExists = await this.checkIfTableExists(queryRunner, 'psicologos');
-    
+    const psicologosTableExists = await this.checkIfTableExists(
+      queryRunner,
+      'psicologos',
+    );
+
     if (!psicologosTableExists) {
       // Crear tabla de psicólogos
       await queryRunner.query(`
@@ -25,9 +28,12 @@ export class PsicologosTables1716911400000 implements MigrationInterface {
           CONSTRAINT "PK_psicologos" PRIMARY KEY ("id")
         )
       `);
-      
+
       // Añadir relación con la tabla de usuarios si existe
-      const usersTableExists = await this.checkIfTableExists(queryRunner, 'users');
+      const usersTableExists = await this.checkIfTableExists(
+        queryRunner,
+        'users',
+      );
       if (usersTableExists) {
         await queryRunner.query(`
           ALTER TABLE "psicologos" ADD CONSTRAINT "FK_psicologos_users"
@@ -37,8 +43,11 @@ export class PsicologosTables1716911400000 implements MigrationInterface {
     }
 
     // Verificar si ya existe la tabla de disponibilidad
-    const disponibilidadTableExists = await this.checkIfTableExists(queryRunner, 'disponibilidad_psicologos');
-    
+    const disponibilidadTableExists = await this.checkIfTableExists(
+      queryRunner,
+      'disponibilidad_psicologos',
+    );
+
     if (!disponibilidadTableExists) {
       // Crear tabla de disponibilidad
       await queryRunner.query(`
@@ -55,7 +64,7 @@ export class PsicologosTables1716911400000 implements MigrationInterface {
             REFERENCES "psicologos"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         )
       `);
-      
+
       // Crear índice para búsquedas eficientes
       await queryRunner.query(`
         CREATE INDEX "IDX_disponibilidad_fecha_psicologo" ON "disponibilidad_psicologos" ("fecha", "psicologoId")
@@ -63,8 +72,11 @@ export class PsicologosTables1716911400000 implements MigrationInterface {
     }
 
     // Verificar si ya existe la tabla de reservas
-    const reservasTableExists = await this.checkIfTableExists(queryRunner, 'reservas_psicologos');
-    
+    const reservasTableExists = await this.checkIfTableExists(
+      queryRunner,
+      'reservas_psicologos',
+    );
+
     if (!reservasTableExists) {
       // Crear tabla de reservas para psicólogos
       await queryRunner.query(`
@@ -84,12 +96,12 @@ export class PsicologosTables1716911400000 implements MigrationInterface {
             REFERENCES "psicologos"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         )
       `);
-      
+
       // Crear índice para búsquedas eficientes
       await queryRunner.query(`
         CREATE INDEX "IDX_reservas_psicologo_fecha" ON "reservas_psicologos" ("psicologoId", "fecha")
       `);
-      
+
       // Crear índice para búsquedas por paciente
       await queryRunner.query(`
         CREATE INDEX "IDX_reservas_paciente" ON "reservas_psicologos" ("pacienteId")
@@ -107,7 +119,10 @@ export class PsicologosTables1716911400000 implements MigrationInterface {
   /**
    * Verifica si una tabla existe en la base de datos
    */
-  private async checkIfTableExists(queryRunner: QueryRunner, tableName: string): Promise<boolean> {
+  private async checkIfTableExists(
+    queryRunner: QueryRunner,
+    tableName: string,
+  ): Promise<boolean> {
     const result = await queryRunner.query(`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
@@ -115,7 +130,7 @@ export class PsicologosTables1716911400000 implements MigrationInterface {
         AND table_name = '${tableName}'
       );
     `);
-    
+
     return result[0].exists;
   }
 }

@@ -3,7 +3,10 @@ import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
-import { verifyAndFixDatabaseStructure, AppDataSource } from './db-structure-verify';
+import {
+  verifyAndFixDatabaseStructure,
+  AppDataSource,
+} from './db-structure-verify';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -13,15 +16,15 @@ export async function runMigrations() {
   try {
     // Primero verificar y corregir la estructura de la base de datos
     await verifyAndFixDatabaseStructure();
-    
+
     console.log('Iniciando conexión a la base de datos...');
     await AppDataSource.initialize();
     console.log('Conexión establecida correctamente.');
-    
+
     console.log('Ejecutando migraciones...');
     await AppDataSource.runMigrations({ transaction: 'all' });
     console.log('Migraciones ejecutadas correctamente.');
-    
+
     return { success: true, message: 'Migraciones completadas con éxito' };
   } catch (error) {
     console.error('Error al ejecutar migraciones:', error);

@@ -24,7 +24,7 @@ export class AddDeletedAtToVoucher1720800016000 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Eliminar índice
     await queryRunner.query(`DROP INDEX "IDX_voucher_deletedAt"`);
-    
+
     // Eliminar columna
     await queryRunner.query(`
       ALTER TABLE "voucher" 
@@ -32,5 +32,3 @@ export class AddDeletedAtToVoucher1720800016000 implements MigrationInterface {
     `);
   }
 }
-
-

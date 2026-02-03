@@ -1,46 +1,72 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddMatchingSystem1703609400000 implements MigrationInterface {
-    name = 'AddMatchingSystem1703609400000';
+  name = 'AddMatchingSystem1703609400000';
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        // 1. Crear extensión UUID si no existe
-        await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    // 1. Crear extensión UUID si no existe
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
-        // 2. Actualizar tabla users - hacer campos obligatorios
-        await queryRunner.query(`UPDATE users SET rut = 'PENDIENTE' WHERE rut IS NULL`);
-        await queryRunner.query(`ALTER TABLE users ALTER COLUMN rut SET NOT NULL`);
-        
-        await queryRunner.query(`UPDATE users SET telefono = 'PENDIENTE' WHERE telefono IS NULL`);
-        await queryRunner.query(`ALTER TABLE users ALTER COLUMN telefono SET NOT NULL`);
-        
-        await queryRunner.query(`UPDATE users SET "fechaNacimiento" = '1990-01-01' WHERE "fechaNacimiento" IS NULL`);
-        await queryRunner.query(`ALTER TABLE users ALTER COLUMN "fechaNacimiento" SET NOT NULL`);
-        await queryRunner.query(`ALTER TABLE users ALTER COLUMN "fechaNacimiento" TYPE date`);
+    // 2. Actualizar tabla users - hacer campos obligatorios
+    await queryRunner.query(
+      `UPDATE users SET rut = 'PENDIENTE' WHERE rut IS NULL`,
+    );
+    await queryRunner.query(`ALTER TABLE users ALTER COLUMN rut SET NOT NULL`);
 
-        // 3. Añadir fotoUrl a users
-        await queryRunner.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS "fotoUrl" character varying`);
+    await queryRunner.query(
+      `UPDATE users SET telefono = 'PENDIENTE' WHERE telefono IS NULL`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE users ALTER COLUMN telefono SET NOT NULL`,
+    );
 
-        // 4. Actualizar enum users_role_enum si es necesario
-        const roleEnumExists = await queryRunner.query(`
+    await queryRunner.query(
+      `UPDATE users SET "fechaNacimiento" = '1990-01-01' WHERE "fechaNacimiento" IS NULL`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE users ALTER COLUMN "fechaNacimiento" SET NOT NULL`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE users ALTER COLUMN "fechaNacimiento" TYPE date`,
+    );
+
+    // 3. Añadir fotoUrl a users
+    await queryRunner.query(
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS "fotoUrl" character varying`,
+    );
+
+    // 4. Actualizar enum users_role_enum si es necesario
+    const roleEnumExists = await queryRunner.query(`
             SELECT EXISTS (
                 SELECT 1 FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid 
                 WHERE t.typname = 'users_role_enum' AND e.enumlabel = 'USUARIO'
             )
         `);
 
-        if (roleEnumExists[0].exists) {
-            await queryRunner.query(`ALTER TABLE users ALTER COLUMN role DROP DEFAULT`);
-            await queryRunner.query(`ALTER TABLE users ALTER COLUMN role TYPE VARCHAR`);
-            await queryRunner.query(`UPDATE users SET role = 'PACIENTE' WHERE role = 'USUARIO'`);
-            await queryRunner.query(`DROP TYPE users_role_enum CASCADE`);
-            await queryRunner.query(`CREATE TYPE users_role_enum AS ENUM ('ADMIN', 'PSICOLOGO', 'PACIENTE')`);
-            await queryRunner.query(`ALTER TABLE users ALTER COLUMN role TYPE users_role_enum USING role::users_role_enum`);
-            await queryRunner.query(`ALTER TABLE users ALTER COLUMN role SET DEFAULT 'PACIENTE'::users_role_enum`);
-        }
+    if (roleEnumExists[0].exists) {
+      await queryRunner.query(
+        `ALTER TABLE users ALTER COLUMN role DROP DEFAULT`,
+      );
+      await queryRunner.query(
+        `ALTER TABLE users ALTER COLUMN role TYPE VARCHAR`,
+      );
+      await queryRunner.query(
+        `UPDATE users SET role = 'PACIENTE' WHERE role = 'USUARIO'`,
+      );
+      await queryRunner.query(`DROP TYPE users_role_enum CASCADE`);
+      await queryRunner.query(
+        `CREATE TYPE users_role_enum AS ENUM ('ADMIN', 'PSICOLOGO', 'PACIENTE')`,
+      );
+      await queryRunner.query(
+        `ALTER TABLE users ALTER COLUMN role TYPE users_role_enum USING role::users_role_enum`,
+      );
+      await queryRunner.query(
+        `ALTER TABLE users ALTER COLUMN role SET DEFAULT 'PACIENTE'::users_role_enum`,
+      );
+    }
 
-        // 5. Crear tabla psicologo
-        await queryRunner.query(`
+    // 5. Crear tabla psicologo
+    await queryRunner.query(`
             CREATE TABLE IF NOT EXISTS "psicologo" (
                 "id" uuid DEFAULT uuid_generate_v4() NOT NULL,
                 "usuarioId" uuid NOT NULL,
@@ -62,46 +88,52 @@ export class AddMatchingSystem1703609400000 implements MigrationInterface {
             )
         `);
 
-        // 6. Eliminar y crear tabla pacientes de forma limpia
-        // await queryRunner.query(`DROP TABLE IF EXISTS pacientes CASCADE`);
+    // 6. Eliminar y crear tabla pacientes de forma limpia
+    // await queryRunner.query(`DROP TABLE IF EXISTS pacientes CASCADE`);
 
-        // Crear nueva tabla pacientes
-        // await queryRunner.query(`
-        //     CREATE TABLE IF NOT EXISTS "pacientes" (
-        //         "id" uuid DEFAULT uuid_generate_v4() NOT NULL,
-        //         "usuarioId" uuid NOT NULL,
-        //         "diagnosticos" text[] DEFAULT '{}',
-        //         "temas" text[] DEFAULT '{}',
-        //         "estilo_esperado" text[] DEFAULT '{}',
-        //         "afinidad" text[] DEFAULT '{}',
-        //         "preferencias" jsonb,
-        //         "estado" character varying DEFAULT 'ACTIVO' NOT NULL,
-        //         "notas" text,
-        //         "createdAt" timestamp DEFAULT now() NOT NULL,
-        //         "updatedAt" timestamp DEFAULT now() NOT NULL,
-        //         CONSTRAINT "PK_pacientes" PRIMARY KEY ("id"),
-        //         CONSTRAINT "UQ_pacientes_usuario" UNIQUE ("usuarioId"),
-        //         CONSTRAINT "FK_pacientes_usuario" FOREIGN KEY ("usuarioId") REFERENCES "users"("id") ON DELETE CASCADE
-        //     )
-        // `);
+    // Crear nueva tabla pacientes
+    // await queryRunner.query(`
+    //     CREATE TABLE IF NOT EXISTS "pacientes" (
+    //         "id" uuid DEFAULT uuid_generate_v4() NOT NULL,
+    //         "usuarioId" uuid NOT NULL,
+    //         "diagnosticos" text[] DEFAULT '{}',
+    //         "temas" text[] DEFAULT '{}',
+    //         "estilo_esperado" text[] DEFAULT '{}',
+    //         "afinidad" text[] DEFAULT '{}',
+    //         "preferencias" jsonb,
+    //         "estado" character varying DEFAULT 'ACTIVO' NOT NULL,
+    //         "notas" text,
+    //         "createdAt" timestamp DEFAULT now() NOT NULL,
+    //         "updatedAt" timestamp DEFAULT now() NOT NULL,
+    //         CONSTRAINT "PK_pacientes" PRIMARY KEY ("id"),
+    //         CONSTRAINT "UQ_pacientes_usuario" UNIQUE ("usuarioId"),
+    //         CONSTRAINT "FK_pacientes_usuario" FOREIGN KEY ("usuarioId") REFERENCES "users"("id") ON DELETE CASCADE
+    //     )
+    // `);
 
-        // 7. Crear índices para performance
-        await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_psicologo_usuario ON psicologo("usuarioId")`);
-        await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)`);
-    }
+    // 7. Crear índices para performance
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_psicologo_usuario ON psicologo("usuarioId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)`,
+    );
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        // Reversar cambios
-        await queryRunner.query(`DROP INDEX IF EXISTS idx_users_role`);
-        await queryRunner.query(`DROP INDEX IF EXISTS idx_psicologo_usuario`);
-        // await queryRunner.query(`DROP INDEX IF EXISTS idx_pacientes_usuario`);
-        // await queryRunner.query(`DROP TABLE IF EXISTS pacientes CASCADE`);
-        await queryRunner.query(`DROP TABLE IF EXISTS psicologo CASCADE`);
-        await queryRunner.query(`ALTER TABLE users DROP COLUMN IF EXISTS "fotoUrl"`);
-        
-        // Revertir campos obligatorios (opcional, puede causar problemas con datos existentes)
-        // await queryRunner.query(`ALTER TABLE users ALTER COLUMN rut DROP NOT NULL`);
-        // await queryRunner.query(`ALTER TABLE users ALTER COLUMN telefono DROP NOT NULL`);
-        // await queryRunner.query(`ALTER TABLE users ALTER COLUMN "fechaNacimiento" DROP NOT NULL`);
-    }
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    // Reversar cambios
+    await queryRunner.query(`DROP INDEX IF EXISTS idx_users_role`);
+    await queryRunner.query(`DROP INDEX IF EXISTS idx_psicologo_usuario`);
+    // await queryRunner.query(`DROP INDEX IF EXISTS idx_pacientes_usuario`);
+    // await queryRunner.query(`DROP TABLE IF EXISTS pacientes CASCADE`);
+    await queryRunner.query(`DROP TABLE IF EXISTS psicologo CASCADE`);
+    await queryRunner.query(
+      `ALTER TABLE users DROP COLUMN IF EXISTS "fotoUrl"`,
+    );
+
+    // Revertir campos obligatorios (opcional, puede causar problemas con datos existentes)
+    // await queryRunner.query(`ALTER TABLE users ALTER COLUMN rut DROP NOT NULL`);
+    // await queryRunner.query(`ALTER TABLE users ALTER COLUMN telefono DROP NOT NULL`);
+    // await queryRunner.query(`ALTER TABLE users ALTER COLUMN "fechaNacimiento" DROP NOT NULL`);
+  }
 }

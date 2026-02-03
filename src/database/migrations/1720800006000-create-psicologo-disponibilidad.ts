@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreatePsicologoDisponibilidad1720800006000 implements MigrationInterface {
+export class CreatePsicologoDisponibilidad1720800006000
+  implements MigrationInterface
+{
   name = 'CreatePsicologoDisponibilidad1720800006000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -29,7 +31,9 @@ export class CreatePsicologoDisponibilidad1720800006000 implements MigrationInte
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX "IDX_psicologo_disponibilidad_psicologo"`);
+    await queryRunner.query(
+      `DROP INDEX "IDX_psicologo_disponibilidad_psicologo"`,
+    );
     await queryRunner.query(`DROP TABLE "psicologo_disponibilidad"`);
   }
-} 
+}

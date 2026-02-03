@@ -1,4 +1,12 @@
-import { IsEnum, IsNumber, IsOptional, IsString, IsUUID, Min, IsObject } from 'class-validator';
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+  IsObject,
+} from 'class-validator';
 import { TipoPago, MetodoPago } from '../../common/entities/pago.entity';
 
 export class CreatePagoDto {
@@ -53,16 +61,3 @@ export class CreatePagoDto {
   @IsObject()
   metadatos?: Record<string, any>;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

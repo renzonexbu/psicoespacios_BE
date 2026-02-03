@@ -1,6 +1,11 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import { extname } from 'path';
@@ -48,20 +53,35 @@ export class BackblazeService {
 
   constructor(private readonly configService: ConfigService) {
     // Configuración de Backblaze B2
-    this.bucketName = this.configService.get<string>('BACKBLAZE_BUCKET_NAME', 'psicoespacios-uploads');
-    this.region = this.configService.get<string>('BACKBLAZE_REGION', 'us-west-002');
-    this.endpoint = this.configService.get<string>('BACKBLAZE_ENDPOINT', 'https://s3.us-west-002.backblazeb2.com');
+    this.bucketName = this.configService.get<string>(
+      'BACKBLAZE_BUCKET_NAME',
+      'psicoespacios-uploads',
+    );
+    this.region = this.configService.get<string>(
+      'BACKBLAZE_REGION',
+      'us-west-002',
+    );
+    this.endpoint = this.configService.get<string>(
+      'BACKBLAZE_ENDPOINT',
+      'https://s3.us-west-002.backblazeb2.com',
+    );
 
     // Obtener credenciales
-    const accessKeyId = this.configService.get<string>('BACKBLAZE_ACCESS_KEY_ID') || 
-                       this.configService.get<string>('BACKBLAZE_ACCOUNT_ID');
-    const secretAccessKey = this.configService.get<string>('BACKBLAZE_SECRET_ACCESS_KEY') || 
-                           this.configService.get<string>('BACKBLAZE_APPLICATION_KEY');
+    const accessKeyId =
+      this.configService.get<string>('BACKBLAZE_ACCESS_KEY_ID') ||
+      this.configService.get<string>('BACKBLAZE_ACCOUNT_ID');
+    const secretAccessKey =
+      this.configService.get<string>('BACKBLAZE_SECRET_ACCESS_KEY') ||
+      this.configService.get<string>('BACKBLAZE_APPLICATION_KEY');
 
     if (!accessKeyId || !secretAccessKey) {
       this.logger.warn('Credenciales de Backblaze B2 no configuradas');
-      this.logger.warn('Variables requeridas: BACKBLAZE_ACCESS_KEY_ID y BACKBLAZE_SECRET_ACCESS_KEY');
-      this.logger.warn('O alternativas: BACKBLAZE_ACCOUNT_ID y BACKBLAZE_APPLICATION_KEY');
+      this.logger.warn(
+        'Variables requeridas: BACKBLAZE_ACCESS_KEY_ID y BACKBLAZE_SECRET_ACCESS_KEY',
+      );
+      this.logger.warn(
+        'O alternativas: BACKBLAZE_ACCOUNT_ID y BACKBLAZE_APPLICATION_KEY',
+      );
     }
 
     // Crear cliente S3 para Backblaze B2
@@ -75,8 +95,12 @@ export class BackblazeService {
       forcePathStyle: true, // Necesario para Backblaze B2
     });
 
-    this.logger.log(`Backblaze B2 configurado - Bucket: ${this.bucketName}, Endpoint: ${this.endpoint}`);
-    this.logger.log(`Credenciales configuradas - AccessKey: ${accessKeyId ? '✅ Configurada' : '❌ No configurada'}, SecretKey: ${secretAccessKey ? '✅ Configurada' : '❌ No configurada'}`);
+    this.logger.log(
+      `Backblaze B2 configurado - Bucket: ${this.bucketName}, Endpoint: ${this.endpoint}`,
+    );
+    this.logger.log(
+      `Credenciales configuradas - AccessKey: ${accessKeyId ? '✅ Configurada' : '❌ No configurada'}, SecretKey: ${secretAccessKey ? '✅ Configurada' : '❌ No configurada'}`,
+    );
   }
 
   /**
@@ -84,7 +108,7 @@ export class BackblazeService {
    */
   async uploadFile(
     file: MulterFile,
-    folder: string = 'general'
+    folder: string = 'general',
   ): Promise<UploadResult> {
     try {
       // Validar archivo
@@ -98,7 +122,9 @@ export class BackblazeService {
       const key = `${folder}/${uniqueFilename}`;
 
       this.logger.log(`Subiendo archivo: ${file.originalname} -> ${key}`);
-      this.logger.log(`Configuración actual - Bucket: ${this.bucketName}, Region: ${this.region}, Endpoint: ${this.endpoint}`);
+      this.logger.log(
+        `Configuración actual - Bucket: ${this.bucketName}, Region: ${this.region}, Endpoint: ${this.endpoint}`,
+      );
 
       // Crear comando para subir archivo
       const uploadCommand = new PutObjectCommand({
@@ -114,7 +140,7 @@ export class BackblazeService {
       });
 
       this.logger.log(`Comando de upload creado, enviando a Backblaze...`);
-      
+
       // Subir archivo
       await this.s3Client.send(uploadCommand);
 
@@ -133,7 +159,6 @@ export class BackblazeService {
 
       this.logger.log(`Archivo subido exitosamente: ${url}`);
       return result;
-
     } catch (error) {
       this.logger.error(`Error subiendo archivo: ${error.message}`);
       throw new BadRequestException(`Error al subir archivo: ${error.message}`);
@@ -154,17 +179,21 @@ export class BackblazeService {
 
       await this.s3Client.send(deleteCommand);
       this.logger.log(`Archivo eliminado exitosamente: ${key}`);
-
     } catch (error) {
       this.logger.error(`Error eliminando archivo: ${error.message}`);
-      throw new BadRequestException(`Error al eliminar archivo: ${error.message}`);
+      throw new BadRequestException(
+        `Error al eliminar archivo: ${error.message}`,
+      );
     }
   }
 
   /**
    * Generar URL firmada temporal para acceso privado
    */
-  async generateSignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
+  async generateSignedUrl(
+    key: string,
+    expiresIn: number = 3600,
+  ): Promise<string> {
     try {
       const command = new GetObjectCommand({
         Bucket: this.bucketName,
@@ -178,7 +207,9 @@ export class BackblazeService {
       return signedUrl;
     } catch (error) {
       this.logger.error(`Error generando URL firmada: ${error.message}`);
-      throw new BadRequestException(`Error al generar URL firmada: ${error.message}`);
+      throw new BadRequestException(
+        `Error al generar URL firmada: ${error.message}`,
+      );
     }
   }
 
@@ -214,7 +245,7 @@ export class BackblazeService {
       });
 
       const response = await this.s3Client.send(command);
-      
+
       if (!response.Metadata) {
         return null;
       }
@@ -237,10 +268,13 @@ export class BackblazeService {
   /**
    * Listar archivos en un folder
    */
-  async listFiles(folder: string = '', maxKeys: number = 100): Promise<string[]> {
+  async listFiles(
+    folder: string = '',
+    maxKeys: number = 100,
+  ): Promise<string[]> {
     try {
       const { ListObjectsV2Command } = await import('@aws-sdk/client-s3');
-      
+
       const command = new ListObjectsV2Command({
         Bucket: this.bucketName,
         Prefix: folder,
@@ -248,11 +282,11 @@ export class BackblazeService {
       });
 
       const response = await this.s3Client.send(command);
-      
-      return response.Contents?.map(obj => obj.Key || '') || [];
+
+      return response.Contents?.map((obj) => obj.Key || '') || [];
     } catch (error) {
       this.logger.error(`Error listando archivos: ${error.message}`);
       return [];
     }
   }
-} 
+}

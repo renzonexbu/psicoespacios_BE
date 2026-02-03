@@ -1,4 +1,16 @@
-import { IsUUID, IsString, IsNumber, IsDateString, IsInt, Min, Max, IsNotEmpty, IsBoolean, ValidateIf, IsOptional } from 'class-validator';
+import {
+  IsUUID,
+  IsString,
+  IsNumber,
+  IsDateString,
+  IsInt,
+  Min,
+  Max,
+  IsNotEmpty,
+  IsBoolean,
+  ValidateIf,
+  IsOptional,
+} from 'class-validator';
 
 export class CreateVoucherDto {
   @IsString()
@@ -54,4 +66,4 @@ export class UpdateVoucherDto {
   @IsInt()
   @Min(0)
   usosActuales?: number;
-} 
+}

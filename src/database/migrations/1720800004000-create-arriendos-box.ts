@@ -90,4 +90,4 @@ export class CreateArriendosBox1720800004000 implements MigrationInterface {
     await queryRunner.query(`DROP TYPE "public"."estado_arriendo_enum"`);
     await queryRunner.query(`DROP TYPE "public"."tipo_arriendo_enum"`);
   }
-} 
+}

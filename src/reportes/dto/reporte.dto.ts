@@ -1,5 +1,8 @@
 import { IsNotEmpty, IsEnum, IsObject, IsOptional } from 'class-validator';
-import { TipoReporte, FormatoReporte } from '../../common/entities/reporte.entity';
+import {
+  TipoReporte,
+  FormatoReporte,
+} from '../../common/entities/reporte.entity';
 
 export class CreateReporteDto {
   @IsEnum(TipoReporte)

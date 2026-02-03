@@ -1,4 +1,13 @@
-import { Controller, Post, UploadedFile, UseInterceptors, BadRequestException, Delete, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+  BadRequestException,
+  Delete,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { File as MulterFile } from 'multer';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { BackblazeService } from './services/backblaze.service';
@@ -20,10 +29,10 @@ export class UploadsController {
         'image/jpg',
         'image/png',
         'image/gif',
-        'image/webp'
+        'image/webp',
       ],
-      folder: 'images'
-    })
+      folder: 'images',
+    }),
   )
   async uploadImage(@UploadedFile() file: MulterFile) {
     if (!file) {
@@ -35,7 +44,7 @@ export class UploadsController {
       return {
         success: true,
         ...result,
-        message: 'Imagen subida exitosamente'
+        message: 'Imagen subida exitosamente',
       };
     } catch (error) {
       throw new BadRequestException(`Error al subir imagen: ${error.message}`);
@@ -48,8 +57,8 @@ export class UploadsController {
       fieldName: 'file',
       maxFileSize: 10 * 1024 * 1024, // 10MB
       allowedMimeTypes: ['application/pdf'],
-      folder: 'pdfs'
-    })
+      folder: 'pdfs',
+    }),
   )
   async uploadPdf(@UploadedFile() file: MulterFile) {
     if (!file) {
@@ -61,17 +70,17 @@ export class UploadsController {
         originalname: file.originalname,
         mimetype: file.mimetype,
         size: file.size,
-        bufferLength: file.buffer?.length
+        bufferLength: file.buffer?.length,
       });
 
       const result = await this.backblazeService.uploadFile(file, 'pdfs');
-      
+
       console.log('[UploadsController] Archivo subido exitosamente:', result);
-      
+
       return {
         success: true,
         ...result,
-        message: 'PDF subido exitosamente'
+        message: 'PDF subido exitosamente',
       };
     } catch (error) {
       console.error('[UploadsController] Error al subir PDF:', error);
@@ -89,10 +98,10 @@ export class UploadsController {
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       ],
-      folder: 'documents'
-    })
+      folder: 'documents',
+    }),
   )
   async uploadDocument(@UploadedFile() file: MulterFile) {
     if (!file) {
@@ -104,10 +113,12 @@ export class UploadsController {
       return {
         success: true,
         ...result,
-        message: 'Documento subido exitosamente'
+        message: 'Documento subido exitosamente',
       };
     } catch (error) {
-      throw new BadRequestException(`Error al subir documento: ${error.message}`);
+      throw new BadRequestException(
+        `Error al subir documento: ${error.message}`,
+      );
     }
   }
 
@@ -116,13 +127,9 @@ export class UploadsController {
     BackblazeUploadInterceptor({
       fieldName: 'file',
       maxFileSize: 3 * 1024 * 1024, // 3MB
-      allowedMimeTypes: [
-        'image/jpeg',
-        'image/jpg',
-        'image/png'
-      ],
-      folder: 'profile-images'
-    })
+      allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png'],
+      folder: 'profile-images',
+    }),
   )
   async uploadProfileImage(@UploadedFile() file: MulterFile) {
     if (!file) {
@@ -130,14 +137,19 @@ export class UploadsController {
     }
 
     try {
-      const result = await this.backblazeService.uploadFile(file, 'profile-images');
+      const result = await this.backblazeService.uploadFile(
+        file,
+        'profile-images',
+      );
       return {
         success: true,
         ...result,
-        message: 'Imagen de perfil subida exitosamente'
+        message: 'Imagen de perfil subida exitosamente',
       };
     } catch (error) {
-      throw new BadRequestException(`Error al subir imagen de perfil: ${error.message}`);
+      throw new BadRequestException(
+        `Error al subir imagen de perfil: ${error.message}`,
+      );
     }
   }
 
@@ -147,10 +159,12 @@ export class UploadsController {
       await this.backblazeService.deleteFile(key);
       return {
         success: true,
-        message: 'Archivo eliminado exitosamente'
+        message: 'Archivo eliminado exitosamente',
       };
     } catch (error) {
-      throw new BadRequestException(`Error al eliminar archivo: ${error.message}`);
+      throw new BadRequestException(
+        `Error al eliminar archivo: ${error.message}`,
+      );
     }
   }
 
@@ -162,7 +176,7 @@ export class UploadsController {
       mimetype: file?.mimetype,
       size: file?.size,
       bufferLength: file?.buffer?.length,
-      fieldname: file?.fieldname
+      fieldname: file?.fieldname,
     });
 
     return {
@@ -172,8 +186,8 @@ export class UploadsController {
         originalname: file?.originalname,
         mimetype: file?.mimetype,
         size: file?.size,
-        bufferLength: file?.buffer?.length
-      }
+        bufferLength: file?.buffer?.length,
+      },
     };
   }
 
@@ -185,25 +199,34 @@ export class UploadsController {
     }
 
     try {
-      console.log('[UploadsController] Test directo Backblaze - Archivo recibido:', {
-        originalname: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size,
-        bufferLength: file.buffer?.length
-      });
+      console.log(
+        '[UploadsController] Test directo Backblaze - Archivo recibido:',
+        {
+          originalname: file.originalname,
+          mimetype: file.mimetype,
+          size: file.size,
+          bufferLength: file.buffer?.length,
+        },
+      );
 
       // Usar directamente el servicio de Backblaze
       const result = await this.backblazeService.uploadFile(file, 'test');
-      
-      console.log('[UploadsController] Test directo Backblaze - Resultado:', result);
-      
+
+      console.log(
+        '[UploadsController] Test directo Backblaze - Resultado:',
+        result,
+      );
+
       return {
         success: true,
         message: 'Test directo Backblaze completado',
-        result
+        result,
       };
     } catch (error) {
-      console.error('[UploadsController] Error en test directo Backblaze:', error);
+      console.error(
+        '[UploadsController] Error en test directo Backblaze:',
+        error,
+      );
       throw new BadRequestException(`Error en test directo: ${error.message}`);
     }
   }
@@ -215,10 +238,12 @@ export class UploadsController {
       return {
         success: true,
         signedUrl,
-        expiresIn: 3600 // 1 hora
+        expiresIn: 3600, // 1 hora
       };
     } catch (error) {
-      throw new BadRequestException(`Error al generar URL firmada: ${error.message}`);
+      throw new BadRequestException(
+        `Error al generar URL firmada: ${error.message}`,
+      );
     }
   }
-} 
+}

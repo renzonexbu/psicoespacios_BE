@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { PackAsignacion } from './pack-asignacion.entity';
 import { Box } from '../../common/entities/box.entity';
 
@@ -31,13 +37,3 @@ export class PackAsignacionHorario {
   @JoinColumn({ name: 'boxId' })
   box: Box;
 }
-
-
-
-
-
-
-
-
-
-

@@ -1,7 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Pago, TipoPago, EstadoPago, MetodoPago, DatosTransaccion } from '../../common/entities/pago.entity';
+import {
+  Pago,
+  TipoPago,
+  EstadoPago,
+  MetodoPago,
+  DatosTransaccion,
+} from '../../common/entities/pago.entity';
 import { User } from '../../common/entities/user.entity';
 import { Suscripcion } from '../../common/entities/suscripcion.entity';
 import { SolicitudDerivacion } from '../../common/entities/solicitud-derivacion.entity';
@@ -38,7 +48,7 @@ export class PagosService {
     }
 
     const metodoPago = Object.values(MetodoPago).find(
-      m => m === createPagoDto.datosTransaccion.metodoPago
+      (m) => m === createPagoDto.datosTransaccion.metodoPago,
     );
 
     if (!metodoPago) {
@@ -55,7 +65,7 @@ export class PagosService {
       referencia: createPagoDto.datosTransaccion.referencia,
       datosTarjeta: createPagoDto.datosTransaccion.datosTarjeta,
       datosTransferencia: createPagoDto.datosTransaccion.datosTransferencia,
-      fechaTransaccion: new Date()
+      fechaTransaccion: new Date(),
     } as DatosTransaccion;
     pago.estado = EstadoPago.PENDIENTE;
 
@@ -71,16 +81,17 @@ export class PagosService {
       throw new NotFoundException('Usuario no encontrado');
     }
 
-    const solicitudDerivacion = await this.solicitudDerivacionRepository.findOne({
-      where: { id: createPagoDto.solicitudDerivacionId },
-    });
+    const solicitudDerivacion =
+      await this.solicitudDerivacionRepository.findOne({
+        where: { id: createPagoDto.solicitudDerivacionId },
+      });
 
     if (!solicitudDerivacion) {
       throw new NotFoundException('Solicitud de derivación no encontrada');
     }
 
     const metodoPago = Object.values(MetodoPago).find(
-      m => m === createPagoDto.datosTransaccion.metodoPago
+      (m) => m === createPagoDto.datosTransaccion.metodoPago,
     );
 
     if (!metodoPago) {
@@ -97,7 +108,7 @@ export class PagosService {
       referencia: createPagoDto.datosTransaccion.referencia,
       datosTarjeta: createPagoDto.datosTransaccion.datosTarjeta,
       datosTransferencia: createPagoDto.datosTransaccion.datosTransferencia,
-      fechaTransaccion: new Date()
+      fechaTransaccion: new Date(),
     } as DatosTransaccion;
     pago.estado = EstadoPago.PENDIENTE;
 
@@ -134,7 +145,9 @@ export class PagosService {
     }
 
     if (pago.estado !== EstadoPago.COMPLETADO) {
-      throw new BadRequestException('Solo se pueden reembolsar pagos completados');
+      throw new BadRequestException(
+        'Solo se pueden reembolsar pagos completados',
+      );
     }
 
     pago.estado = EstadoPago.REEMBOLSADO;
@@ -154,9 +167,9 @@ export class PagosService {
 
   async findOne(id: string, userId: string) {
     const pago = await this.pagoRepository.findOne({
-      where: { 
+      where: {
         id,
-        usuario: { id: userId }
+        usuario: { id: userId },
       },
       relations: ['usuario', 'suscripcion', 'solicitudDerivacion'],
     });

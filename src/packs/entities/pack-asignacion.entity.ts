@@ -1,10 +1,19 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { PackHora } from './pack-hora.entity';
 import { User } from '../../common/entities/user.entity';
 
 export enum EstadoPackAsignacion {
   ACTIVA = 'ACTIVA',
-  CANCELADA = 'CANCELADA'
+  CANCELADA = 'CANCELADA',
 }
 
 @Entity('packs_asignaciones')
@@ -26,7 +35,11 @@ export class PackAsignacion {
   @JoinColumn({ name: 'usuarioId' })
   usuario: User;
 
-  @Column({ type: 'enum', enum: EstadoPackAsignacion, default: EstadoPackAsignacion.ACTIVA })
+  @Column({
+    type: 'enum',
+    enum: EstadoPackAsignacion,
+    default: EstadoPackAsignacion.ACTIVA,
+  })
   estado: EstadoPackAsignacion;
 
   @Column({ type: 'boolean', default: true })
@@ -38,19 +51,11 @@ export class PackAsignacion {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => PackAsignacionHorario, (h) => h.asignacion, { cascade: true })
+  @OneToMany(() => PackAsignacionHorario, (h) => h.asignacion, {
+    cascade: true,
+  })
   horarios: PackAsignacionHorario[];
 }
 
 // forward import to avoid circular require issues in TS transpile order
 import { PackAsignacionHorario } from './pack-asignacion-horario.entity';
-
-
-
-
-
-
-
-
-
-

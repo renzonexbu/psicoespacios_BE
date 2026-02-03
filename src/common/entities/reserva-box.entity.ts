@@ -1,10 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 export enum EstadoReservaBox {
   PENDIENTE = 'pendiente',
   CONFIRMADA = 'confirmada',
   CANCELADA = 'cancelada',
-  COMPLETADA = 'completada'
+  COMPLETADA = 'completada',
 }
 
 @Entity('reservas_boxes')
@@ -30,7 +36,7 @@ export class ReservaBox {
   @Column({
     type: 'enum',
     enum: EstadoReservaBox,
-    default: EstadoReservaBox.PENDIENTE
+    default: EstadoReservaBox.PENDIENTE,
   })
   estado: EstadoReservaBox;
 

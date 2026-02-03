@@ -1,7 +1,17 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 import { QueryFailedError } from 'typeorm';
-import { ApiErrorResponse, ErrorType, DatabaseErrorDetails } from '../interfaces/api-error.interface';
+import {
+  ApiErrorResponse,
+  ErrorType,
+  DatabaseErrorDetails,
+} from '../interfaces/api-error.interface';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -19,7 +29,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      
+
       if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
         // Si el mensaje es un array (errores de validación de DTO), ponerlo en details
         if (Array.isArray((exceptionResponse as any).message)) {
@@ -34,23 +44,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
       } else if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
       }
-    } 
+    }
     // Errores de TypeORM para problemas con la base de datos
     else if (exception instanceof QueryFailedError) {
       statusCode = HttpStatus.BAD_REQUEST;
       message = 'Error en la consulta a la base de datos';
       error = ErrorType.DATABASE;
-      
+
       // Crear detalles del error de base de datos
       const dbErrorDetails: DatabaseErrorDetails = {
-        detail: exception.message
+        detail: exception.message,
       };
 
       // Interpretar tipos específicos de errores de PostgreSQL
       if (exception.message.includes('duplicate key')) {
         message = 'Ya existe un registro con esta información';
         dbErrorDetails.constraint = 'UNIQUE';
-      } else if (exception.message.includes('violates foreign key constraint')) {
+      } else if (
+        exception.message.includes('violates foreign key constraint')
+      ) {
         message = 'La referencia a otro registro no es válida';
         dbErrorDetails.constraint = 'FOREIGN KEY';
       } else if (exception.message.includes('connection')) {
@@ -60,16 +72,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
 
       details = dbErrorDetails;
-    } 
+    }
     // Errores de validación
-    else if (exception instanceof Error && exception.name === 'ValidationError') {
+    else if (
+      exception instanceof Error &&
+      exception.name === 'ValidationError'
+    ) {
       statusCode = HttpStatus.BAD_REQUEST;
       message = 'Error de validación en los datos enviados';
       error = ErrorType.VALIDATION;
       details = { validationMessage: exception.message };
     }
     // Error de sintaxis JSON
-    else if (exception instanceof SyntaxError && exception.message.includes('JSON')) {
+    else if (
+      exception instanceof SyntaxError &&
+      exception.message.includes('JSON')
+    ) {
       statusCode = HttpStatus.BAD_REQUEST;
       message = 'Formato JSON inválido en la solicitud';
       error = ErrorType.VALIDATION;
@@ -84,11 +102,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     else if (exception instanceof Error) {
       message = exception.message || message;
       error = ErrorType.UNEXPECTED;
-      
+
       // En entorno de desarrollo incluimos el stack trace para debug
       if (process.env.NODE_ENV !== 'production') {
         details = {
-          stack: exception.stack?.split('\n').slice(0, 3).join('\n')
+          stack: exception.stack?.split('\n').slice(0, 3).join('\n'),
         };
       }
     }
@@ -129,13 +147,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
         break;
       case HttpStatus.CONFLICT:
         if (!message || message === 'Conflict') {
-          message = 'Conflicto: la solicitud no pudo completarse debido a un conflicto con el estado actual del recurso';
+          message =
+            'Conflicto: la solicitud no pudo completarse debido a un conflicto con el estado actual del recurso';
         }
         error = ErrorType.CONFLICT;
         break;
       case HttpStatus.UNPROCESSABLE_ENTITY:
         if (!message || message === 'Unprocessable Entity') {
-          message = 'Entidad no procesable: la solicitud fue bien formada pero no se puede procesar';
+          message =
+            'Entidad no procesable: la solicitud fue bien formada pero no se puede procesar';
         }
         error = ErrorType.VALIDATION;
         break;
@@ -156,7 +176,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       details = null;
     }
 
-    // Estructura de respuesta de error 
+    // Estructura de respuesta de error
     const errorResponse: ApiErrorResponse = {
       statusCode,
       message,
@@ -164,7 +184,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
-      details: process.env.NODE_ENV !== 'production' ? details : null
+      details: process.env.NODE_ENV !== 'production' ? details : null,
     };
 
     // Registrar el error en logs

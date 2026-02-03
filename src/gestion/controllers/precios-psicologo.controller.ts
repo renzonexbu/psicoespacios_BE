@@ -1,4 +1,13 @@
-import { Controller, Get, Patch, Param, Body, UseGuards, Request, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Param,
+  Body,
+  UseGuards,
+  Request,
+  ForbiddenException,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -15,7 +24,7 @@ export class PreciosPsicologoController {
   @Roles(Role.ADMIN, Role.TERAPEUTA, Role.PSICOLOGO)
   async getPreciosByUserId(
     @Param('usuarioId') usuarioId: string,
-    @Request() req
+    @Request() req,
   ) {
     // Verificar que el psicólogo solo puede ver sus propios precios
     if (req.user.role === Role.PSICOLOGO && req.user.id !== usuarioId) {
@@ -30,25 +39,14 @@ export class PreciosPsicologoController {
   async updatePreciosByUserId(
     @Param('usuarioId') usuarioId: string,
     @Body() updatePreciosDto: UpdatePreciosDto,
-    @Request() req
+    @Request() req,
   ) {
     // Verificar que el psicólogo solo puede actualizar sus propios precios
     if (req.user.role === Role.PSICOLOGO && req.user.id !== usuarioId) {
-      throw new ForbiddenException('Solo puedes actualizar tus propios precios');
+      throw new ForbiddenException(
+        'Solo puedes actualizar tus propios precios',
+      );
     }
     return this.psicologosService.updatePrecios(usuarioId, updatePreciosDto);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

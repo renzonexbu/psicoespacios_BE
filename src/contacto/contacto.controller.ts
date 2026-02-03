@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+  UseGuards,
+  Patch,
+} from '@nestjs/common';
 import { ContactoService } from './contacto.service';
 import { CreateContactoDto } from './dto/create-contacto.dto';
 import { UpdateContactoDto } from './dto/update-contacto.dto';
@@ -33,7 +43,10 @@ export class ContactoController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateContactoDto: UpdateContactoDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateContactoDto: UpdateContactoDto,
+  ) {
     return this.contactoService.update(id, updateContactoDto);
   }
 
@@ -47,7 +60,10 @@ export class ContactoController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Patch(':id/responder')
-  responder(@Param('id') id: string, @Body() responderContactoDto: ResponderContactoDto) {
+  responder(
+    @Param('id') id: string,
+    @Body() responderContactoDto: ResponderContactoDto,
+  ) {
     return this.contactoService.responder(id, responderContactoDto);
   }
 }

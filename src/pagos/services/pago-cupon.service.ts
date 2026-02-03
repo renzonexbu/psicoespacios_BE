@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Pago } from '../../common/entities/pago.entity';
@@ -16,7 +20,9 @@ export class PagoCuponService {
     private dataSource: DataSource,
   ) {}
 
-  async procesarPagoConCupon(createPagoDto: CreatePagoDto): Promise<PagoResponseDto> {
+  async procesarPagoConCupon(
+    createPagoDto: CreatePagoDto,
+  ): Promise<PagoResponseDto> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -27,14 +33,22 @@ export class PagoCuponService {
 
       // Si se proporciona un cupón, validarlo y aplicarlo
       if (createPagoDto.cuponId) {
-        cupon = await this.validarYUsarCupon(createPagoDto.cuponId, queryRunner);
-        descuentoAplicado = this.calcularDescuento(createPagoDto.monto, cupon.porcentaje);
+        cupon = await this.validarYUsarCupon(
+          createPagoDto.cuponId,
+          queryRunner,
+        );
+        descuentoAplicado = this.calcularDescuento(
+          createPagoDto.monto,
+          cupon.porcentaje,
+        );
       }
 
       // Verificar que el monto final sea correcto
       const montoFinalCalculado = createPagoDto.monto - descuentoAplicado;
       if (Math.abs(montoFinalCalculado - createPagoDto.montoFinal) > 0.01) {
-        throw new BadRequestException('El monto final no coincide con el descuento aplicado');
+        throw new BadRequestException(
+          'El monto final no coincide con el descuento aplicado',
+        );
       }
 
       // Crear el pago
@@ -57,7 +71,6 @@ export class PagoCuponService {
 
       // Retornar el pago con información del cupón
       return this.mapToResponseDto(pagoGuardado, cupon);
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -66,10 +79,13 @@ export class PagoCuponService {
     }
   }
 
-  private async validarYUsarCupon(cuponId: string, queryRunner: any): Promise<Voucher> {
+  private async validarYUsarCupon(
+    cuponId: string,
+    queryRunner: any,
+  ): Promise<Voucher> {
     const cupon = await queryRunner.manager.findOne(Voucher, {
       where: { id: cuponId },
-      relations: ['psicologo', 'psicologo.usuario']
+      relations: ['psicologo', 'psicologo.usuario'],
     });
 
     if (!cupon) {
@@ -102,12 +118,14 @@ export class PagoCuponService {
       montoFinal: pago.montoFinal,
       estado: pago.estado,
       cuponId: pago.cuponId,
-      cupon: cupon ? {
-        id: cupon.id,
-        nombre: cupon.nombre,
-        porcentaje: cupon.porcentaje,
-        modalidad: cupon.modalidad,
-      } : undefined,
+      cupon: cupon
+        ? {
+            id: cupon.id,
+            nombre: cupon.nombre,
+            porcentaje: cupon.porcentaje,
+            modalidad: cupon.modalidad,
+          }
+        : undefined,
       datosTransaccion: pago.datosTransaccion,
       notasReembolso: pago.notasReembolso,
       metadatos: pago.metadatos,
@@ -122,9 +140,9 @@ export class PagoCuponService {
     const pagos = await this.pagoRepository.find({
       where: { cuponId },
       relations: ['cupon'],
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
 
-    return pagos.map(pago => this.mapToResponseDto(pago, pago.cupon));
+    return pagos.map((pago) => this.mapToResponseDto(pago, pago.cupon));
   }
 }

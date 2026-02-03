@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 
-export class CreatePackPagosMensualesTable1735000000001 implements MigrationInterface {
+export class CreatePackPagosMensualesTable1735000000001
+  implements MigrationInterface
+{
   name = 'CreatePackPagosMensualesTable1735000000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

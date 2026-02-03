@@ -36,8 +36,18 @@ import { MailModule } from '../mail/mail.module';
     ]),
     MailModule,
   ],
-  controllers: [PagosController, FlowController, SimulatePaymentController, PagoSesionController],
-  providers: [PagosService, FlowService, SimulatePaymentService, PagoSesionService],
+  controllers: [
+    PagosController,
+    FlowController,
+    SimulatePaymentController,
+    PagoSesionController,
+  ],
+  providers: [
+    PagosService,
+    FlowService,
+    SimulatePaymentService,
+    PagoSesionService,
+  ],
   exports: [PagosService, PagoSesionService],
 })
 export class PagosModule {}

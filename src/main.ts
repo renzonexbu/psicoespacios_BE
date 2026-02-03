@@ -16,27 +16,30 @@ import { BadRequestException } from '@nestjs/common';
 async function bootstrap() {
   try {
     console.log('Iniciando aplicación...');
-    console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Configurada' : 'No configurada');
+    console.log(
+      'DATABASE_URL:',
+      process.env.DATABASE_URL ? 'Configurada' : 'No configurada',
+    );
     console.log('NODE_ENV:', process.env.NODE_ENV);
-    
+
     const app = await NestFactory.create(AppModule, {
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
     });
-      console.log('Aplicación NestJS creada exitosamente');
-    
+    console.log('Aplicación NestJS creada exitosamente');
+
     // Servir archivos estáticos de /uploads
     app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
 
     // Configurar el filtro global de excepciones
     app.useGlobalFilters(new AllExceptionsFilter());
-      // Configurar interceptores globales
+    // Configurar interceptores globales
     app.useGlobalInterceptors(
       new DatabaseErrorInterceptor(),
       // Quitamos el ValidationInterceptor que causa problemas
       // new ValidationInterceptor(),
       new TimeoutInterceptor(60000), // 60 segundos de timeout
     );
-    
+
     // Configurar ValidationPipe global para validación de DTOs
     app.useGlobalPipes(
       new ValidationPipe({
@@ -50,15 +53,17 @@ async function bootstrap() {
         exceptionFactory: (errors) => {
           console.log('🔍 ValidationPipe - Errores de validación:', errors);
           const result = {};
-          errors.forEach(error => {
-            result[error.property] = Object.values(error.constraints || { error: 'Valor inválido' });
+          errors.forEach((error) => {
+            result[error.property] = Object.values(
+              error.constraints || { error: 'Valor inválido' },
+            );
           });
           return new BadRequestException({
             message: 'Error de validación en los datos proporcionados',
             errors: result,
             details: errors,
           });
-        }
+        },
       }),
     );
 
@@ -67,7 +72,7 @@ async function bootstrap() {
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
       credentials: true,
     });
-    
+
     // Usar puerto dinámico para Vercel o 3000 para desarrollo local
     const port = process.env.PORT || 3000;
     // Escuchar en 0.0.0.0 para que sea accesible desde fuera del contenedor

@@ -1,11 +1,19 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HistorialPaciente } from '../../common/entities/historial-paciente.entity';
 import { Paciente } from '../../common/entities/paciente.entity';
 import { Psicologo } from '../../common/entities/psicologo.entity';
 import { User } from '../../common/entities/user.entity';
-import { ArchivoPacienteDto, FiltrosArchivosPacienteDto } from '../dto/archivos-paciente.dto';
+import {
+  ArchivoPacienteDto,
+  FiltrosArchivosPacienteDto,
+} from '../dto/archivos-paciente.dto';
 
 @Injectable()
 export class ArchivosPacienteService {
@@ -27,25 +35,29 @@ export class ArchivosPacienteService {
    */
   async obtenerArchivosPaciente(
     pacienteUserId: string,
-    filtros?: FiltrosArchivosPacienteDto
+    filtros?: FiltrosArchivosPacienteDto,
   ): Promise<ArchivoPacienteDto[]> {
     this.logger.log(`Obteniendo archivos del paciente ${pacienteUserId}`);
 
     // 1. Verificar que el paciente existe
     const paciente = await this.pacienteRepository.findOne({
-      where: { idUsuarioPaciente: pacienteUserId }
+      where: { idUsuarioPaciente: pacienteUserId },
     });
 
     if (!paciente) {
       throw new NotFoundException('Paciente no encontrado');
     }
 
-    this.logger.log(`Paciente encontrado: ${paciente.id}, idUsuarioPaciente: ${paciente.idUsuarioPaciente}`);
+    this.logger.log(
+      `Paciente encontrado: ${paciente.id}, idUsuarioPaciente: ${paciente.idUsuarioPaciente}`,
+    );
 
     // 2. Construir query con filtros - buscar por el ID de la tabla pacientes
     const queryBuilder = this.historialRepository
       .createQueryBuilder('historial')
-      .where('historial.idUsuarioPaciente = :pacienteId', { pacienteId: paciente.id })
+      .where('historial.idUsuarioPaciente = :pacienteId', {
+        pacienteId: paciente.id,
+      })
       .andWhere('historial.url IS NOT NULL') // Solo archivos con URL
       .orderBy('historial.createdAt', 'DESC');
 
@@ -55,20 +67,22 @@ export class ArchivosPacienteService {
     }
 
     if (filtros?.fechaDesde) {
-      queryBuilder.andWhere('historial.createdAt >= :fechaDesde', { 
-        fechaDesde: new Date(filtros.fechaDesde) 
+      queryBuilder.andWhere('historial.createdAt >= :fechaDesde', {
+        fechaDesde: new Date(filtros.fechaDesde),
       });
     }
 
     if (filtros?.fechaHasta) {
-      queryBuilder.andWhere('historial.createdAt <= :fechaHasta', { 
-        fechaHasta: new Date(filtros.fechaHasta) 
+      queryBuilder.andWhere('historial.createdAt <= :fechaHasta', {
+        fechaHasta: new Date(filtros.fechaHasta),
       });
     }
 
     // 4. Ejecutar query
     const registros = await queryBuilder.getMany();
-    this.logger.log(`Query ejecutada. Encontrados ${registros.length} registros en historial_paciente`);
+    this.logger.log(
+      `Query ejecutada. Encontrados ${registros.length} registros en historial_paciente`,
+    );
 
     // 5. Obtener información del psicólogo para cada registro
     const archivosConInfo = await Promise.all(
@@ -77,7 +91,9 @@ export class ArchivosPacienteService {
         const psicologo = await this.psicologoRepository
           .createQueryBuilder('psicologo')
           .leftJoinAndSelect('psicologo.usuario', 'usuario')
-          .where('psicologo.id = :psicologoId', { psicologoId: paciente.idUsuarioPsicologo })
+          .where('psicologo.id = :psicologoId', {
+            psicologoId: paciente.idUsuarioPsicologo,
+          })
           .getOne();
 
         return {
@@ -89,13 +105,15 @@ export class ArchivosPacienteService {
           psicologo: {
             id: psicologo?.id || 'N/A',
             nombre: psicologo?.usuario?.nombre || 'N/A',
-            apellido: psicologo?.usuario?.apellido || 'N/A'
-          }
+            apellido: psicologo?.usuario?.apellido || 'N/A',
+          },
         };
-      })
+      }),
     );
 
-    this.logger.log(`Encontrados ${archivosConInfo.length} archivos para el paciente ${pacienteUserId}`);
+    this.logger.log(
+      `Encontrados ${archivosConInfo.length} archivos para el paciente ${pacienteUserId}`,
+    );
     return archivosConInfo;
   }
 
@@ -104,13 +122,15 @@ export class ArchivosPacienteService {
    */
   async obtenerArchivoPaciente(
     archivoId: string,
-    pacienteUserId: string
+    pacienteUserId: string,
   ): Promise<ArchivoPacienteDto> {
-    this.logger.log(`Obteniendo archivo ${archivoId} del paciente ${pacienteUserId}`);
+    this.logger.log(
+      `Obteniendo archivo ${archivoId} del paciente ${pacienteUserId}`,
+    );
 
     // 1. Verificar que el paciente existe
     const paciente = await this.pacienteRepository.findOne({
-      where: { idUsuarioPaciente: pacienteUserId }
+      where: { idUsuarioPaciente: pacienteUserId },
     });
 
     if (!paciente) {
@@ -121,19 +141,25 @@ export class ArchivosPacienteService {
     const archivo = await this.historialRepository
       .createQueryBuilder('historial')
       .where('historial.id = :archivoId', { archivoId })
-      .andWhere('historial.idUsuarioPaciente = :pacienteId', { pacienteId: paciente.id })
+      .andWhere('historial.idUsuarioPaciente = :pacienteId', {
+        pacienteId: paciente.id,
+      })
       .andWhere('historial.url IS NOT NULL')
       .getOne();
 
     if (!archivo) {
-      throw new NotFoundException('Archivo no encontrado o no tienes permisos para verlo');
+      throw new NotFoundException(
+        'Archivo no encontrado o no tienes permisos para verlo',
+      );
     }
 
     // 3. Obtener información del psicólogo
     const psicologo = await this.psicologoRepository
       .createQueryBuilder('psicologo')
       .leftJoinAndSelect('psicologo.usuario', 'usuario')
-      .where('psicologo.id = :psicologoId', { psicologoId: paciente.idUsuarioPsicologo })
+      .where('psicologo.id = :psicologoId', {
+        psicologoId: paciente.idUsuarioPsicologo,
+      })
       .getOne();
 
     return {
@@ -145,8 +171,8 @@ export class ArchivosPacienteService {
       psicologo: {
         id: psicologo?.id || 'N/A',
         nombre: psicologo?.usuario?.nombre || 'N/A',
-        apellido: psicologo?.usuario?.apellido || 'N/A'
-      }
+        apellido: psicologo?.usuario?.apellido || 'N/A',
+      },
     };
   }
 
@@ -158,11 +184,13 @@ export class ArchivosPacienteService {
     archivosPorTipo: Record<string, number>;
     ultimoArchivo?: Date;
   }> {
-    this.logger.log(`Obteniendo estadísticas de archivos del paciente ${pacienteUserId}`);
+    this.logger.log(
+      `Obteniendo estadísticas de archivos del paciente ${pacienteUserId}`,
+    );
 
     // 1. Verificar que el paciente existe
     const paciente = await this.pacienteRepository.findOne({
-      where: { idUsuarioPaciente: pacienteUserId }
+      where: { idUsuarioPaciente: pacienteUserId },
     });
 
     if (!paciente) {
@@ -172,24 +200,30 @@ export class ArchivosPacienteService {
     // 2. Obtener todos los archivos del paciente
     const archivos = await this.historialRepository
       .createQueryBuilder('historial')
-      .where('historial.idUsuarioPaciente = :pacienteId', { pacienteId: paciente.id })
+      .where('historial.idUsuarioPaciente = :pacienteId', {
+        pacienteId: paciente.id,
+      })
       .andWhere('historial.url IS NOT NULL')
       .orderBy('historial.createdAt', 'DESC')
       .getMany();
 
     // 3. Calcular estadísticas
     const totalArchivos = archivos.length;
-    const archivosPorTipo = archivos.reduce((acc, archivo) => {
-      acc[archivo.tipo] = (acc[archivo.tipo] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const archivosPorTipo = archivos.reduce(
+      (acc, archivo) => {
+        acc[archivo.tipo] = (acc[archivo.tipo] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
-    const ultimoArchivo = archivos.length > 0 ? archivos[0].createdAt : undefined;
+    const ultimoArchivo =
+      archivos.length > 0 ? archivos[0].createdAt : undefined;
 
     return {
       totalArchivos,
       archivosPorTipo,
-      ultimoArchivo
+      ultimoArchivo,
     };
   }
 }

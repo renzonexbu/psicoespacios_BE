@@ -1,5 +1,12 @@
-
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+  JoinColumn,
+} from 'typeorm';
 import { User } from './user.entity';
 import { Psicologo } from './psicologo.entity';
 
@@ -9,12 +16,12 @@ export enum EstadoReservaPsicologo {
   CONFIRMADA = 'confirmada',
   CANCELADA = 'cancelada',
   COMPLETADA = 'completada',
-  NO_SHOW = 'no_show'
+  NO_SHOW = 'no_show',
 }
 
 export enum ModalidadSesion {
   ONLINE = 'online',
-  PRESENCIAL = 'presencial'
+  PRESENCIAL = 'presencial',
 }
 
 @Entity('reservas_sesiones')
@@ -45,14 +52,14 @@ export class ReservaPsicologo {
   @Column({
     type: 'enum',
     enum: ModalidadSesion,
-    default: ModalidadSesion.PRESENCIAL
+    default: ModalidadSesion.PRESENCIAL,
   })
   modalidad: ModalidadSesion;
 
   @Column({
     type: 'enum',
     enum: EstadoReservaPsicologo,
-    default: EstadoReservaPsicologo.PENDIENTE
+    default: EstadoReservaPsicologo.PENDIENTE,
   })
   estado: EstadoReservaPsicologo;
 
@@ -62,7 +69,13 @@ export class ReservaPsicologo {
   @Column({ type: 'uuid', nullable: true, name: 'cupon_id' })
   cuponId: string; // ID del cupón usado
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true, name: 'descuento_aplicado' })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+    name: 'descuento_aplicado',
+  })
   descuentoAplicado: number; // Monto del descuento aplicado
 
   @Column({ type: 'boolean', default: false })
@@ -83,4 +96,4 @@ export class ReservaPsicologo {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-} 
+}

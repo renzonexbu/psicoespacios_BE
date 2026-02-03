@@ -44,27 +44,27 @@ import { MatchingService } from './services/matching.service';
     }),
   ],
   controllers: [
-    PsicologosController, 
-    DisponibilidadController, 
+    PsicologosController,
+    DisponibilidadController,
     DocumentosPsicologoController,
-    MatchingController
+    MatchingController,
   ],
   providers: [
-    PsicologosService, 
-    DisponibilidadService, 
-    AgendaService, 
-    DocumentosPsicologoService, 
+    PsicologosService,
+    DisponibilidadService,
+    AgendaService,
+    DocumentosPsicologoService,
     BackblazeService,
     CrearPacienteService,
     TransferirPacienteService,
     MailService,
-    MatchingService
+    MatchingService,
   ],
   exports: [
-    DisponibilidadService, 
-    AgendaService, 
+    DisponibilidadService,
+    AgendaService,
     DocumentosPsicologoService,
-    MatchingService
+    MatchingService,
   ],
 })
 export class PsicologosModule {}

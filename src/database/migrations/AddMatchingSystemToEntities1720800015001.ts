@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddMatchingSystemToEntities1720800015001 implements MigrationInterface {
+export class AddMatchingSystemToEntities1720800015001
+  implements MigrationInterface
+{
   name = 'AddMatchingSystemToEntities1720800015001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -135,4 +137,3 @@ export class AddMatchingSystemToEntities1720800015001 implements MigrationInterf
     `);
   }
 }
-

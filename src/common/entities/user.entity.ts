@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { SubrolPsicologo } from '../enums/subrol-psicologo.enum';
 
@@ -19,13 +25,13 @@ export class User {
 
   @Column()
   apellido: string;
-  
+
   @Column()
   rut: string;
-  
+
   @Column()
   telefono: string;
-  
+
   @Column({ type: 'date' })
   fechaNacimiento: Date;
 
@@ -63,21 +69,21 @@ export class User {
   @Column({
     type: 'enum',
     enum: ['PSICOLOGO', 'PACIENTE', 'ADMIN'],
-    default: 'PACIENTE'
+    default: 'PACIENTE',
   })
   role: string;
 
   @Column({
     type: 'enum',
     enum: ['ACTIVO', 'INACTIVO', 'PENDIENTE'],
-    default: 'ACTIVO'
+    default: 'ACTIVO',
   })
   estado: string;
 
   @Column({
     type: 'enum',
     enum: SubrolPsicologo,
-    nullable: true
+    nullable: true,
   })
   subrol: SubrolPsicologo;
 

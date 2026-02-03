@@ -1,9 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Psicologo } from '../../common/entities/psicologo.entity';
 import { User } from '../../common/entities/user.entity';
-import { CreatePsicologoDto, UpdatePsicologoDto, PsicologoPublicDto } from '../../common/dto/psicologo.dto';
+import {
+  CreatePsicologoDto,
+  UpdatePsicologoDto,
+  PsicologoPublicDto,
+} from '../../common/dto/psicologo.dto';
 import { PacienteAsignadoDto } from '../dto/paciente-asignado.dto';
 import { Reserva } from '../../common/entities/reserva.entity';
 import { ReservaPsicologo } from '../../common/entities/reserva-psicologo.entity';
@@ -27,25 +35,29 @@ export class PsicologosService {
   async create(createPsicologoDto: CreatePsicologoDto): Promise<Psicologo> {
     // Verificar que el usuario existe y tiene rol PSICOLOGO
     const usuario = await this.userRepository.findOne({
-      where: { id: createPsicologoDto.usuarioId, role: 'PSICOLOGO' }
+      where: { id: createPsicologoDto.usuarioId, role: 'PSICOLOGO' },
     });
 
     if (!usuario) {
-      throw new BadRequestException('El usuario no existe o no tiene rol PSICOLOGO');
+      throw new BadRequestException(
+        'El usuario no existe o no tiene rol PSICOLOGO',
+      );
     }
 
     // Verificar que no existe ya un perfil de psicólogo para este usuario
     const existingPsicologo = await this.psicologoRepository.findOne({
-      where: { usuario: { id: createPsicologoDto.usuarioId } }
+      where: { usuario: { id: createPsicologoDto.usuarioId } },
     });
 
     if (existingPsicologo) {
-      throw new BadRequestException('Ya existe un perfil de psicólogo para este usuario');
+      throw new BadRequestException(
+        'Ya existe un perfil de psicólogo para este usuario',
+      );
     }
 
     const psicologo = this.psicologoRepository.create({
       ...createPsicologoDto,
-      usuario
+      usuario,
     });
 
     return await this.psicologoRepository.save(psicologo);
@@ -53,7 +65,7 @@ export class PsicologosService {
 
   async findAll(): Promise<Psicologo[]> {
     return await this.psicologoRepository.find({
-      relations: ['usuario']
+      relations: ['usuario'],
     });
   }
 
@@ -63,7 +75,7 @@ export class PsicologosService {
       where: { usuario: { estado: 'ACTIVO' } },
     });
 
-    return psicologos.map(psicologo => ({
+    return psicologos.map((psicologo) => ({
       id: psicologo.id,
       diagnosticos_experiencia: psicologo.diagnosticos_experiencia,
       temas_experiencia: psicologo.temas_experiencia,
@@ -93,7 +105,7 @@ export class PsicologosService {
     console.log('[PsicologosService] findOne - id:', id);
     const psicologo = await this.psicologoRepository.findOne({
       where: { id },
-      relations: ['usuario']
+      relations: ['usuario'],
     });
     console.log('[PsicologosService] findOne - resultado:', psicologo);
     if (!psicologo) {
@@ -141,22 +153,32 @@ export class PsicologosService {
   async findByUserId(usuarioId: string): Promise<Psicologo> {
     const psicologo = await this.psicologoRepository.findOne({
       where: { usuario: { id: usuarioId } },
-      relations: ['usuario']
+      relations: ['usuario'],
     });
 
     if (!psicologo) {
-      throw new NotFoundException('Perfil de psicólogo no encontrado para este usuario');
+      throw new NotFoundException(
+        'Perfil de psicólogo no encontrado para este usuario',
+      );
     }
 
     return psicologo;
   }
 
-  async update(id: string, updatePsicologoDto: UpdatePsicologoDto): Promise<Psicologo> {
-    console.log('[PsicologosService] update - id:', id, 'body:', updatePsicologoDto);
+  async update(
+    id: string,
+    updatePsicologoDto: UpdatePsicologoDto,
+  ): Promise<Psicologo> {
+    console.log(
+      '[PsicologosService] update - id:',
+      id,
+      'body:',
+      updatePsicologoDto,
+    );
     const psicologo = await this.findOne(id);
-    
+
     Object.assign(psicologo, updatePsicologoDto);
-    
+
     return await this.psicologoRepository.save(psicologo);
   }
 
@@ -165,23 +187,40 @@ export class PsicologosService {
     await this.psicologoRepository.remove(psicologo);
   }
 
-  async disponibilidadDias(id: string, mes: number, anio: number): Promise<{ fecha: string, disponible: boolean }[]> {
+  async disponibilidadDias(
+    id: string,
+    mes: number,
+    anio: number,
+  ): Promise<{ fecha: string; disponible: boolean }[]> {
     const psicologo = await this.findOne(id);
     if (!psicologo || !psicologo.disponibilidad) {
-      throw new NotFoundException('Disponibilidad no encontrada para este psicólogo');
+      throw new NotFoundException(
+        'Disponibilidad no encontrada para este psicólogo',
+      );
     }
     // Obtener cantidad de días del mes
     const diasEnMes = new Date(anio, mes, 0).getDate();
-    const resultado: { fecha: string, disponible: boolean }[] = [];
+    const resultado: { fecha: string; disponible: boolean }[] = [];
     for (let dia = 1; dia <= diasEnMes; dia++) {
       const fecha = `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
       // Verificar si hay disponibilidad para ese día
       let disponible = false;
       // Suponemos que la disponibilidad es un objeto tipo { lunes: [...], miercoles: [...] }
       const dateObj = new Date(anio, mes - 1, dia);
-      const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+      const diasSemana = [
+        'domingo',
+        'lunes',
+        'martes',
+        'miercoles',
+        'jueves',
+        'viernes',
+        'sabado',
+      ];
       const diaSemana = diasSemana[dateObj.getDay()];
-      if (psicologo.disponibilidad[diaSemana] && psicologo.disponibilidad[diaSemana].length > 0) {
+      if (
+        psicologo.disponibilidad[diaSemana] &&
+        psicologo.disponibilidad[diaSemana].length > 0
+      ) {
         disponible = true;
       }
       resultado.push({ fecha, disponible });
@@ -192,7 +231,9 @@ export class PsicologosService {
   async disponibilidadHorarios(id: string, fecha: string): Promise<string[]> {
     const psicologo = await this.findOne(id);
     if (!psicologo || !psicologo.disponibilidad) {
-      throw new NotFoundException('Disponibilidad no encontrada para este psicólogo');
+      throw new NotFoundException(
+        'Disponibilidad no encontrada para este psicólogo',
+      );
     }
     // fecha: YYYY-MM-DD
     // Corregir: parsear como local para evitar desfase de día
@@ -201,18 +242,29 @@ export class PsicologosService {
     if (isNaN(dateObj.getTime())) {
       throw new BadRequestException('Fecha inválida');
     }
-    const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    const diasSemana = [
+      'domingo',
+      'lunes',
+      'martes',
+      'miercoles',
+      'jueves',
+      'viernes',
+      'sabado',
+    ];
     const diaSemana = diasSemana[dateObj.getDay()];
     console.log('Día consultado:', diaSemana);
-    console.log('Claves de disponibilidad:', Object.keys(psicologo.disponibilidad));
+    console.log(
+      'Claves de disponibilidad:',
+      Object.keys(psicologo.disponibilidad),
+    );
     // Horarios base disponibles para ese día
     const franjas: string[] = psicologo.disponibilidad[diaSemana] || [];
     // Generar bloques de 1 hora por franja
     const bloques: string[] = [];
     for (const franja of franjas) {
       const [inicio, fin] = franja.split('-');
-      let [hIni, mIni] = inicio.split(':').map(Number);
-      let [hFin, mFin] = fin.split(':').map(Number);
+      const [hIni, mIni] = inicio.split(':').map(Number);
+      const [hFin, mFin] = fin.split(':').map(Number);
       let current = new Date(dateObj);
       current.setHours(hIni, mIni, 0, 0);
       const end = new Date(dateObj);
@@ -221,7 +273,7 @@ export class PsicologosService {
         const next = new Date(current);
         next.setHours(current.getHours() + 1);
         if (next > end) break;
-        const bloque = `${current.toTimeString().slice(0,5)}-${next.toTimeString().slice(0,5)}`;
+        const bloque = `${current.toTimeString().slice(0, 5)}-${next.toTimeString().slice(0, 5)}`;
         bloques.push(bloque);
         current = next;
       }
@@ -231,16 +283,18 @@ export class PsicologosService {
       where: { psicologoId: psicologo.usuario.id, fecha: new Date(fecha) },
     });
     // Filtrar bloques ocupados
-    const bloquesOcupados = reservas.map(r => `${r.horaInicio}-${r.horaFin}`);
-    const bloquesLibres = bloques.filter(b => !bloquesOcupados.includes(b));
+    const bloquesOcupados = reservas.map((r) => `${r.horaInicio}-${r.horaFin}`);
+    const bloquesLibres = bloques.filter((b) => !bloquesOcupados.includes(b));
     return bloquesLibres;
   }
 
-  async getPacientesAsignados(psicologoUserId: string): Promise<PacienteAsignadoDto[]> {
+  async getPacientesAsignados(
+    psicologoUserId: string,
+  ): Promise<PacienteAsignadoDto[]> {
     // Buscar pacientes asignados directamente desde la tabla pacientes
     const pacientes = await this.pacienteRepository.find({
       where: { idUsuarioPsicologo: psicologoUserId },
-      order: { primeraSesionRegistrada: 'DESC' }
+      order: { primeraSesionRegistrada: 'DESC' },
     });
 
     if (pacientes.length === 0) {
@@ -251,7 +305,7 @@ export class PsicologosService {
     const pacientesConInfo = await Promise.all(
       pacientes.map(async (paciente) => {
         const usuarioPaciente = await this.userRepository.findOne({
-          where: { id: paciente.idUsuarioPaciente }
+          where: { id: paciente.idUsuarioPaciente },
         });
 
         if (!usuarioPaciente) {
@@ -260,7 +314,10 @@ export class PsicologosService {
 
         // Calcular la próxima sesión basándose en las reservas futuras
         // El psicologoUserId ya es el ID del psicólogo (no del usuario)
-        const proximaSesion = await this.calcularProximaSesion(paciente.idUsuarioPaciente, psicologoUserId);
+        const proximaSesion = await this.calcularProximaSesion(
+          paciente.idUsuarioPaciente,
+          psicologoUserId,
+        );
 
         return {
           id: paciente.id,
@@ -275,22 +332,27 @@ export class PsicologosService {
           primeraSesionRegistrada: paciente.primeraSesionRegistrada,
           proximaSesion: proximaSesion,
           estado: paciente.estado || 'ACTIVO',
-          tag: paciente.tag
+          tag: paciente.tag,
         };
-      })
+      }),
     );
 
     // Filtrar pacientes nulos y retornar
-    return pacientesConInfo.filter(paciente => paciente !== null);
+    return pacientesConInfo.filter((paciente) => paciente !== null);
   }
 
   /**
    * Calcula la próxima sesión de un paciente basándose en las reservas futuras
    */
-  private async calcularProximaSesion(pacienteId: string, psicologoId: string): Promise<Date | null> {
+  private async calcularProximaSesion(
+    pacienteId: string,
+    psicologoId: string,
+  ): Promise<Date | null> {
     try {
-      console.log(`[DEBUG] Calculando próxima sesión para paciente: ${pacienteId}, psicólogo: ${psicologoId}`);
-      
+      console.log(
+        `[DEBUG] Calculando próxima sesión para paciente: ${pacienteId}, psicólogo: ${psicologoId}`,
+      );
+
       // Buscar la próxima reserva futura del paciente con este psicólogo
       // La tabla reservas_sesiones tiene:
       // - paciente_id: referencia al usuario paciente (pacienteId)
@@ -300,8 +362,8 @@ export class PsicologosService {
         .where('reserva.paciente.id = :pacienteId', { pacienteId })
         .andWhere('reserva.psicologo.id = :psicologoId', { psicologoId })
         .andWhere('reserva.fecha >= :hoy', { hoy: new Date() })
-        .andWhere('reserva.estado IN (:...estados)', { 
-          estados: ['PENDIENTE', 'CONFIRMADA'] 
+        .andWhere('reserva.estado IN (:...estados)', {
+          estados: ['PENDIENTE', 'CONFIRMADA'],
         })
         .orderBy('reserva.fecha', 'ASC')
         .addOrderBy('reserva.horaInicio', 'ASC')
@@ -327,20 +389,37 @@ export class PsicologosService {
   }
 
   // Métodos para gestionar precios
-  async getPrecios(usuarioId: string): Promise<{ precioOnline: number | null; precioPresencial: number | null; fonasa: boolean; updatedAt: Date }> {
+  async getPrecios(usuarioId: string): Promise<{
+    precioOnline: number | null;
+    precioPresencial: number | null;
+    fonasa: boolean;
+    updatedAt: Date;
+  }> {
     const psicologo = await this.findByUserId(usuarioId);
-    
+
     return {
       precioOnline: psicologo.precioOnline,
       precioPresencial: psicologo.precioPresencial,
       fonasa: psicologo.fonasa || false,
-      updatedAt: psicologo.updatedAt
+      updatedAt: psicologo.updatedAt,
     };
   }
 
-  async updatePrecios(usuarioId: string, precios: { precioOnline?: number; precioPresencial?: number; fonasa?: boolean }): Promise<{ precioOnline: number | null; precioPresencial: number | null; fonasa: boolean; updatedAt: Date }> {
+  async updatePrecios(
+    usuarioId: string,
+    precios: {
+      precioOnline?: number;
+      precioPresencial?: number;
+      fonasa?: boolean;
+    },
+  ): Promise<{
+    precioOnline: number | null;
+    precioPresencial: number | null;
+    fonasa: boolean;
+    updatedAt: Date;
+  }> {
     const psicologo = await this.findByUserId(usuarioId);
-    
+
     // Actualizar solo los precios proporcionados
     if (precios.precioOnline !== undefined) {
       psicologo.precioOnline = precios.precioOnline;
@@ -351,15 +430,15 @@ export class PsicologosService {
     if (precios.fonasa !== undefined) {
       psicologo.fonasa = precios.fonasa;
     }
-    
+
     // Guardar cambios
     const psicologoActualizado = await this.psicologoRepository.save(psicologo);
-    
+
     return {
       precioOnline: psicologoActualizado.precioOnline,
       precioPresencial: psicologoActualizado.precioPresencial,
       fonasa: psicologoActualizado.fonasa || false,
-      updatedAt: psicologoActualizado.updatedAt
+      updatedAt: psicologoActualizado.updatedAt,
     };
   }
 }

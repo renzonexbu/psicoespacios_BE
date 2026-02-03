@@ -16,4 +16,4 @@ export class Acreditacion {
 
   @Column({ type: 'boolean', default: true })
   estado: boolean;
-} 
+}

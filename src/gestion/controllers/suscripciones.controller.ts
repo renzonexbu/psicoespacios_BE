@@ -1,9 +1,26 @@
-import { Controller, Get, Post, Body, Param, Delete, Request, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Request,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { SuscripcionesService } from '../services/suscripciones.service';
-import { CreateSuscripcionDto, UpdateSuscripcionDto, ConfigurarRenovacionDto, RenovarSuscripcionDto, ActivarSuscripcionDto, AsignarSuscripcionGratuitaDto } from '../dto/suscripcion.dto';
+import {
+  CreateSuscripcionDto,
+  UpdateSuscripcionDto,
+  ConfigurarRenovacionDto,
+  RenovarSuscripcionDto,
+  ActivarSuscripcionDto,
+  AsignarSuscripcionGratuitaDto,
+} from '../dto/suscripcion.dto';
 
 @Controller('api/v1/gestion/suscripciones')
 export class SuscripcionesController {
@@ -15,16 +32,22 @@ export class SuscripcionesController {
   @Roles('PSICOLOGO')
   async registrarSuscripcionMensual(
     @Body() createSuscripcionDto: CreateSuscripcionDto,
-    @Request() req
+    @Request() req,
   ) {
-    return this.suscripcionesService.registrarSuscripcionMensual(createSuscripcionDto, req.user.id);
+    return this.suscripcionesService.registrarSuscripcionMensual(
+      createSuscripcionDto,
+      req.user.id,
+    );
   }
 
   // Endpoint existente (mantener compatibilidad)
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('PSICOLOGO')
-  async create(@Body() createSuscripcionDto: CreateSuscripcionDto, @Request() req) {
+  async create(
+    @Body() createSuscripcionDto: CreateSuscripcionDto,
+    @Request() req,
+  ) {
     return this.suscripcionesService.create(createSuscripcionDto, req.user.id);
   }
 
@@ -41,7 +64,9 @@ export class SuscripcionesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('PSICOLOGO')
   async getProximasRenovacionesMensuales(@Request() req) {
-    return this.suscripcionesService.getProximasRenovacionesMensuales(req.user.id);
+    return this.suscripcionesService.getProximasRenovacionesMensuales(
+      req.user.id,
+    );
   }
 
   // Obtener información de renovación mensual
@@ -59,9 +84,13 @@ export class SuscripcionesController {
   async configurarRenovacionMensual(
     @Param('id') id: string,
     @Body() configDto: ConfigurarRenovacionDto,
-    @Request() req
+    @Request() req,
   ) {
-    return this.suscripcionesService.configurarRenovacionMensual(id, configDto, req.user.id);
+    return this.suscripcionesService.configurarRenovacionMensual(
+      id,
+      configDto,
+      req.user.id,
+    );
   }
 
   // Obtener historial de pagos
@@ -80,7 +109,11 @@ export class SuscripcionesController {
     @Body() updateSuscripcionDto: UpdateSuscripcionDto,
     @Req() req: any,
   ) {
-    return this.suscripcionesService.cancel(id, updateSuscripcionDto, req.user.id);
+    return this.suscripcionesService.cancel(
+      id,
+      updateSuscripcionDto,
+      req.user.id,
+    );
   }
 
   @Post(':id/renovar')
@@ -103,7 +136,10 @@ export class SuscripcionesController {
     @Body() activarDto: ActivarSuscripcionDto,
     @Req() req: any,
   ) {
-    return this.suscripcionesService.activarSuscripcion(id, activarDto.datosPago);
+    return this.suscripcionesService.activarSuscripcion(
+      id,
+      activarDto.datosPago,
+    );
   }
 
   // Asignar suscripción gratuita indefinida (solo para administradores)
@@ -114,7 +150,10 @@ export class SuscripcionesController {
     @Body() asignarDto: AsignarSuscripcionGratuitaDto,
     @Req() req: any,
   ) {
-    return this.suscripcionesService.asignarSuscripcionGratuita(asignarDto, req.user.id);
+    return this.suscripcionesService.asignarSuscripcionGratuita(
+      asignarDto,
+      req.user.id,
+    );
   }
 
   // Cancelar suscripción (solo ADMIN), independientemente del psicólogo

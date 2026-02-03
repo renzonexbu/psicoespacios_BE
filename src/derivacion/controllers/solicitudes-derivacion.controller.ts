@@ -1,12 +1,26 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { SolicitudesDerivacionService } from '../services/solicitudes-derivacion.service';
-import { CreateSolicitudDerivacionDto, UpdateSolicitudDerivacionDto, PagoSesionDto } from '../dto/solicitud-derivacion.dto';
+import {
+  CreateSolicitudDerivacionDto,
+  UpdateSolicitudDerivacionDto,
+  PagoSesionDto,
+} from '../dto/solicitud-derivacion.dto';
 
 @Controller('api/v1/derivacion/solicitudes')
 @UseGuards(JwtAuthGuard)
 export class SolicitudesDerivacionController {
-  constructor(private readonly solicitudesService: SolicitudesDerivacionService) {}
+  constructor(
+    private readonly solicitudesService: SolicitudesDerivacionService,
+  ) {}
 
   @Post()
   async create(
@@ -32,10 +46,7 @@ export class SolicitudesDerivacionController {
   }
 
   @Post(':id/aceptar')
-  async aceptar(
-    @Param('id') id: string,
-    @Request() req,
-  ) {
+  async aceptar(@Param('id') id: string, @Request() req) {
     return this.solicitudesService.aceptar(id, req.user.id);
   }
 

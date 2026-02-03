@@ -37,4 +37,4 @@ export class DocumentoPsicologoResponseDto {
   psicologo?: {
     id: string;
   };
-} 
+}

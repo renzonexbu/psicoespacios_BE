@@ -5,11 +5,11 @@ export class UpdateContactoDto {
   @IsEnum(ContactoEstado)
   @IsOptional()
   estado?: ContactoEstado;
-  
+
   @IsString()
   @IsOptional()
   respuesta?: string;
-  
+
   @IsDateString()
   @IsOptional()
   fechaRespuesta?: Date;

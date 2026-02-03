@@ -1,4 +1,12 @@
-import { IsString, IsOptional, IsUrl, IsArray, ValidateNested, IsEnum, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsUrl,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+  IsNumber,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreatePsicologoDto, ModalidadDto } from './create-psicologo.dto';
 

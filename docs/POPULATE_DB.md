@@ -114,7 +114,7 @@ Si tienes problemas de conexión, asegúrate de:
 
 2. **Dependencias entre Tablas**: Las tablas se pueblan en un orden específico para respetar las dependencias (primero usuarios, luego pacientes, etc.).
 
-3. **Contraseñas**: Las contraseñas de los usuarios de ejemplo están hasheadas con bcrypt. La contraseña para todos los usuarios de ejemplo es "admin123".
+3. **Contraseñas**: Las contraseñas de los usuarios de ejemplo están hasheadas con bcryptjs. La contraseña para todos los usuarios de ejemplo es "admin123".
 
 4. **Estados Variados**: Se crean registros con diferentes estados para probar todas las funcionalidades del sistema.
 

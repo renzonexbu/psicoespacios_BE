@@ -1,4 +1,13 @@
-import { Controller, Post, Get, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { VouchersService } from './vouchers.service';
 import { CreateVoucherDto, UpdateVoucherDto } from '../common/dto/voucher.dto';
 import { ValidarCuponResponseDto } from './dto/validar-cupon.dto';
@@ -30,7 +39,9 @@ export class VouchersController {
   }
 
   @Get('validar/:codigo')
-  async validarCupon(@Param('codigo') codigo: string): Promise<ValidarCuponResponseDto> {
+  async validarCupon(
+    @Param('codigo') codigo: string,
+  ): Promise<ValidarCuponResponseDto> {
     return this.vouchersService.validarCupon(codigo);
   }
 
@@ -57,4 +68,4 @@ export class VouchersController {
   restore(@Param('id') id: string) {
     return this.vouchersService.restore(id);
   }
-} 
+}

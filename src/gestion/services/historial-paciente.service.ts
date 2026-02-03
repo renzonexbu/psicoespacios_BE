@@ -2,7 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HistorialPaciente } from '../../common/entities/historial-paciente.entity';
-import { CreateHistorialPacienteDto, UpdateHistorialPacienteDto } from '../dto/historial-paciente.dto';
+import {
+  CreateHistorialPacienteDto,
+  UpdateHistorialPacienteDto,
+} from '../dto/historial-paciente.dto';
 
 @Injectable()
 export class HistorialPacienteService {
@@ -22,11 +25,15 @@ export class HistorialPacienteService {
 
   async findOne(id: string): Promise<HistorialPaciente> {
     const registro = await this.historialRepository.findOne({ where: { id } });
-    if (!registro) throw new NotFoundException('Registro de historial no encontrado');
+    if (!registro)
+      throw new NotFoundException('Registro de historial no encontrado');
     return registro;
   }
 
-  async update(id: string, dto: UpdateHistorialPacienteDto): Promise<HistorialPaciente> {
+  async update(
+    id: string,
+    dto: UpdateHistorialPacienteDto,
+  ): Promise<HistorialPaciente> {
     const registro = await this.findOne(id);
     Object.assign(registro, dto);
     return this.historialRepository.save(registro);
@@ -37,7 +44,9 @@ export class HistorialPacienteService {
     await this.historialRepository.remove(registro);
   }
 
-  async findByPaciente(idUsuarioPaciente: string): Promise<HistorialPaciente[]> {
+  async findByPaciente(
+    idUsuarioPaciente: string,
+  ): Promise<HistorialPaciente[]> {
     return this.historialRepository.find({ where: { idUsuarioPaciente } });
   }
-} 
+}

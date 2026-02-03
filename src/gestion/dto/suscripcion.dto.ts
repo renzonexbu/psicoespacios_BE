@@ -1,11 +1,21 @@
-import { IsNotEmpty, IsUUID, IsOptional, IsString, IsNumber, IsEnum, IsObject, ValidateNested, IsBoolean } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsUUID,
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsEnum,
+  IsObject,
+  ValidateNested,
+  IsBoolean,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum EstadoSuscripcion {
   PENDIENTE_PAGO = 'PENDIENTE_PAGO',
   ACTIVA = 'ACTIVA',
   CANCELADA = 'CANCELADA',
-  VENCIDA = 'VENCIDA'
+  VENCIDA = 'VENCIDA',
 }
 
 class DatosPagoDto {

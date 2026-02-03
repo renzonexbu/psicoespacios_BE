@@ -1,4 +1,13 @@
-import { Controller, Get, Put, Param, Body, UseGuards, Request, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Param,
+  Body,
+  UseGuards,
+  Request,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -25,10 +34,7 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get(':id/perfil')
-  async getProfile(
-    @Param('id') id: string,
-    @Request() req,
-  ) {
+  async getProfile(@Param('id') id: string, @Request() req) {
     // Verificar que el usuario solo puede ver su propio perfil (a menos que sea admin)
     if (req.user.role !== 'ADMIN' && req.user.id !== id) {
       throw new BadRequestException('Solo puedes ver tu propio perfil');
@@ -47,9 +53,10 @@ export class UsersController {
   @Put(':id/perfil')
   async updateProfile(
     @Param('id') id: string,
-    @Body() updateData: { 
-      experiencia?: string; 
-      nombre?: string; 
+    @Body()
+    updateData: {
+      experiencia?: string;
+      nombre?: string;
       apellido?: string;
       telefono?: string;
       fechaNacimiento?: string;
@@ -67,4 +74,4 @@ export class UsersController {
 
     return this.authService.updateProfile(id, updateData);
   }
-} 
+}

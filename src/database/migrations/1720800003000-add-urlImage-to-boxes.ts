@@ -16,4 +16,4 @@ export class AddUrlImageToBoxes1720800003000 implements MigrationInterface {
       DROP COLUMN "urlImage"
     `);
   }
-} 
+}

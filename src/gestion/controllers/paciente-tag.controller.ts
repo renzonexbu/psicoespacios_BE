@@ -1,10 +1,23 @@
-import { Controller, Post, Get, Put, Delete, Body, Param, Request, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { PacienteTagService } from '../services/paciente-tag.service';
-import { UpdatePacienteTagDto, RemovePacienteTagDto } from '../dto/update-paciente-tag.dto';
+import {
+  UpdatePacienteTagDto,
+  RemovePacienteTagDto,
+} from '../dto/update-paciente-tag.dto';
 
 @Controller('api/v1/pacientes')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -20,9 +33,13 @@ export class PacienteTagController {
   async asignarTag(
     @Param('pacienteId') pacienteId: string,
     @Body() updateTagDto: UpdatePacienteTagDto,
-    @Request() req
+    @Request() req,
   ) {
-    return this.pacienteTagService.asignarTag(pacienteId, updateTagDto, req.user.id);
+    return this.pacienteTagService.asignarTag(
+      pacienteId,
+      updateTagDto,
+      req.user.id,
+    );
   }
 
   /**
@@ -34,9 +51,13 @@ export class PacienteTagController {
   async removerTag(
     @Param('pacienteId') pacienteId: string,
     @Body() removeTagDto: RemovePacienteTagDto,
-    @Request() req
+    @Request() req,
   ) {
-    return this.pacienteTagService.removerTag(pacienteId, removeTagDto, req.user.id);
+    return this.pacienteTagService.removerTag(
+      pacienteId,
+      removeTagDto,
+      req.user.id,
+    );
   }
 
   /**
@@ -45,10 +66,7 @@ export class PacienteTagController {
    */
   @Get(':pacienteId/tag')
   @Roles(Role.PSICOLOGO, Role.ADMIN)
-  async obtenerTag(
-    @Param('pacienteId') pacienteId: string,
-    @Request() req
-  ) {
+  async obtenerTag(@Param('pacienteId') pacienteId: string, @Request() req) {
     return this.pacienteTagService.obtenerTag(pacienteId, req.user.id);
   }
 

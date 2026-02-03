@@ -63,9 +63,15 @@ export class CreatePacksTables1720800100000 implements MigrationInterface {
     `);
 
     // Índices útiles
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_packs_asignaciones_usuario" ON "packs_asignaciones"("usuarioId")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_packs_asignaciones_estado" ON "packs_asignaciones"("estado")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_reservas_packAsignacionId" ON "reservas"("packAsignacionId")`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_packs_asignaciones_usuario" ON "packs_asignaciones"("usuarioId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_packs_asignaciones_estado" ON "packs_asignaciones"("estado")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_reservas_packAsignacionId" ON "reservas"("packAsignacionId")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -79,13 +85,19 @@ export class CreatePacksTables1720800100000 implements MigrationInterface {
         ALTER TABLE "reservas" DROP COLUMN IF EXISTS "packAsignacionId";
       EXCEPTION WHEN undefined_column THEN NULL; END $$;
     `);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_reservas_packAsignacionId"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_packs_asignaciones_estado"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_packs_asignaciones_usuario"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "packs_asignaciones_horarios"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_reservas_packAsignacionId"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_packs_asignaciones_estado"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_packs_asignaciones_usuario"`,
+    );
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS "packs_asignaciones_horarios"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "packs_asignaciones"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "packs_horas"`);
   }
 }
-
-

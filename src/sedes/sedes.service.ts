@@ -1,9 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Sede } from '../common/entities/sede.entity';
 import { Box } from '../common/entities/box.entity';
-import { ReservaPsicologo, EstadoReservaPsicologo } from '../common/entities/reserva-psicologo.entity';
+import {
+  ReservaPsicologo,
+  EstadoReservaPsicologo,
+} from '../common/entities/reserva-psicologo.entity';
 import { CreateSedeDto, UpdateSedeDto, SedePublicDto } from './dto/sede.dto';
 import { Reserva, EstadoReserva } from '../common/entities/reserva.entity';
 
@@ -22,24 +29,24 @@ export class SedesService {
 
   private normalizarDia(dia: string): string {
     const normalizaciones: Record<string, string> = {
-      'lunes': 'Lunes',
-      'martes': 'Martes',
-      'miércoles': 'Miércoles',
-      'miercoles': 'Miércoles',
-      'jueves': 'Jueves',
-      'viernes': 'Viernes',
-      'sábado': 'Sábado',
-      'sabado': 'Sábado',
-      'domingo': 'Domingo',
-      'LUNES': 'Lunes',
-      'MARTES': 'Martes',
-      'MIÉRCOLES': 'Miércoles',
-      'MIERCOLES': 'Miércoles',
-      'JUEVES': 'Jueves',
-      'VIERNES': 'Viernes',
-      'SÁBADO': 'Sábado',
-      'SABADO': 'Sábado',
-      'DOMINGO': 'Domingo'
+      lunes: 'Lunes',
+      martes: 'Martes',
+      miércoles: 'Miércoles',
+      miercoles: 'Miércoles',
+      jueves: 'Jueves',
+      viernes: 'Viernes',
+      sábado: 'Sábado',
+      sabado: 'Sábado',
+      domingo: 'Domingo',
+      LUNES: 'Lunes',
+      MARTES: 'Martes',
+      MIÉRCOLES: 'Miércoles',
+      MIERCOLES: 'Miércoles',
+      JUEVES: 'Jueves',
+      VIERNES: 'Viernes',
+      SÁBADO: 'Sábado',
+      SABADO: 'Sábado',
+      DOMINGO: 'Domingo',
     };
     return normalizaciones[dia?.toLowerCase?.()] || dia;
   }
@@ -58,7 +65,9 @@ export class SedesService {
     if (!sede?.horarioAtencion?.diasHabiles?.length) {
       return true; // sin restricción definida
     }
-    const diaHorario = sede.horarioAtencion.diasHabiles.find(d => this.normalizarDia(d.dia) === this.normalizarDia(diaSemana));
+    const diaHorario = sede.horarioAtencion.diasHabiles.find(
+      (d) => this.normalizarDia(d.dia) === this.normalizarDia(diaSemana),
+    );
     if (!diaHorario || diaHorario.cerrado) {
       return false;
     }
@@ -84,7 +93,7 @@ export class SedesService {
     });
 
     // Retornar solo información pública sin datos sensibles
-    return sedes.map(sede => ({
+    return sedes.map((sede) => ({
       id: sede.id,
       nombre: sede.nombre,
       description: sede.description,
@@ -158,13 +167,13 @@ export class SedesService {
       horarioAtencion: createSedeDto.horarioAtencion,
       serviciosDisponibles: createSedeDto.serviciosDisponibles,
     });
-    
+
     return await this.sedesRepository.save(sede);
   }
 
   async update(id: string, updateSedeDto: UpdateSedeDto): Promise<Sede> {
     const sede = await this.findOne(id);
-    
+
     Object.assign(sede, updateSedeDto);
     return await this.sedesRepository.save(sede);
   }
@@ -207,11 +216,15 @@ export class SedesService {
     // Validar formato de hora (HH:MM o HH:MM:SS)
     const horaRegex = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
     if (!horaRegex.test(horaInicio)) {
-      throw new BadRequestException(`Formato de hora inicio inválido: ${horaInicio}. Use formato HH:MM o HH:MM:SS`);
+      throw new BadRequestException(
+        `Formato de hora inicio inválido: ${horaInicio}. Use formato HH:MM o HH:MM:SS`,
+      );
     }
 
     if (!horaRegex.test(horaFin)) {
-      throw new BadRequestException(`Formato de hora fin inválido: ${horaFin}. Use formato HH:MM o HH:MM:SS`);
+      throw new BadRequestException(
+        `Formato de hora fin inválido: ${horaFin}. Use formato HH:MM o HH:MM:SS`,
+      );
     }
 
     // Formatear la fecha de manera segura
@@ -226,25 +239,42 @@ export class SedesService {
         const month = String(fecha.getMonth() + 1).padStart(2, '0');
         const day = String(fecha.getDate()).padStart(2, '0');
         fechaStr = `${year}-${month}-${day}`;
-        
+
         // Validar que la fecha resultante es correcta
         if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaStr)) {
           throw new Error('Formato de fecha inválido');
         }
       } catch (e) {
-        throw new BadRequestException('No se pudo procesar la fecha proporcionada');
+        throw new BadRequestException(
+          'No se pudo procesar la fecha proporcionada',
+        );
       }
     }
-    
+
     // Verificar que horaFin es posterior a horaInicio
     if (horaFin <= horaInicio) {
-      throw new BadRequestException('La hora de fin debe ser posterior a la hora de inicio');
+      throw new BadRequestException(
+        'La hora de fin debe ser posterior a la hora de inicio',
+      );
     }
-    
+
     // Validar horario de atención de la sede para el día solicitado
-    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const diasSemana = [
+      'Domingo',
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+    ];
     const diaSemana = diasSemana[fecha.getDay()];
-    const dentroDeHorario = this.esHorarioValidoParaSede(horaInicio, horaFin, sede, diaSemana);
+    const dentroDeHorario = this.esHorarioValidoParaSede(
+      horaInicio,
+      horaFin,
+      sede,
+      diaSemana,
+    );
     if (!dentroDeHorario) {
       return {
         fecha: fechaStr,
@@ -254,7 +284,7 @@ export class SedesService {
         total: 0,
         boxAsignado: null,
         asignacionAutomatica: asignarBox,
-        motivo: 'Fuera del horario de atención de la sede'
+        motivo: 'Fuera del horario de atención de la sede',
       };
     }
 
@@ -269,22 +299,22 @@ export class SedesService {
 
       // Filtrar boxes que no tienen conflictos de horario
       const boxesDisponibles: Box[] = [];
-      
+
       for (const box of boxes) {
         // Verificar reservas de sesiones (reservas_sesiones)
         const conflictosSesiones = await this.reservaPsicologoRepository
           .createQueryBuilder('reserva')
           .where('reserva.boxId = :boxId', { boxId: box.id })
           .andWhere('reserva.fecha = :fecha', { fecha: fechaStr })
-          .andWhere('reserva.estado IN (:...estadosSesion)', { 
+          .andWhere('reserva.estado IN (:...estadosSesion)', {
             estadosSesion: [
               EstadoReservaPsicologo.CONFIRMADA,
-              EstadoReservaPsicologo.PENDIENTE
-            ]
+              EstadoReservaPsicologo.PENDIENTE,
+            ],
           })
           .andWhere(
             '(reserva.horaInicio < :horaFin AND reserva.horaFin > :horaInicio)',
-            { horaInicio, horaFin }
+            { horaInicio, horaFin },
           )
           .getCount();
 
@@ -293,12 +323,12 @@ export class SedesService {
           .createQueryBuilder('res')
           .where('res.boxId = :boxId', { boxId: box.id })
           .andWhere('res.fecha = :fecha', { fecha: fechaStr })
-          .andWhere('res.estado IN (:...estados)', { 
-            estados: [EstadoReserva.CONFIRMADA, EstadoReserva.PENDIENTE]
+          .andWhere('res.estado IN (:...estados)', {
+            estados: [EstadoReserva.CONFIRMADA, EstadoReserva.PENDIENTE],
           })
           .andWhere(
             '(res.horaInicio < :horaFin AND res.horaFin > :horaInicio)',
-            { horaInicio, horaFin }
+            { horaInicio, horaFin },
           )
           .getCount();
 
@@ -313,7 +343,7 @@ export class SedesService {
         // Seleccionar el primer box disponible (lógica simple)
         // En el futuro se podría implementar lógica más sofisticada
         boxAsignado = boxesDisponibles[0];
-        
+
         // Marcar el box como temporalmente reservado (opcional)
         // Esto evitaría que otros usuarios lo reserven simultáneamente
         // await this.boxesRepository.update(boxAsignado.id, { estado: 'TEMPORALMENTE_RESERVADO' });
@@ -326,10 +356,12 @@ export class SedesService {
         boxesDisponibles: boxesDisponibles,
         total: boxesDisponibles.length,
         boxAsignado: boxAsignado,
-        asignacionAutomatica: asignarBox
+        asignacionAutomatica: asignarBox,
       };
     } catch (error) {
-      throw new BadRequestException('Error al buscar disponibilidad: ' + error.message);
+      throw new BadRequestException(
+        'Error al buscar disponibilidad: ' + error.message,
+      );
     }
   }
 
@@ -349,14 +381,16 @@ export class SedesService {
         fecha,
         horaInicio,
         horaFin,
-        false // Solo verificar, no asignar
+        false, // Solo verificar, no asignar
       );
 
       if (disponibilidad.total === 0) {
         return {
           success: false,
           disponible: false,
-          message: disponibilidad.motivo || 'No hay boxes disponibles para la fecha y hora especificadas',
+          message:
+            disponibilidad.motivo ||
+            'No hay boxes disponibles para la fecha y hora especificadas',
           fecha: disponibilidad.fecha,
           horaInicio,
           horaFin,
@@ -374,9 +408,9 @@ export class SedesService {
       // - Considerar accesibilidad
 
       // Obtener información completa de la sede
-      const sedeInfo = await this.sedesRepository.findOne({ 
+      const sedeInfo = await this.sedesRepository.findOne({
         where: { id: sedeId },
-        select: ['id', 'nombre', 'direccion', 'ciudad', 'telefono', 'email']
+        select: ['id', 'nombre', 'direccion', 'ciudad', 'telefono', 'email'],
       });
 
       return {
@@ -387,7 +421,7 @@ export class SedesService {
           nombre: boxAsignado.nombre,
           capacidad: boxAsignado.capacidad,
           sedeId: sedeId, // Usar el sedeId del parámetro
-          estado: boxAsignado.estado
+          estado: boxAsignado.estado,
         },
         fecha: disponibilidad.fecha,
         horaInicio,
@@ -398,15 +432,16 @@ export class SedesService {
           direccion: sedeInfo?.direccion || 'Dirección no disponible',
           ciudad: sedeInfo?.ciudad || 'Ciudad no disponible',
           telefono: sedeInfo?.telefono,
-          email: sedeInfo?.email
-        }
+          email: sedeInfo?.email,
+        },
       };
-
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new BadRequestException('Error al asignar box automáticamente: ' + error.message);
+      throw new BadRequestException(
+        'Error al asignar box automáticamente: ' + error.message,
+      );
     }
   }
 }

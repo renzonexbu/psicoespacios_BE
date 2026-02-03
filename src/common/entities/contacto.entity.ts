@@ -1,4 +1,10 @@
-import { Column, CreateDateColumn, UpdateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 export enum ContactoEstado {
   PENDIENTE = 'PENDIENTE',
@@ -7,9 +13,8 @@ export enum ContactoEstado {
   SOLUCIONADA = 'SOLUCIONADA',
   CONTACTADO = 'CONTACTADO',
   RESUELTO = 'RESUELTO',
-  RECHAZADO = 'RECHAZADO'
+  RECHAZADO = 'RECHAZADO',
 }
-
 
 export enum ContactoTipo {
   CONSULTA = 'CONSULTA',
@@ -18,7 +23,7 @@ export enum ContactoTipo {
   ADMINISTRATIVA = 'ADMINISTRATIVA',
   PACIENTE = 'PACIENTE',
   PSICOLOGO = 'PSICOLOGO',
-  OTRO = 'OTRO'
+  OTRO = 'OTRO',
 }
 
 @Entity('contactos')
@@ -32,7 +37,7 @@ export class Contacto {
   @Column({
     type: 'enum',
     enum: ContactoTipo,
-    default: ContactoTipo.CONSULTA
+    default: ContactoTipo.CONSULTA,
   })
   tipo: ContactoTipo;
 
@@ -51,7 +56,7 @@ export class Contacto {
   @Column({
     type: 'enum',
     enum: ContactoEstado,
-    default: ContactoEstado.PENDIENTE
+    default: ContactoEstado.PENDIENTE,
   })
   estado: ContactoEstado;
 

@@ -20,4 +20,4 @@ export class CreateRefreshTokens1720800002000 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP TABLE IF EXISTS "refresh_tokens"`);
   }
-} 
+}

@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+  UseGuards,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { BoxesService } from './boxes.service';
 import { CreateBoxDto, UpdateBoxDto } from './dto/box.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -65,4 +75,4 @@ export class BoxesController {
   async findBySede(@Param('sedeId', ParseUUIDPipe) sedeId: string) {
     return this.boxesService.findBySede(sedeId);
   }
-} 
+}

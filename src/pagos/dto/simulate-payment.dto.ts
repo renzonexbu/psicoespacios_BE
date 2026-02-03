@@ -1,4 +1,12 @@
-import { IsNumber, IsString, IsNotEmpty, IsUUID, IsEnum, IsOptional, IsDateString } from 'class-validator';
+import {
+  IsNumber,
+  IsString,
+  IsNotEmpty,
+  IsUUID,
+  IsEnum,
+  IsOptional,
+  IsDateString,
+} from 'class-validator';
 import { TipoPago } from '../../common/entities/pago.entity';
 
 export class SimulatePaymentDto {
@@ -43,4 +51,4 @@ export class SimulatePaymentDto {
   @IsOptional()
   @IsString()
   simulateStatus?: 'success' | 'failed' | 'pending' | 'cancelled';
-} 
+}

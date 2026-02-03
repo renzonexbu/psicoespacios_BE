@@ -12,11 +12,17 @@ import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ReservaPsicologo, User, Psicologo, Box, Paciente]),
+    TypeOrmModule.forFeature([
+      ReservaPsicologo,
+      User,
+      Psicologo,
+      Box,
+      Paciente,
+    ]),
     MailModule,
   ],
   controllers: [ReservasPsicologosController],
   providers: [ReservasPsicologosService, ReservasPsicologosReminderService],
   exports: [ReservasPsicologosService],
 })
-export class ReservasPsicologosModule {} 
+export class ReservasPsicologosModule {}

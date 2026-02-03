@@ -10,9 +10,11 @@ export class InitialSchema1685394000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Verificar si las tablas ya existen para evitar errores
     const tablesExist = await this.checkIfTablesExist(queryRunner);
-    
+
     if (tablesExist) {
-      console.log('Las tablas ya existen en la base de datos. Omitiendo creación inicial de esquema.');
+      console.log(
+        'Las tablas ya existen en la base de datos. Omitiendo creación inicial de esquema.',
+      );
       return;
     }
 
@@ -40,7 +42,7 @@ export class InitialSchema1685394000000 implements MigrationInterface {
     CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id")
   )
 `);
-   // Crear tabla de configuración del sistema
+    // Crear tabla de configuración del sistema
     await queryRunner.query(`
       CREATE TABLE "configuracion_sistema" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -55,7 +57,7 @@ export class InitialSchema1685394000000 implements MigrationInterface {
         CONSTRAINT "PK_7a64268fe7d5d782f91277b5f8c" PRIMARY KEY ("id")
       )
     `);
-    
+
     // Crear tabla de sedes
     await queryRunner.query(`
       CREATE TABLE "sedes" (
@@ -97,8 +99,7 @@ export class InitialSchema1685394000000 implements MigrationInterface {
       )
     `);
 
-   
-      await queryRunner.query(`
+    await queryRunner.query(`
         CREATE TABLE "blogs" (
           "id" SERIAL PRIMARY KEY,
           "titulo" character varying(255) NOT NULL,
@@ -109,13 +110,13 @@ export class InitialSchema1685394000000 implements MigrationInterface {
           "contenido" text NOT NULL
         )
       `);
-    
+
     // Agregar relación entre boxes y sedes
     await queryRunner.query(`
       ALTER TABLE "boxes" ADD CONSTRAINT "FK_3c5e1ebfb1d5b6a42a5ae1be41b" 
       FOREIGN KEY ("sedeId") REFERENCES "sedes"("id") ON DELETE SET NULL ON UPDATE NO ACTION
     `);
-    
+
     // Crear tabla de planes
     await queryRunner.query(`
       CREATE TABLE "planes" (
@@ -159,12 +160,12 @@ export class InitialSchema1685394000000 implements MigrationInterface {
       ALTER TABLE "suscripciones" ADD CONSTRAINT "FK_d2f1ae9e6f0f1aba0d1b1b1b1b1" 
       FOREIGN KEY ("planId") REFERENCES "planes"("id") ON DELETE SET NULL ON UPDATE NO ACTION
     `);
-    
+
     await queryRunner.query(`
       ALTER TABLE "suscripciones" ADD CONSTRAINT "FK_e2f1ae9e6f0f1aba0d1b1b1b1b1" 
       FOREIGN KEY ("usuarioId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION
     `);
-    
+
     // Crear tabla de contactos
     await queryRunner.query(`
       CREATE TABLE "contactos" (
@@ -183,7 +184,7 @@ export class InitialSchema1685394000000 implements MigrationInterface {
         CONSTRAINT "PK_b3a3b8b7a3a8b5c3d5e2f1a2b3c" PRIMARY KEY ("id")
       )
     `);
-    
+
     // Crear tabla de pagos
     await queryRunner.query(`
       CREATE TABLE "pagos" (
@@ -204,13 +205,13 @@ export class InitialSchema1685394000000 implements MigrationInterface {
         CONSTRAINT "PK_c7b3cf6a0bf49af33a4c2cb7dc7" PRIMARY KEY ("id")
       )
     `);
-    
+
     // Agregar relaciones para pagos
     await queryRunner.query(`
       ALTER TABLE "pagos" ADD CONSTRAINT "FK_f7b3cf6a0bf49af33a4c2cb7dc7" 
       FOREIGN KEY ("suscripcionId") REFERENCES "suscripciones"("id") ON DELETE SET NULL ON UPDATE NO ACTION
     `);
-    
+
     await queryRunner.query(`
       ALTER TABLE "pagos" ADD CONSTRAINT "FK_g7b3cf6a0bf49af33a4c2cb7dc7" 
       FOREIGN KEY ("usuarioId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION
@@ -276,13 +277,23 @@ export class InitialSchema1685394000000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Eliminar relaciones
-    await queryRunner.query(`ALTER TABLE "pagos" DROP CONSTRAINT IF EXISTS "FK_g7b3cf6a0bf49af33a4c2cb7dc7"`);
-    await queryRunner.query(`ALTER TABLE "pagos" DROP CONSTRAINT IF EXISTS "FK_f7b3cf6a0bf49af33a4c2cb7dc7"`);
-    await queryRunner.query(`ALTER TABLE "suscripciones" DROP CONSTRAINT IF EXISTS "FK_e2f1ae9e6f0f1aba0d1b1b1b1b1"`);
-    await queryRunner.query(`ALTER TABLE "suscripciones" DROP CONSTRAINT IF EXISTS "FK_d2f1ae9e6f0f1aba0d1b1b1b1b1"`);
-    await queryRunner.query(`ALTER TABLE "boxes" DROP CONSTRAINT IF EXISTS "FK_3c5e1ebfb1d5b6a42a5ae1be41b"`);
+    await queryRunner.query(
+      `ALTER TABLE "pagos" DROP CONSTRAINT IF EXISTS "FK_g7b3cf6a0bf49af33a4c2cb7dc7"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "pagos" DROP CONSTRAINT IF EXISTS "FK_f7b3cf6a0bf49af33a4c2cb7dc7"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "suscripciones" DROP CONSTRAINT IF EXISTS "FK_e2f1ae9e6f0f1aba0d1b1b1b1b1"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "suscripciones" DROP CONSTRAINT IF EXISTS "FK_d2f1ae9e6f0f1aba0d1b1b1b1b1"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "boxes" DROP CONSTRAINT IF EXISTS "FK_3c5e1ebfb1d5b6a42a5ae1be41b"`,
+    );
     await queryRunner.query(`ALTER TABLE "users" DROP COLUMN IF EXISTS "bio"`);
-    
+
     // Eliminar tablas
     await queryRunner.query(`DROP TABLE IF EXISTS "pagos"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "contactos"`);
@@ -298,8 +309,20 @@ export class InitialSchema1685394000000 implements MigrationInterface {
   }
 
   private async checkIfTablesExist(queryRunner: QueryRunner): Promise<boolean> {
-    const tablas = ['users', 'configuracion_sistema', 'sedes', 'boxes', 'planes', 'suscripciones', 'contactos', 'pagos', 'psicologo', 'reservas', 'pacientes'];
-    
+    const tablas = [
+      'users',
+      'configuracion_sistema',
+      'sedes',
+      'boxes',
+      'planes',
+      'suscripciones',
+      'contactos',
+      'pagos',
+      'psicologo',
+      'reservas',
+      'pacientes',
+    ];
+
     for (const tabla of tablas) {
       const result = await queryRunner.query(`
         SELECT EXISTS (
@@ -308,12 +331,12 @@ export class InitialSchema1685394000000 implements MigrationInterface {
           AND table_name = '${tabla}'
         );
       `);
-      
+
       if (result[0].exists) {
         return true;
       }
     }
-    
+
     return false;
   }
 }

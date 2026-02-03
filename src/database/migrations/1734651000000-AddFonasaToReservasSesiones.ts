@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
 
-export class AddFonasaToReservasSesiones1734651000000 implements MigrationInterface {
+export class AddFonasaToReservasSesiones1734651000000
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.addColumn(
       'reservas_sesiones',
@@ -17,4 +19,3 @@ export class AddFonasaToReservasSesiones1734651000000 implements MigrationInterf
     await queryRunner.dropColumn('reservas_sesiones', 'fonasa');
   }
 }
-

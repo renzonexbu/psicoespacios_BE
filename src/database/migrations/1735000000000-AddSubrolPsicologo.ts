@@ -24,25 +24,11 @@ export class AddSubrolPsicologo1735000000000 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Eliminar el índice
     await queryRunner.query(`DROP INDEX "IDX_users_subrol"`);
-    
+
     // Eliminar la columna subrol
     await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "subrol"`);
-    
+
     // Eliminar el tipo enum
     await queryRunner.query(`DROP TYPE subrol_psicologo_enum`);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

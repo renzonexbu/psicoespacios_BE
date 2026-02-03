@@ -1,4 +1,12 @@
-import { IsString, IsNumber, IsOptional, IsArray, IsUUID, IsIn, IsUrl } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsArray,
+  IsUUID,
+  IsIn,
+  IsUrl,
+} from 'class-validator';
 
 export class CreateBoxDto {
   @IsString()
@@ -70,4 +78,4 @@ export class UpdateBoxDto {
   @IsUUID()
   @IsOptional()
   sedeId?: string;
-} 
+}

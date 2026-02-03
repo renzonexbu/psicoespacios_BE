@@ -1,13 +1,23 @@
-import { Injectable, BadRequestException, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import { Repository, IsNull, MoreThan, ILike } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
+import { createHash, randomBytes } from 'crypto';
 import { User } from '../common/entities/user.entity';
 import { Psicologo } from '../common/entities/psicologo.entity';
 import { RefreshToken } from '../common/entities/refresh-token.entity';
-import { Suscripcion, EstadoSuscripcion } from '../common/entities/suscripcion.entity';
+import {
+  Suscripcion,
+  EstadoSuscripcion,
+} from '../common/entities/suscripcion.entity';
+import { PasswordResetToken } from '../common/entities/password-reset-token.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
@@ -25,41 +35,57 @@ export class AuthService {
     private refreshTokenRepository: Repository<RefreshToken>,
     @InjectRepository(Suscripcion)
     private suscripcionRepository: Repository<Suscripcion>,
+    @InjectRepository(PasswordResetToken)
+    private passwordResetTokenRepository: Repository<PasswordResetToken>,
     private jwtService: JwtService,
     private mailService: MailService,
   ) {}
 
   async login(loginDto: LoginDto): Promise<LoginResponseDto> {
     // Verificar que el usuario existe
-    const user = await this.userRepository.findOne({ 
-      where: { email: loginDto.email } 
+    const user = await this.userRepository.findOne({
+      where: { email: loginDto.email },
     });
 
     if (!user) {
-      throw new UnauthorizedException('El correo electrónico no está registrado en el sistema');
+      throw new UnauthorizedException(
+        'El correo electrónico no está registrado en el sistema',
+      );
     }
 
     // Verificar la contraseña
-    const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.password,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('La contraseña es incorrecta');
     }
 
     // Verificar que el usuario no esté bloqueado o suspendido
     if (user.estado === 'BLOQUEADO' || user.estado === 'SUSPENDIDO') {
-      throw new UnauthorizedException(`Tu cuenta está ${user.estado.toLowerCase()}. Contacta al administrador para más información`);
+      throw new UnauthorizedException(
+        `Tu cuenta está ${user.estado.toLowerCase()}. Contacta al administrador para más información`,
+      );
     }
 
     // Verificar que los psicólogos tengan un subrol asignado
     if (user.role === 'PSICOLOGO' && !user.subrol) {
-      throw new UnauthorizedException('Tu cuenta de psicólogo está pendiente de aprobación. Un administrador debe asignarte un subrol para poder acceder al sistema.');
+      throw new UnauthorizedException(
+        'Tu cuenta de psicólogo está pendiente de aprobación. Un administrador debe asignarte un subrol para poder acceder al sistema.',
+      );
     }
 
     // No bloquear el login por onboarding: si es PSICOLOGO con subrol CDD o AMBOS
     // permitimos iniciar sesión y reportamos hasOnboarding en la respuesta.
     // La verificación de onboarding se hará en el frontend usando el flag devuelto.
 
-    const payload = { sub: user.id, email: user.email, role: user.role, subrol: user.subrol };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      subrol: user.subrol,
+    };
     const access_token = await this.jwtService.signAsync(payload);
     // Crear refresh token
     const refresh_token = uuidv4() + uuidv4();
@@ -73,16 +99,16 @@ export class AuthService {
     // Validar suscripción si es psicólogo
     let suscripcionInfo: any = null;
     let psicologoId: string | undefined = undefined;
-    
+
     if (user.role === 'PSICOLOGO') {
       suscripcionInfo = await this.validarSuscripcionPsicologo(user.id);
-      
+
       // Obtener el psicologoId
       const psicologo = await this.psicologoRepository.findOne({
         where: { usuario: { id: user.id } },
-        relations: ['usuario']
+        relations: ['usuario'],
       });
-      
+
       if (psicologo) {
         psicologoId = psicologo.id;
       }
@@ -90,7 +116,10 @@ export class AuthService {
 
     // Verificar estado de onboarding para usuarios CDD o AMBOS
     let hasOnboarding: boolean | undefined = undefined;
-    if (user.role === 'PSICOLOGO' && (user.subrol === 'CDD' || user.subrol === 'AMBOS')) {
+    if (
+      user.role === 'PSICOLOGO' &&
+      (user.subrol === 'CDD' || user.subrol === 'AMBOS')
+    ) {
       hasOnboarding = !!psicologoId;
     }
 
@@ -122,29 +151,39 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new BadRequestException('El email ya está registrado. Por favor, usa otro correo electrónico.');
+      throw new BadRequestException(
+        'El email ya está registrado. Por favor, usa otro correo electrónico.',
+      );
     }
 
     // Validaciones adicionales personalizadas
     if (!registerDto.password || registerDto.password.length < 6) {
-      throw new BadRequestException('La contraseña debe tener al menos 6 caracteres.');
+      throw new BadRequestException(
+        'La contraseña debe tener al menos 6 caracteres.',
+      );
     }
     if (!registerDto.nombre || !registerDto.apellido) {
       throw new BadRequestException('El nombre y apellido son obligatorios.');
     }
     if (!registerDto.rut) {
-      throw new BadRequestException('El RUT es obligatorio y debe tener el formato XX.XXX.XXX-X.');
+      throw new BadRequestException(
+        'El RUT es obligatorio y debe tener el formato XX.XXX.XXX-X.',
+      );
     }
     if (!registerDto.telefono) {
       throw new BadRequestException('El teléfono es obligatorio.');
     }
     if (!registerDto.fechaNacimiento) {
-      throw new BadRequestException('La fecha de nacimiento es obligatoria y debe tener el formato YYYY-MM-DD.');
+      throw new BadRequestException(
+        'La fecha de nacimiento es obligatoria y debe tener el formato YYYY-MM-DD.',
+      );
     }
     if (!registerDto.role) {
-      throw new BadRequestException('El rol es obligatorio y debe ser PSICOLOGO, PACIENTE o ADMIN.');
+      throw new BadRequestException(
+        'El rol es obligatorio y debe ser PSICOLOGO, PACIENTE o ADMIN.',
+      );
     }
-    
+
     // Validaciones de campos de dirección
     if (!registerDto.calleNumero) {
       throw new BadRequestException('La calle y número son obligatorios.');
@@ -172,24 +211,23 @@ export class AuthService {
       comuna: registerDto.comuna,
       compania: registerDto.compania,
       role: registerDto.role,
-      estado: 'PENDIENTE' // Usuarios nuevos comienzan como PENDIENTES
+      estado: 'PENDIENTE', // Usuarios nuevos comienzan como PENDIENTES
     });
 
     await this.userRepository.save(user);
-    
+
     // Enviar email de bienvenida
     try {
-      await this.mailService.sendBienvenida(
-        user.email,
-        user.nombre,
-        user.role,
-      );
+      await this.mailService.sendBienvenida(user.email, user.nombre, user.role);
       console.log(`✅ Email de bienvenida enviado a ${user.email}`);
     } catch (error) {
-      console.error(`❌ Error al enviar email de bienvenida a ${user.email}:`, error);
+      console.error(
+        `❌ Error al enviar email de bienvenida a ${user.email}:`,
+        error,
+      );
       // No fallar el registro si falla el email
     }
-    
+
     const payload = { sub: user.id, email: user.email, role: user.role };
     const access_token = await this.jwtService.signAsync(payload);
     // Crear refresh token para el registro también
@@ -201,7 +239,7 @@ export class AuthService {
       expiresAt,
       revoked: false,
     });
-    
+
     return {
       access_token,
       refresh_token,
@@ -221,23 +259,27 @@ export class AuthService {
   }
 
   async refreshToken(refreshToken: string) {
-    const token = await this.refreshTokenRepository.findOne({ where: { token: refreshToken, revoked: false } });
+    const token = await this.refreshTokenRepository.findOne({
+      where: { token: refreshToken, revoked: false },
+    });
     if (!token || token.expiresAt < new Date()) {
       throw new UnauthorizedException('Refresh token inválido o expirado');
     }
-    const user = await this.userRepository.findOne({ where: { id: token.userId } });
+    const user = await this.userRepository.findOne({
+      where: { id: token.userId },
+    });
     if (!user) {
       throw new UnauthorizedException('Usuario no encontrado');
     }
-    
+
     // Revocar el refresh token actual
     token.revoked = true;
     await this.refreshTokenRepository.save(token);
-    
+
     // Generar nuevo access token
     const payload = { sub: user.id, email: user.email, role: user.role };
     const access_token = await this.jwtService.signAsync(payload);
-    
+
     // Generar nuevo refresh token
     const new_refresh_token = uuidv4() + uuidv4();
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 días
@@ -247,35 +289,137 @@ export class AuthService {
       expiresAt,
       revoked: false,
     });
-    
-    return { 
+
+    return {
       access_token,
-      refresh_token: new_refresh_token
+      refresh_token: new_refresh_token,
     };
   }
 
   async revokeRefreshToken(refreshToken: string) {
-    const token = await this.refreshTokenRepository.findOne({ where: { token: refreshToken } });
+    const token = await this.refreshTokenRepository.findOne({
+      where: { token: refreshToken },
+    });
     if (token) {
       token.revoked = true;
       await this.refreshTokenRepository.save(token);
     }
   }
 
+  private async revokeAllRefreshTokensForUser(userId: string) {
+    await this.refreshTokenRepository.update(
+      { userId, revoked: false },
+      { revoked: true },
+    );
+  }
+
+  /**
+   * Solicita recuperación de contraseña.
+   *
+   * - Responde "ok" incluso si el email no existe (anti-enumeración).
+   * - Aplica un rate limit muy básico por usuario (no emitir más de 1 token por minuto).
+   */
+  async forgotPassword(email: string) {
+    const normalizedEmail = (email || '').trim();
+    if (!normalizedEmail) return;
+
+    // Case-insensitive match for Postgres (evita problemas si el email se guardó con mayúsculas)
+    const user = await this.userRepository.findOne({
+      where: { email: ILike(normalizedEmail) },
+    });
+    if (!user) {
+      // Anti-enumeración: no revelar si existe o no
+      return;
+    }
+
+    // Rate limit básico: si ya se generó un token en el último minuto, no generamos otro.
+    const oneMinuteAgo = new Date(Date.now() - 60_000);
+    const recentToken = await this.passwordResetTokenRepository.findOne({
+      where: {
+        userId: user.id,
+        createdAt: MoreThan(oneMinuteAgo),
+      },
+      order: { createdAt: 'DESC' },
+    });
+    if (recentToken) return;
+
+    const rawToken = randomBytes(32).toString('hex'); // 64 chars hex
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 30); // 30 minutos
+
+    await this.passwordResetTokenRepository.save({
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+      usedAt: null,
+    });
+
+    // Enviar email con link al frontend (FRONT_URL se inyecta en el template automáticamente)
+    await this.mailService.sendEmail({
+      to: user.email,
+      template: 'password-reset',
+      context: {
+        nombre: user.nombre,
+        token: rawToken,
+        // el template puede usar: {{FRONT_URL}}/reset-password?token={{token}}
+      },
+    });
+  }
+
+  /**
+   * Resetea la contraseña usando un token de recuperación.
+   */
+  async resetPassword(token: string, newPassword: string) {
+    const rawToken = (token || '').trim();
+    if (!rawToken) {
+      throw new BadRequestException('Token inválido');
+    }
+    if (!newPassword || newPassword.length < 6) {
+      throw new BadRequestException(
+        'La contraseña debe tener al menos 6 caracteres.',
+      );
+    }
+
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const resetToken = await this.passwordResetTokenRepository.findOne({
+      where: { tokenHash },
+    });
+
+    if (!resetToken) throw new BadRequestException('Token inválido o expirado');
+    if (resetToken.usedAt)
+      throw new BadRequestException('Token inválido o expirado');
+    if (resetToken.expiresAt < new Date())
+      throw new BadRequestException('Token inválido o expirado');
+
+    const user = await this.userRepository.findOne({
+      where: { id: resetToken.userId },
+    });
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await this.userRepository.save(user);
+
+    resetToken.usedAt = new Date();
+    await this.passwordResetTokenRepository.save(resetToken);
+
+    // Seguridad: revocar todos los refresh tokens del usuario
+    await this.revokeAllRefreshTokensForUser(user.id);
+  }
+
   async getFullProfile(id: string) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) throw new UnauthorizedException('Usuario no encontrado');
-    
+
     const { password, ...userData } = user;
-    
+
     // Si es psicólogo, agregar información adicional del perfil
     if (user.role === 'PSICOLOGO') {
       try {
         const psicologo = await this.psicologoRepository.findOne({
           where: { usuario: { id } },
-          relations: ['usuario']
+          relations: ['usuario'],
         });
-        
+
         if (psicologo) {
           return {
             ...userData,
@@ -284,7 +428,8 @@ export class AuthService {
               diagnosticos_experiencia: psicologo.diagnosticos_experiencia,
               temas_experiencia: psicologo.temas_experiencia,
               estilo_terapeutico: psicologo.estilo_terapeutico,
-              afinidad_paciente_preferida: psicologo.afinidad_paciente_preferida,
+              afinidad_paciente_preferida:
+                psicologo.afinidad_paciente_preferida,
               genero: psicologo.genero,
               numeroRegistroProfesional: psicologo.numeroRegistroProfesional,
               experiencia: psicologo.experiencia,
@@ -294,8 +439,8 @@ export class AuthService {
               disponibilidad: psicologo.disponibilidad,
               fonasa: psicologo.fonasa,
               createdAt: psicologo.createdAt,
-              updatedAt: psicologo.updatedAt
-            }
+              updatedAt: psicologo.updatedAt,
+            },
           };
         }
       } catch (error) {
@@ -303,7 +448,7 @@ export class AuthService {
         // Si hay error, devolver solo datos del usuario
       }
     }
-    
+
     return userData;
   }
 
@@ -319,22 +464,28 @@ export class AuthService {
     return userData;
   }
 
-  async changePassword(id: string, currentPassword: string, newPassword: string) {
+  async changePassword(
+    id: string,
+    currentPassword: string,
+    newPassword: string,
+  ) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) throw new UnauthorizedException('Usuario no encontrado');
     const valid = await bcrypt.compare(currentPassword, user.password);
-    if (!valid) throw new UnauthorizedException('La contraseña actual es incorrecta');
+    if (!valid)
+      throw new UnauthorizedException('La contraseña actual es incorrecta');
     user.password = await bcrypt.hash(newPassword, 10);
     await this.userRepository.save(user);
   }
 
-  async findAllUsers(): Promise<any[]> { // Assuming UserResponseDto is removed, so returning raw user data for now
+  async findAllUsers(): Promise<any[]> {
+    // Assuming UserResponseDto is removed, so returning raw user data for now
     const users = await this.userRepository.find({
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
-    
+
     // Transformar usando el DTO para excluir password y formatear fechas
-    return users.map(user => {
+    return users.map((user) => {
       const { password, ...userData } = user;
       return userData;
     });
@@ -361,10 +512,10 @@ export class AuthService {
         'estado',
         'subrol',
         'createdAt',
-        'updatedAt'
-      ]
+        'updatedAt',
+      ],
     });
-    
+
     return psychologists;
   }
 
@@ -373,22 +524,23 @@ export class AuthService {
    * @param userId ID del usuario psicólogo
    * @returns Información de la suscripción o null si no tiene
    */
-  private async validarSuscripcionPsicologo(userId: string): Promise<any> { // Assuming SuscripcionInfoDto is removed, so returning raw data for now
+  private async validarSuscripcionPsicologo(userId: string): Promise<any> {
+    // Assuming SuscripcionInfoDto is removed, so returning raw data for now
     try {
       const suscripcion = await this.suscripcionRepository.findOne({
-        where: { 
+        where: {
           usuarioId: userId,
-          estado: EstadoSuscripcion.ACTIVA
+          estado: EstadoSuscripcion.ACTIVA,
         },
-        relations: ['plan']
+        relations: ['plan'],
       });
 
       if (!suscripcion) {
-              return {
-        tieneSuscripcion: false,
-        mensaje: 'No tienes una suscripción activa',
-        estado: 'SIN_SUSCRIPCION' as const
-      };
+        return {
+          tieneSuscripcion: false,
+          mensaje: 'No tienes una suscripción activa',
+          estado: 'SIN_SUSCRIPCION' as const,
+        };
       }
 
       // Verificar si la suscripción está vencida
@@ -401,12 +553,15 @@ export class AuthService {
           mensaje: 'Tu suscripción ha vencido',
           estado: 'VENCIDA' as const,
           fechaVencimiento: suscripcion.fechaFin,
-          plan: suscripcion.plan?.nombre || 'Plan no especificado'
+          plan: suscripcion.plan?.nombre || 'Plan no especificado',
         };
       }
 
       // Calcular días restantes
-      const diasRestantes = Math.ceil((suscripcion.fechaFin.getTime() - ahora.getTime()) / (1000 * 60 * 60 * 24));
+      const diasRestantes = Math.ceil(
+        (suscripcion.fechaFin.getTime() - ahora.getTime()) /
+          (1000 * 60 * 60 * 24),
+      );
 
       return {
         tieneSuscripcion: true,
@@ -416,14 +571,14 @@ export class AuthService {
         fechaVencimiento: suscripcion.fechaFin,
         diasRestantes,
         renovacionAutomatica: suscripcion.renovacionAutomatica || false,
-        precioRenovacion: suscripcion.precioRenovacion
+        precioRenovacion: suscripcion.precioRenovacion,
       };
     } catch (error) {
       console.error('Error al validar suscripción:', error);
       return {
         tieneSuscripcion: false,
         mensaje: 'Error al verificar suscripción',
-        estado: 'ERROR' as const
+        estado: 'ERROR' as const,
       };
     }
   }
@@ -431,7 +586,7 @@ export class AuthService {
   async assignSubrol(userId: string, subrol: string): Promise<any> {
     // Verificar que el usuario existe y es psicólogo
     const user = await this.userRepository.findOne({
-      where: { id: userId, role: 'PSICOLOGO' }
+      where: { id: userId, role: 'PSICOLOGO' },
     });
 
     if (!user) {
@@ -441,34 +596,41 @@ export class AuthService {
     // Actualizar el subrol y cambiar estado a ACTIVO
     user.subrol = subrol as any;
     user.estado = 'ACTIVO';
-    
+
     await this.userRepository.save(user);
 
     // Enviar email de notificación al psicólogo (cuenta default)
     try {
       let mensaje = '';
       if (subrol === 'AMBOS') {
-        mensaje = 'Hola, tu cuenta ha sido actualizada y ahora tienes acceso al panel profesional para gestionar tus box, agenda y pacientes. Bienvenido/a al ecosistema PsicoEspacios.';
+        mensaje =
+          'Hola, tu cuenta ha sido actualizada y ahora tienes acceso al panel profesional para gestionar tus box, agenda y pacientes. Bienvenido/a al ecosistema PsicoEspacios.';
       } else if (subrol === 'CDD') {
-        mensaje = 'Hola, tu cuenta ha sido actualizada y ahora tienes acceso al panel profesional para gestionar tu agenda y pacientes. Bienvenido/a al ecosistema PsicoEspacios.';
+        mensaje =
+          'Hola, tu cuenta ha sido actualizada y ahora tienes acceso al panel profesional para gestionar tu agenda y pacientes. Bienvenido/a al ecosistema PsicoEspacios.';
       } else if (subrol === 'ADB') {
-        mensaje = 'Hola, tu cuenta ha sido actualizada y ahora tienes acceso al panel profesional para gestionar tus Boxes. Bienvenido/a al ecosistema PsicoEspacios.';
+        mensaje =
+          'Hola, tu cuenta ha sido actualizada y ahora tienes acceso al panel profesional para gestionar tus Boxes. Bienvenido/a al ecosistema PsicoEspacios.';
       } else {
-        mensaje = 'Hola, tu cuenta ha sido actualizada y ahora tienes acceso al panel profesional. Bienvenido/a al ecosistema PsicoEspacios.';
+        mensaje =
+          'Hola, tu cuenta ha sido actualizada y ahora tienes acceso al panel profesional. Bienvenido/a al ecosistema PsicoEspacios.';
       }
-      
+
       await this.mailService.sendEmail({
         to: user.email,
         template: 'subrol-actualizado',
         context: {
           nombre: user.nombre,
           subrol,
-          mensaje
-        }
+          mensaje,
+        },
       });
     } catch (error) {
       // No bloquear la operación si falla el email
-      console.error(`❌ Error al enviar email de subrol a ${user.email}:`, error);
+      console.error(
+        `❌ Error al enviar email de subrol a ${user.email}:`,
+        error,
+      );
     }
 
     return {
@@ -481,8 +643,8 @@ export class AuthService {
         apellido: user.apellido,
         role: user.role,
         estado: user.estado,
-        subrol: user.subrol
-      }
+        subrol: user.subrol,
+      },
     };
   }
 
@@ -490,7 +652,7 @@ export class AuthService {
     const pendingPsychologists = await this.userRepository.find({
       where: {
         role: 'PSICOLOGO',
-        subrol: IsNull()
+        subrol: IsNull(),
       },
       select: [
         'id',
@@ -504,28 +666,30 @@ export class AuthService {
         'numeroRegistroProfesional',
         'experiencia',
         'estado',
-        'createdAt'
+        'createdAt',
       ],
       order: {
-        createdAt: 'DESC'
-      }
+        createdAt: 'DESC',
+      },
     });
 
     return {
       success: true,
       count: pendingPsychologists.length,
-      psychologists: pendingPsychologists
+      psychologists: pendingPsychologists,
     };
   }
 
-  async checkOnboardingStatus(userId: string): Promise<{ hasOnboarding: boolean; psicologoId?: string }> {
+  async checkOnboardingStatus(
+    userId: string,
+  ): Promise<{ hasOnboarding: boolean; psicologoId?: string }> {
     const psicologo = await this.psicologoRepository.findOne({
-      where: { usuario: { id: userId } }
+      where: { usuario: { id: userId } },
     });
 
     return {
       hasOnboarding: !!psicologo,
-      psicologoId: psicologo?.id
+      psicologoId: psicologo?.id,
     };
   }
 }

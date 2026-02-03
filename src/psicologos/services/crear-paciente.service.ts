@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { User } from '../../common/entities/user.entity';
@@ -7,7 +13,7 @@ import { Psicologo } from '../../common/entities/psicologo.entity';
 import { CrearPacienteDto } from '../dto/crear-paciente.dto';
 import { CrearPacienteResponseDto } from '../dto/crear-paciente-response.dto';
 import { MailService } from '../../mail/mail.service';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class CrearPacienteService {
@@ -24,7 +30,10 @@ export class CrearPacienteService {
     private mailService: MailService,
   ) {}
 
-  async crearPaciente(crearPacienteDto: CrearPacienteDto, psicologoUserId: string): Promise<CrearPacienteResponseDto> {
+  async crearPaciente(
+    crearPacienteDto: CrearPacienteDto,
+    psicologoUserId: string,
+  ): Promise<CrearPacienteResponseDto> {
     this.logger.log(`Creando paciente para psicólogo: ${psicologoUserId}`);
     this.logger.log(`Datos del paciente: ${JSON.stringify(crearPacienteDto)}`);
 
@@ -33,29 +42,33 @@ export class CrearPacienteService {
       // 1. Verificar que el psicólogo existe
       const psicologo = await manager.findOne(Psicologo, {
         where: { usuario: { id: psicologoUserId } },
-        relations: ['usuario']
+        relations: ['usuario'],
       });
 
       if (!psicologo) {
         throw new NotFoundException('Psicólogo no encontrado');
       }
 
-      this.logger.log(`Psicólogo encontrado: ${psicologo.usuario.nombre} ${psicologo.usuario.apellido}`);
+      this.logger.log(
+        `Psicólogo encontrado: ${psicologo.usuario.nombre} ${psicologo.usuario.apellido}`,
+      );
       this.logger.log(`ID del psicólogo (tabla): ${psicologo.id}`);
       this.logger.log(`ID del usuario psicólogo: ${psicologo.usuario.id}`);
 
       // 2. Verificar que el email no esté en uso
       const usuarioExistente = await manager.findOne(User, {
-        where: { email: crearPacienteDto.email }
+        where: { email: crearPacienteDto.email },
       });
 
       if (usuarioExistente) {
-        throw new ConflictException('El email ya está registrado en el sistema');
+        throw new ConflictException(
+          'El email ya está registrado en el sistema',
+        );
       }
 
       // 3. Verificar que el RUT no esté en uso
       const rutExistente = await manager.findOne(User, {
-        where: { rut: crearPacienteDto.rut }
+        where: { rut: crearPacienteDto.rut },
       });
 
       if (rutExistente) {
@@ -81,7 +94,7 @@ export class CrearPacienteService {
         compania: crearPacienteDto.compania,
         password: hashedPassword,
         role: 'PACIENTE',
-        estado: 'ACTIVO'
+        estado: 'ACTIVO',
       });
 
       const usuarioGuardado = await manager.save(nuevoUsuario);
@@ -100,7 +113,7 @@ export class CrearPacienteService {
         enfoque_teorico_preferido: [],
         afinidad_personal_preferida: [],
         modalidad_preferida: [],
-        genero_psicologo_preferido: []
+        genero_psicologo_preferido: [],
       });
 
       const pacienteGuardado = await manager.save(nuevoPaciente);
@@ -118,8 +131,8 @@ export class CrearPacienteService {
             email: crearPacienteDto.email,
             password: passwordGenerada,
             psicologoNombre: `${psicologo.usuario.nombre} ${psicologo.usuario.apellido}`,
-            psicologoEmail: psicologo.usuario.email
-          }
+            psicologoEmail: psicologo.usuario.email,
+          },
         });
         this.logger.log(`Email de bienvenida enviado: ${emailEnviado}`);
       } catch (error) {
@@ -137,18 +150,20 @@ export class CrearPacienteService {
           apellido: usuarioGuardado.apellido,
           email: usuarioGuardado.email,
           rut: usuarioGuardado.rut,
-          fechaNacimiento: usuarioGuardado.fechaNacimiento.toISOString().split('T')[0],
+          fechaNacimiento: usuarioGuardado.fechaNacimiento
+            .toISOString()
+            .split('T')[0],
           role: usuarioGuardado.role,
-          estado: usuarioGuardado.estado
+          estado: usuarioGuardado.estado,
         },
         psicologo: {
           id: psicologo.id,
           nombre: psicologo.usuario.nombre,
           apellido: psicologo.usuario.apellido,
-          email: psicologo.usuario.email
+          email: psicologo.usuario.email,
         },
         emailEnviado,
-        passwordGenerada // Solo para mostrar en la respuesta
+        passwordGenerada, // Solo para mostrar en la respuesta
       };
 
       this.logger.log(`Paciente creado exitosamente: ${usuarioGuardado.id}`);
@@ -157,21 +172,25 @@ export class CrearPacienteService {
   }
 
   private generarPassword(): string {
-    const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    const caracteres =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
     let password = '';
-    
+
     // Asegurar al menos un carácter de cada tipo
     password += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)]; // Mayúscula
     password += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)]; // Minúscula
     password += '0123456789'[Math.floor(Math.random() * 10)]; // Número
     password += '!@#$%^&*'[Math.floor(Math.random() * 8)]; // Símbolo
-    
+
     // Completar hasta 12 caracteres
     for (let i = 4; i < 12; i++) {
       password += caracteres[Math.floor(Math.random() * caracteres.length)];
     }
-    
+
     // Mezclar la contraseña
-    return password.split('').sort(() => Math.random() - 0.5).join('');
+    return password
+      .split('')
+      .sort(() => Math.random() - 0.5)
+      .join('');
   }
 }

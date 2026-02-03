@@ -17,11 +17,11 @@ const testConnection = async () => {
     console.log('Intentando conectar a la base de datos...');
     await AppDataSource.initialize();
     console.log('✅ Conexión exitosa a la base de datos');
-    
+
     // Probar una consulta simple
     const result = await AppDataSource.query('SELECT NOW()');
     console.log('✅ Consulta de prueba exitosa:', result);
-    
+
     await AppDataSource.destroy();
     return true;
   } catch (error) {

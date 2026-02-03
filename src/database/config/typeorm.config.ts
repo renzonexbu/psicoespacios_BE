@@ -1,4 +1,7 @@
-import { DataSource, DataSourceOptions as TypeORMDataSourceOptions } from 'typeorm';
+import {
+  DataSource,
+  DataSourceOptions as TypeORMDataSourceOptions,
+} from 'typeorm';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -11,8 +14,14 @@ const getConnectionOptions = (): TypeORMDataSourceOptions => {
     return {
       type: 'postgres',
       url: process.env.DATABASE_URL,
-      entities: ['dist/src/common/entities/**/*.entity.{ts,js}', 'dist/common/entities/**/*.entity.{ts,js}'],
-      migrations: ['dist/src/database/migrations/**/*.{ts,js}', 'dist/database/migrations/**/*.{ts,js}'],
+      entities: [
+        'dist/src/common/entities/**/*.entity.{ts,js}',
+        'dist/common/entities/**/*.entity.{ts,js}',
+      ],
+      migrations: [
+        'dist/src/database/migrations/**/*.{ts,js}',
+        'dist/database/migrations/**/*.{ts,js}',
+      ],
       synchronize: false,
       ssl: {
         rejectUnauthorized: false,
@@ -24,10 +33,17 @@ const getConnectionOptions = (): TypeORMDataSourceOptions => {
       logging: process.env.NODE_ENV !== 'production',
     };
   }
-  
+
   // Si tenemos las variables individuales de DB_
-  if (process.env.DB_HOST && process.env.DB_USERNAME && process.env.DB_PASSWORD && process.env.DB_DATABASE) {
-    console.log(`Usando variables individuales para la conexión a ${process.env.DB_HOST}`);
+  if (
+    process.env.DB_HOST &&
+    process.env.DB_USERNAME &&
+    process.env.DB_PASSWORD &&
+    process.env.DB_DATABASE
+  ) {
+    console.log(
+      `Usando variables individuales para la conexión a ${process.env.DB_HOST}`,
+    );
     return {
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -35,8 +51,14 @@ const getConnectionOptions = (): TypeORMDataSourceOptions => {
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: ['dist/src/common/entities/**/*.entity.{ts,js}', 'dist/common/entities/**/*.entity.{ts,js}'],
-      migrations: ['dist/src/database/migrations/**/*.{ts,js}', 'dist/database/migrations/**/*.{ts,js}'],
+      entities: [
+        'dist/src/common/entities/**/*.entity.{ts,js}',
+        'dist/common/entities/**/*.entity.{ts,js}',
+      ],
+      migrations: [
+        'dist/src/database/migrations/**/*.{ts,js}',
+        'dist/database/migrations/**/*.{ts,js}',
+      ],
       synchronize: false,
       ssl: {
         rejectUnauthorized: false,
@@ -48,7 +70,7 @@ const getConnectionOptions = (): TypeORMDataSourceOptions => {
       logging: process.env.NODE_ENV !== 'production',
     };
   }
-  
+
   // Configuración para desarrollo local si nada de lo anterior está definido
   console.log('Usando configuración local para desarrollo');
   return {
@@ -58,8 +80,14 @@ const getConnectionOptions = (): TypeORMDataSourceOptions => {
     username: process.env.DATABASE_USER || 'psicoespacios_user',
     password: process.env.DATABASE_PASSWORD || 'psicoespacios_password',
     database: process.env.DATABASE_NAME || 'psicoespacios',
-    entities: ['dist/src/common/entities/**/*.entity.{ts,js}', 'dist/common/entities/**/*.entity.{ts,js}'],
-    migrations: ['dist/src/database/migrations/**/*.{ts,js}', 'dist/database/migrations/**/*.{ts,js}'],
+    entities: [
+      'dist/src/common/entities/**/*.entity.{ts,js}',
+      'dist/common/entities/**/*.entity.{ts,js}',
+    ],
+    migrations: [
+      'dist/src/database/migrations/**/*.{ts,js}',
+      'dist/database/migrations/**/*.{ts,js}',
+    ],
     synchronize: false,
     logging: process.env.NODE_ENV !== 'production',
   };

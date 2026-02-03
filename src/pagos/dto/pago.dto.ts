@@ -1,4 +1,12 @@
-import { IsNotEmpty, IsString, IsNumber, IsEnum, IsOptional, ValidateNested, IsUUID } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsEnum,
+  IsOptional,
+  ValidateNested,
+  IsUUID,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class DatosTarjetaDto {

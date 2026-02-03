@@ -1,4 +1,15 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum, IsOptional, IsDateString, Matches, IsUrl, ValidateIf } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+  IsEnum,
+  IsOptional,
+  IsDateString,
+  Matches,
+  IsUrl,
+  ValidateIf,
+} from 'class-validator';
 
 export class RegisterDto {
   @IsEmail()
@@ -39,8 +50,8 @@ export class RegisterDto {
 
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[0-9]{1,2}[.][0-9]{3}[.][0-9]{3}[-][0-9kK]{1}$/, { 
-    message: 'RUT debe tener el formato XX.XXX.XXX-X' 
+  @Matches(/^[0-9]{1,2}[.][0-9]{3}[.][0-9]{3}[-][0-9kK]{1}$/, {
+    message: 'RUT debe tener el formato XX.XXX.XXX-X',
   })
   rut: string;
 
@@ -50,9 +61,13 @@ export class RegisterDto {
 
   @IsNotEmpty()
   @IsString()
-  @Matches(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?$/, {
-    message: 'fechaNacimiento debe ser una fecha válida en formato YYYY-MM-DD o ISO 8601 completo'
-  })
+  @Matches(
+    /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?$/,
+    {
+      message:
+        'fechaNacimiento debe ser una fecha válida en formato YYYY-MM-DD o ISO 8601 completo',
+    },
+  )
   fechaNacimiento: string;
 
   @ValidateIf((o) => o.fotoUrl && o.fotoUrl.trim() !== '')
@@ -83,4 +98,8 @@ export class RegisterDto {
 
   @IsEnum(['PSICOLOGO', 'PACIENTE', 'ADMIN'])
   role: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'recaptchaToken es obligatorio' })
+  recaptchaToken: string;
 }

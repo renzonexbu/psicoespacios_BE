@@ -1,14 +1,21 @@
-import { IsArray, IsString, IsOptional, IsEnum, IsBoolean, IsDateString } from 'class-validator';
+import {
+  IsArray,
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsBoolean,
+  IsDateString,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
-import { 
-  DiagnosticoPaciente, 
-  TemaPaciente, 
-  EstiloTerapeuticoPaciente, 
-  EnfoqueTeorico, 
+import {
+  DiagnosticoPaciente,
+  TemaPaciente,
+  EstiloTerapeuticoPaciente,
+  EnfoqueTeorico,
   AfinidadPersonalPaciente,
   Genero,
   ModalidadAtencion,
-  GeneroPreferido
+  GeneroPreferido,
 } from '../../common/enums/matching.enum';
 
 // DTO para crear/actualizar el perfil de matching de un paciente
@@ -45,16 +52,21 @@ export class CrearPerfilMatchingDto {
   @IsArray()
   @Transform(({ value }) => {
     if (Array.isArray(value)) {
-      return value.map(v => {
+      return value.map((v) => {
         if (typeof v === 'string') {
           // Normalizar valores de modalidad
           const normalized = v.toLowerCase();
           switch (normalized) {
-            case 'indiferente': return 'Indiferente';
-            case 'online': return 'Online';
-            case 'presencial': return 'Presencial';
-            case 'ambas': return 'Ambas';
-            default: return v; // Mantener valor original si no coincide
+            case 'indiferente':
+              return 'Indiferente';
+            case 'online':
+              return 'Online';
+            case 'presencial':
+              return 'Presencial';
+            case 'ambas':
+              return 'Ambas';
+            default:
+              return v; // Mantener valor original si no coincide
           }
         }
         return v;
@@ -110,16 +122,21 @@ export class CrearPerfilMatchingPsicologoDto {
   @IsArray()
   @Transform(({ value }) => {
     if (Array.isArray(value)) {
-      return value.map(v => {
+      return value.map((v) => {
         if (typeof v === 'string') {
           // Normalizar valores de modalidad
           const normalized = v.toLowerCase();
           switch (normalized) {
-            case 'indiferente': return 'Indiferente';
-            case 'online': return 'Online';
-            case 'presencial': return 'Presencial';
-            case 'ambas': return 'Ambas';
-            default: return v; // Mantener valor original si no coincide
+            case 'indiferente':
+              return 'Indiferente';
+            case 'online':
+              return 'Online';
+            case 'presencial':
+              return 'Presencial';
+            case 'ambas':
+              return 'Ambas';
+            default:
+              return v; // Mantener valor original si no coincide
           }
         }
         return v;
@@ -228,16 +245,21 @@ export class FormularioMatchingPacienteDto {
   @IsArray()
   @Transform(({ value }) => {
     if (Array.isArray(value)) {
-      return value.map(v => {
+      return value.map((v) => {
         if (typeof v === 'string') {
           // Normalizar valores de modalidad
           const normalized = v.toLowerCase();
           switch (normalized) {
-            case 'indiferente': return 'Indiferente';
-            case 'online': return 'Online';
-            case 'presencial': return 'Presencial';
-            case 'ambas': return 'Ambas';
-            default: return v; // Mantener valor original si no coincide
+            case 'indiferente':
+              return 'Indiferente';
+            case 'online':
+              return 'Online';
+            case 'presencial':
+              return 'Presencial';
+            case 'ambas':
+              return 'Ambas';
+            default:
+              return v; // Mantener valor original si no coincide
           }
         }
         return v;
@@ -287,16 +309,21 @@ export class FormularioMatchingPsicologoDto {
   @IsArray()
   @Transform(({ value }) => {
     if (Array.isArray(value)) {
-      return value.map(v => {
+      return value.map((v) => {
         if (typeof v === 'string') {
           // Normalizar valores de modalidad
           const normalized = v.toLowerCase();
           switch (normalized) {
-            case 'indiferente': return 'Indiferente';
-            case 'online': return 'Online';
-            case 'presencial': return 'Presencial';
-            case 'ambas': return 'Ambas';
-            default: return v; // Mantener valor original si no coincide
+            case 'indiferente':
+              return 'Indiferente';
+            case 'online':
+              return 'Online';
+            case 'presencial':
+              return 'Presencial';
+            case 'ambas':
+              return 'Ambas';
+            default:
+              return v; // Mantener valor original si no coincide
           }
         }
         return v;
@@ -307,4 +334,3 @@ export class FormularioMatchingPsicologoDto {
   @IsEnum(ModalidadAtencion, { each: true })
   modalidad_atencion: ModalidadAtencion[];
 }
-

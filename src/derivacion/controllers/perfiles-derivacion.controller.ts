@@ -1,7 +1,20 @@
-import { Controller, Get, Post, Body, Param, Put, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PerfilesDerivacionService } from '../services/perfiles-derivacion.service';
-import { CreatePerfilDerivacionDto, UpdatePerfilDerivacionDto, SearchPerfilDerivacionDto } from '../dto/perfil-derivacion.dto';
+import {
+  CreatePerfilDerivacionDto,
+  UpdatePerfilDerivacionDto,
+  SearchPerfilDerivacionDto,
+} from '../dto/perfil-derivacion.dto';
 
 @Controller('api/v1/derivacion/perfiles')
 @UseGuards(JwtAuthGuard)

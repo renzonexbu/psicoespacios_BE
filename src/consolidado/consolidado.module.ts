@@ -14,11 +14,20 @@ import { PackPagoMensual } from '../packs/entities/pack-pago-mensual.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Reserva, Box, Sede, User, Suscripcion, Plan, PackHora, PackAsignacion, PackPagoMensual])
+    TypeOrmModule.forFeature([
+      Reserva,
+      Box,
+      Sede,
+      User,
+      Suscripcion,
+      Plan,
+      PackHora,
+      PackAsignacion,
+      PackPagoMensual,
+    ]),
   ],
   controllers: [ConsolidadoController],
   providers: [ConsolidadoService],
-  exports: [ConsolidadoService]
+  exports: [ConsolidadoService],
 })
 export class ConsolidadoModule {}
-

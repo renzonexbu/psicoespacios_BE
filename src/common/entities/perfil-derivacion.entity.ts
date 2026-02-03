@@ -1,4 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToOne,
+  OneToMany,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { User } from './user.entity';
 import { SolicitudDerivacion } from './solicitud-derivacion.entity';
 
@@ -41,7 +50,10 @@ export class PerfilDerivacion {
   @Column({ default: false })
   aprobado: boolean;
 
-  @OneToMany(() => SolicitudDerivacion, solicitud => solicitud.psicologoDestino)
+  @OneToMany(
+    () => SolicitudDerivacion,
+    (solicitud) => solicitud.psicologoDestino,
+  )
   solicitudesRecibidas: SolicitudDerivacion[];
 
   @CreateDateColumn()

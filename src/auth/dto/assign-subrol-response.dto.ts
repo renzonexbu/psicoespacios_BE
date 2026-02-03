@@ -11,17 +11,3 @@ export class AssignSubrolResponseDto {
     subrol: string;
   };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

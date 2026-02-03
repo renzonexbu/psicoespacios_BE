@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Psicologo } from './psicologo.entity';
 
 @Entity('voucher')
@@ -42,4 +50,4 @@ export class Voucher {
 
   @Column({ type: 'timestamp', nullable: true })
   deletedAt: Date | null;
-} 
+}

@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Box } from './box.entity';
 import { User } from './user.entity';
 
@@ -7,7 +15,7 @@ export enum EstadoArriendo {
   ACTIVO = 'ACTIVO',
   SUSPENDIDO = 'SUSPENDIDO',
   CANCELADO = 'CANCELADO',
-  VENCIDO = 'VENCIDO'
+  VENCIDO = 'VENCIDO',
 }
 
 export enum TipoArriendo {
@@ -15,7 +23,7 @@ export enum TipoArriendo {
   TRIMESTRAL = 'TRIMESTRAL',
   SEMESTRAL = 'SEMESTRAL',
   ANUAL = 'ANUAL',
-  PERSONALIZADO = 'PERSONALIZADO'
+  PERSONALIZADO = 'PERSONALIZADO',
 }
 
 @Entity('arriendos_box')
@@ -38,7 +46,7 @@ export class ArriendoBox {
   @Column({
     type: 'enum',
     enum: TipoArriendo,
-    default: TipoArriendo.MENSUAL
+    default: TipoArriendo.MENSUAL,
   })
   tipoArriendo: TipoArriendo;
 
@@ -65,7 +73,7 @@ export class ArriendoBox {
   @Column({
     type: 'enum',
     enum: EstadoArriendo,
-    default: EstadoArriendo.PENDIENTE
+    default: EstadoArriendo.PENDIENTE,
   })
   estado: EstadoArriendo;
 
@@ -96,4 +104,4 @@ export class ArriendoBox {
 
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
-} 
+}

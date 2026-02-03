@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Box } from '../common/entities/box.entity';
@@ -73,14 +77,16 @@ export class BoxesService {
         },
       });
       if (existingBox) {
-        throw new BadRequestException('Ya existe un box con ese número en esta sede');
+        throw new BadRequestException(
+          'Ya existe un box con ese número en esta sede',
+        );
       }
     }
 
     // Crear el box sin sedeId (para evitar problemas de mapeo)
     const { sedeId, ...boxData } = createBoxDto;
     const box = this.boxesRepository.create(boxData);
-    
+
     // Asignar la sede si existe
     if (sede) {
       box.sede = sede;
@@ -113,14 +119,16 @@ export class BoxesService {
         },
       });
       if (existingBox) {
-        throw new BadRequestException('Ya existe un box con ese número en esta sede');
+        throw new BadRequestException(
+          'Ya existe un box con ese número en esta sede',
+        );
       }
     }
 
     // Actualizar el box sin sedeId (para evitar problemas de mapeo)
     const { sedeId, ...boxData } = updateBoxDto;
     Object.assign(box, boxData);
-    
+
     // Asignar la sede si se proporciona
     if (sede) {
       box.sede = sede;
@@ -184,4 +192,4 @@ export class BoxesService {
     box.deletedAt = null;
     return await this.boxesRepository.save(box);
   }
-} 
+}

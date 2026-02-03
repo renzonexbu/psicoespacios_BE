@@ -17,7 +17,7 @@ export class PlanesService {
       order: { precio: 'ASC' },
     });
 
-    return planes.map(plan => ({
+    return planes.map((plan) => ({
       id: plan.id,
       tipo: plan.tipo,
       nombre: plan.nombre,

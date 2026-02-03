@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddCuponToReservasSesiones1720800018000 implements MigrationInterface {
+export class AddCuponToReservasSesiones1720800018000
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     console.log('🔄 Iniciando migración: Agregar cupón a reservas sesiones...');
 
@@ -49,14 +51,15 @@ export class AddCuponToReservasSesiones1720800018000 implements MigrationInterfa
             FOREIGN KEY ("cupon_id") REFERENCES "voucher"("id") ON DELETE SET NULL
           `);
         } else {
-          console.log('⚠️  Tabla voucher no existe, omitiendo foreign key constraint');
+          console.log(
+            '⚠️  Tabla voucher no existe, omitiendo foreign key constraint',
+          );
         }
 
         console.log('✅ Migración completada exitosamente');
       } else {
         console.log('ℹ️  Las columnas ya existen, omitiendo migración');
       }
-
     } catch (error) {
       console.error('❌ Error en migración:', error.message);
       throw error;
@@ -64,7 +67,9 @@ export class AddCuponToReservasSesiones1720800018000 implements MigrationInterfa
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    console.log('🔄 Revirtiendo migración: Eliminar cupón de reservas sesiones...');
+    console.log(
+      '🔄 Revirtiendo migración: Eliminar cupón de reservas sesiones...',
+    );
 
     try {
       // Verificar si el constraint existe antes de eliminarlo
@@ -120,7 +125,6 @@ export class AddCuponToReservasSesiones1720800018000 implements MigrationInterfa
       }
 
       console.log('✅ Rollback completado exitosamente');
-
     } catch (error) {
       console.error('❌ Error en rollback:', error.message);
       throw error;

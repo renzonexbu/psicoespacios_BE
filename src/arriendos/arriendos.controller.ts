@@ -1,18 +1,21 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Param, 
-  Delete, 
-  Put, 
-  Query, 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  Query,
   UseGuards,
   Request,
-  BadRequestException
+  BadRequestException,
 } from '@nestjs/common';
 import { ArriendosService } from './arriendos.service';
-import { CreateArriendoBoxDto, UpdateArriendoBoxDto } from './dto/arriendo-box.dto';
+import {
+  CreateArriendoBoxDto,
+  UpdateArriendoBoxDto,
+} from './dto/arriendo-box.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -71,12 +74,16 @@ export class ArriendosController {
   async verificarDisponibilidad(
     @Param('boxId') boxId: string,
     @Query('fecha') fecha: string,
-    @Body() horarios: any[]
+    @Body() horarios: any[],
   ) {
     if (!fecha) {
       throw new BadRequestException('La fecha es requerida');
     }
-    return this.arriendosService.verificarDisponibilidad(boxId, new Date(fecha), horarios);
+    return this.arriendosService.verificarDisponibilidad(
+      boxId,
+      new Date(fecha),
+      horarios,
+    );
   }
 
   @Get(':id')
@@ -90,8 +97,8 @@ export class ArriendosController {
   @UseGuards(RolesGuard)
   @Roles('ADMIN', 'PSICOLOGO')
   async update(
-    @Param('id') id: string, 
-    @Body() updateArriendoDto: UpdateArriendoBoxDto
+    @Param('id') id: string,
+    @Body() updateArriendoDto: UpdateArriendoBoxDto,
   ) {
     return this.arriendosService.update(id, updateArriendoDto);
   }
@@ -99,10 +106,7 @@ export class ArriendosController {
   @Post(':id/cancelar')
   @UseGuards(RolesGuard)
   @Roles('ADMIN', 'PSICOLOGO')
-  async cancelar(
-    @Param('id') id: string,
-    @Body() body: { motivo: string }
-  ) {
+  async cancelar(@Param('id') id: string, @Body() body: { motivo: string }) {
     if (!body.motivo) {
       throw new BadRequestException('El motivo de cancelación es requerido');
     }
@@ -122,4 +126,4 @@ export class ArriendosController {
   async remove(@Param('id') id: string) {
     return this.arriendosService.remove(id);
   }
-} 
+}

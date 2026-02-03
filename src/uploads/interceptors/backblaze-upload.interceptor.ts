@@ -11,7 +11,7 @@ export interface BackblazeUploadOptions {
 }
 
 export function BackblazeUploadInterceptor(
-  options: BackblazeUploadOptions = {}
+  options: BackblazeUploadOptions = {},
 ): Type<NestInterceptor> {
   @Injectable()
   class MixinInterceptor extends FileInterceptor(options.fieldName || 'file', {
@@ -33,8 +33,10 @@ export function BackblazeUploadInterceptor(
 
       if (!allowedTypes.includes(file.mimetype)) {
         return callback(
-          new Error(`Tipo de archivo no permitido. Tipos permitidos: ${allowedTypes.join(', ')}`),
-          false
+          new Error(
+            `Tipo de archivo no permitido. Tipos permitidos: ${allowedTypes.join(', ')}`,
+          ),
+          false,
         );
       }
 
@@ -43,4 +45,4 @@ export function BackblazeUploadInterceptor(
   } as MulterOptions) {}
 
   return mixin(MixinInterceptor);
-} 
+}
