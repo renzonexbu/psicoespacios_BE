@@ -2,10 +2,16 @@ import { Expose } from 'class-transformer';
 
 export class RegisterResponseDto {
   @Expose()
-  access_token: string;
+  access_token?: string;
 
   @Expose()
-  refresh_token: string;
+  refresh_token?: string;
+
+  @Expose()
+  requiresEmailVerification?: boolean;
+
+  @Expose()
+  message?: string;
 
   @Expose()
   user: {

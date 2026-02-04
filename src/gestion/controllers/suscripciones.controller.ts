@@ -21,10 +21,27 @@ import {
   ActivarSuscripcionDto,
   AsignarSuscripcionGratuitaDto,
 } from '../dto/suscripcion.dto';
+import { IsNotEmpty, IsUUID } from 'class-validator';
+
+class SubscribeFlowDto {
+  @IsUUID()
+  @IsNotEmpty()
+  planId: string;
+}
 
 @Controller('api/v1/gestion/suscripciones')
 export class SuscripcionesController {
   constructor(private readonly suscripcionesService: SuscripcionesService) {}
+
+  @Post('flow/subscribe')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PSICOLOGO')
+  async subscribeFlow(@Body() body: SubscribeFlowDto, @Request() req) {
+    return this.suscripcionesService.iniciarSuscripcionFlow(
+      body.planId,
+      req.user.id,
+    );
+  }
 
   // Endpoint principal para registrar suscripción mensual
   @Post('registrar-mensual')

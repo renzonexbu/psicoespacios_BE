@@ -18,6 +18,7 @@ import {
   EstadoSuscripcion,
 } from '../common/entities/suscripcion.entity';
 import { PasswordResetToken } from '../common/entities/password-reset-token.entity';
+import { EmailVerificationToken } from '../common/entities/email-verification-token.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
@@ -37,6 +38,8 @@ export class AuthService {
     private suscripcionRepository: Repository<Suscripcion>,
     @InjectRepository(PasswordResetToken)
     private passwordResetTokenRepository: Repository<PasswordResetToken>,
+    @InjectRepository(EmailVerificationToken)
+    private emailVerificationTokenRepository: Repository<EmailVerificationToken>,
     private jwtService: JwtService,
     private mailService: MailService,
   ) {}
@@ -60,6 +63,13 @@ export class AuthService {
     );
     if (!isPasswordValid) {
       throw new UnauthorizedException('La contraseña es incorrecta');
+    }
+
+    // Bloquear login de PACIENTE si no confirmó el email
+    if (user.role === 'PACIENTE' && !user.emailVerified) {
+      throw new UnauthorizedException(
+        'Debes confirmar tu correo para iniciar sesión',
+      );
     }
 
     // Verificar que el usuario no esté bloqueado o suspendido
@@ -196,6 +206,7 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+    const requiresEmailVerification = registerDto.role === 'PACIENTE';
     const user = this.userRepository.create({
       email: registerDto.email,
       password: hashedPassword,
@@ -212,9 +223,31 @@ export class AuthService {
       compania: registerDto.compania,
       role: registerDto.role,
       estado: 'PENDIENTE', // Usuarios nuevos comienzan como PENDIENTES
+      emailVerified: !requiresEmailVerification,
+      emailVerifiedAt: requiresEmailVerification ? null : new Date(),
     });
 
     await this.userRepository.save(user);
+
+    if (requiresEmailVerification) {
+      await this.sendEmailVerification(user);
+      return {
+        requiresEmailVerification: true,
+        message: 'Te enviamos un correo para confirmar tu registro.',
+        user: {
+          id: user.id,
+          email: user.email,
+          nombre: user.nombre,
+          apellido: user.apellido,
+          rut: user.rut,
+          telefono: user.telefono,
+          fechaNacimiento: user.fechaNacimiento,
+          fotoUrl: user.fotoUrl,
+          role: user.role,
+          estado: user.estado,
+        },
+      };
+    }
 
     // Enviar email de bienvenida
     try {
@@ -256,6 +289,57 @@ export class AuthService {
         estado: user.estado,
       },
     };
+  }
+
+  private async sendEmailVerification(user: User) {
+    const rawToken = randomBytes(32).toString('hex');
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 horas
+
+    await this.emailVerificationTokenRepository.save({
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+      usedAt: null,
+    });
+
+    await this.mailService.sendEmail({
+      to: user.email,
+      template: 'email-verification',
+      context: {
+        nombre: user.nombre,
+        token: rawToken,
+      },
+    });
+  }
+
+  async verifyEmail(token: string) {
+    const rawToken = (token || '').trim();
+    if (!rawToken) throw new BadRequestException('Token inválido');
+
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const verification = await this.emailVerificationTokenRepository.findOne({
+      where: { tokenHash },
+    });
+
+    if (!verification) throw new BadRequestException('Token inválido o expirado');
+    if (verification.usedAt)
+      throw new BadRequestException('Token inválido o expirado');
+    if (verification.expiresAt < new Date())
+      throw new BadRequestException('Token inválido o expirado');
+
+    const user = await this.userRepository.findOne({
+      where: { id: verification.userId },
+    });
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+
+    user.emailVerified = true;
+    user.emailVerifiedAt = new Date();
+    if (user.estado === 'PENDIENTE') user.estado = 'ACTIVO';
+    await this.userRepository.save(user);
+
+    verification.usedAt = new Date();
+    await this.emailVerificationTokenRepository.save(verification);
   }
 
   async refreshToken(refreshToken: string) {

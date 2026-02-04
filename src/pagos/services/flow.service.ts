@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
@@ -53,7 +53,9 @@ export class FlowService {
 
     // Ordenar las claves alfabéticamente (requerido por Flow)
     const keys = Object.keys(paramsToSign).sort();
-    const toSign = keys.map((k) => `${k}${paramsToSign[k]}`).join('');
+    const toSign = keys
+      .map((k) => `${k}${String(paramsToSign[k])}`)
+      .join('');
 
     console.log('Parámetros para firma:', keys);
     console.log(
@@ -65,6 +67,85 @@ export class FlowService {
       .createHmac('sha256', this.secretKey)
       .update(toSign)
       .digest('hex');
+  }
+
+  /**
+   * Flow firma exactamente los parámetros enviados.
+   * `qs.stringify()` tiende a OMITIR `undefined` y a serializar `null` como vacío,
+   * así que nunca debemos firmar keys con `null/undefined`.
+   */
+  private cleanParams(params: Record<string, any>) {
+    const cleaned: Record<string, any> = {};
+    for (const [k, v] of Object.entries(params || {})) {
+      if (v === undefined || v === null) continue;
+      cleaned[k] = v;
+    }
+    return cleaned;
+  }
+
+  private withSignature(params: Record<string, any>) {
+    const signed: any = this.cleanParams({ ...params, apiKey: this.apiKey });
+    signed.s = this.sign(signed);
+    return signed;
+  }
+
+  private async postForm<T>(path: string, params: Record<string, any>): Promise<T> {
+    const url = `${this.baseUrl}${path}`;
+    const signed = this.withSignature(params);
+    try {
+      const formData = qs.stringify(signed);
+      const { data } = await axios.post(url, formData, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: 30000,
+      });
+      return data as T;
+    } catch (error: any) {
+      const status = error.response?.status;
+      const data = error.response?.data;
+      const msg =
+        (typeof data === 'object' && data ? data.message : undefined) ||
+        (typeof data === 'string' ? data : undefined) ||
+        error.message ||
+        'Error llamando a Flow';
+
+      this.logger.error(
+        `Error Flow POST ${path} (${status ?? 'no-status'}): ${
+          typeof data === 'object' ? JSON.stringify(data) : String(data ?? msg)
+        }`,
+      );
+      throw new BadGatewayException(msg);
+    }
+  }
+
+  private async getQuery<T>(path: string, params: Record<string, any>): Promise<T> {
+    const url = `${this.baseUrl}${path}`;
+    const signed = this.withSignature(params);
+    try {
+      const { data } = await axios.get(url, { params: signed });
+      return data as T;
+    } catch (error: any) {
+      const status = error.response?.status;
+      const data = error.response?.data;
+      const msg =
+        (typeof data === 'object' && data ? data.message : undefined) ||
+        (typeof data === 'string' ? data : undefined) ||
+        error.message ||
+        'Error llamando a Flow';
+
+      this.logger.error(
+        `Error Flow GET ${path} (${status ?? 'no-status'}): ${
+          typeof data === 'object' ? JSON.stringify(data) : String(data ?? msg)
+        }`,
+      );
+      throw new BadGatewayException(msg);
+    }
+  }
+
+  private ensureUrlHasToken(url: string, token: string) {
+    if (!url) return url;
+    if (url.includes('token=')) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}token=${token}`;
   }
 
   async createPayment(
@@ -289,5 +370,120 @@ export class FlowService {
         `Error al obtener estado del pago por flowOrder: ${error.message}`,
       );
     }
+  }
+
+  // =========================
+  // Suscripciones (Flow API)
+  // =========================
+
+  async plansGet(planId: string) {
+    return await this.getQuery<any>('/plans/get', { planId });
+  }
+
+  async plansCreate(params: {
+    planId: string;
+    name: string;
+    amount: number;
+    interval: number; // 1 diario 2 semanal 3 mensual 4 anual
+    interval_count?: number;
+    currency?: string;
+    trial_period_days?: number;
+    days_until_due?: number;
+    periods_number?: number | null;
+    urlCallback: string;
+    charges_retries_number?: number;
+  }) {
+    return await this.postForm<any>('/plans/create', {
+      currency: 'CLP',
+      interval_count: 1,
+      trial_period_days: 0,
+      days_until_due: 3,
+      ...params,
+    });
+  }
+
+  async plansEdit(params: {
+    planId: string;
+    name?: string;
+    amount?: number;
+    interval?: number;
+    interval_count?: number;
+    currency?: string;
+    trial_period_days?: number;
+    days_until_due?: number;
+    periods_number?: number | null;
+    urlCallback?: string;
+    charges_retries_number?: number;
+  }) {
+    return await this.postForm<any>('/plans/edit', params);
+  }
+
+  async plansDelete(planId: string) {
+    return await this.postForm<any>('/plans/delete', { planId });
+  }
+
+  async customerCreate(params: { name: string; email: string; externalId: string }) {
+    return await this.postForm<any>('/customer/create', params);
+  }
+
+  async customerGet(customerId: string) {
+    return await this.getQuery<any>('/customer/get', { customerId });
+  }
+
+  async customerRegister(params: { customerId: string; url_return: string }) {
+    const data = await this.postForm<any>('/customer/register', params);
+    if (data?.url && data?.token) {
+      data.url = this.ensureUrlHasToken(data.url, data.token);
+    }
+    return data;
+  }
+
+  async customerGetRegisterStatus(token: string) {
+    return await this.getQuery<any>('/customer/getRegisterStatus', { token });
+  }
+
+  async subscriptionCreate(params: {
+    planId: string;
+    customerId: string;
+    subscription_start?: string; // yyyy-mm-dd
+    couponId?: number;
+    trial_period_days?: number;
+    periods_number?: number | null;
+    planAdditionalList?: number[];
+  }) {
+    return await this.postForm<any>('/subscription/create', params);
+  }
+
+  async subscriptionGet(subscriptionId: string) {
+    return await this.getQuery<any>('/subscription/get', { subscriptionId });
+  }
+
+  async subscriptionCancel(params: { subscriptionId: string; at_period_end: number }) {
+    return await this.postForm<any>('/subscription/cancel', params);
+  }
+
+  async subscriptionChangePlan(params: {
+    subscriptionId: string;
+    newPlanId: string;
+    startDateOfNewPlan?: string | null; // yyyy-mm-dd
+  }) {
+    return await this.postForm<any>('/subscription/changePlan', params);
+  }
+
+  async invoiceGet(invoiceId: number) {
+    return await this.getQuery<any>('/invoice/get', { invoiceId });
+  }
+
+  async invoiceGetOverDue(params: {
+    start?: number;
+    limit?: number;
+    filter?: string;
+    planId?: string;
+  }) {
+    return await this.getQuery<any>('/invoice/getOverDue', params);
+  }
+
+  async invoiceRetryToCollect(invoiceId: number) {
+    return await this.postForm<any>('/invoice/retryToCollect', { invoiceId });
   }
 }

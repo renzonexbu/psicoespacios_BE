@@ -16,6 +16,18 @@ export class User {
   @Column({ unique: true })
   email: string;
 
+  @Column({ type: 'boolean', default: false })
+  emailVerified: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  emailVerifiedAt: Date | null;
+
+  /**
+   * Identificador del cliente en Flow (`customerId`) para cobros recurrentes.
+   */
+  @Column({ type: 'varchar', nullable: true })
+  flowCustomerId?: string;
+
   @Column()
   @Exclude()
   password: string;

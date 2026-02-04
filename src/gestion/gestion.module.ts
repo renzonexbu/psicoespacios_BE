@@ -37,6 +37,7 @@ import { ReservaPsicologo } from '../common/entities/reserva-psicologo.entity';
 import { Disponibilidad } from '../psicologos/entities/disponibilidad.entity';
 import { HistorialPaciente } from '../common/entities/historial-paciente.entity';
 import { Acreditacion } from '../common/entities/acreditacion.entity';
+import { PagosModule } from '../pagos/pagos.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { Acreditacion } from '../common/entities/acreditacion.entity';
       Acreditacion,
     ]),
     MailModule,
+    PagosModule,
   ],
   controllers: [
     PlanesController,

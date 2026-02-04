@@ -22,6 +22,30 @@ export class Suscripcion {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  /**
+   * Identificador de la suscripción en Flow (`subscriptionId`).
+   */
+  @Column({ type: 'varchar', nullable: true, unique: true })
+  flowSubscriptionId?: string;
+
+  /**
+   * Último invoice procesado (Flow `invoice.id`).
+   */
+  @Column({ type: 'integer', nullable: true })
+  flowLastInvoiceId?: number;
+
+  /**
+   * Próxima fecha de cobro según Flow.
+   */
+  @Column({ type: 'timestamp', nullable: true })
+  flowNextInvoiceDate?: Date;
+
+  /**
+   * Estado numérico de Flow (subscription.status).
+   */
+  @Column({ type: 'integer', nullable: true })
+  flowStatus?: number;
+
   @Column({ name: 'fechaInicio', type: 'timestamp' })
   fechaInicio: Date;
 

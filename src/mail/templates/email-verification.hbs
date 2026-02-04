@@ -1,0 +1,21 @@
+<h2>Confirma tu correo</h2>
+
+<p>Hola {{nombre}},</p>
+
+<p>Para activar tu cuenta, confirma tu correo haciendo clic en el siguiente botón:</p>
+
+<p style="text-align:center;">
+  <a class="button" href="{{FRONT_URL}}/verify-email?token={{token}}" style="color:#ffffff !important; text-decoration:none !important;">Confirmar correo</a>
+</p>
+
+<div class="info-box">
+  <strong>Importante:</strong>
+  <ul>
+    <li>Este link expira en 24 horas.</li>
+    <li>Si no creaste una cuenta, puedes ignorar este email.</li>
+  </ul>
+</div>
+
+<p>Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
+<p><a href="{{FRONT_URL}}/verify-email?token={{token}}">{{FRONT_URL}}/verify-email?token={{token}}</a></p>
+

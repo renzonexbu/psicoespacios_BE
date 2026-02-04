@@ -184,6 +184,7 @@ export class MailService {
       'pack-activado-psicologo':
         'Confirmación de packs de horas - PsicoEspacios',
       'password-reset': 'Recupera tu contraseña - PsicoEspacios',
+      'email-verification': 'Confirma tu correo - PsicoEspacios',
     };
 
     return subjects[templateName] || 'PsicoEspacios';

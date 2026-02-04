@@ -3,12 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Plan } from '../../common/entities/plan.entity';
 import { CreatePlanDto, UpdatePlanDto, PlanPublicDto } from '../dto/plan.dto';
+import { FlowSubscriptionsService } from '../../pagos/services/flow-subscriptions.service';
 
 @Injectable()
 export class PlanesService {
   constructor(
     @InjectRepository(Plan)
     private readonly planRepository: Repository<Plan>,
+    private readonly flowSubscriptionsService: FlowSubscriptionsService,
   ) {}
 
   async findAllPublic(): Promise<PlanPublicDto[]> {
@@ -74,13 +76,26 @@ export class PlanesService {
 
   async create(createPlanDto: CreatePlanDto) {
     const plan = this.planRepository.create(createPlanDto);
-    return this.planRepository.save(plan);
+    const saved = await this.planRepository.save(plan);
+    // Best-effort: crear/sincronizar plan en Flow si es necesario
+    try {
+      await this.flowSubscriptionsService.syncFlowPlanFromLocal(saved.id);
+    } catch {
+      // No bloquear la creación del plan si Flow falla
+    }
+    return saved;
   }
 
   async update(id: string, updatePlanDto: UpdatePlanDto) {
     const plan = await this.findOne(id);
     const updatedPlan = Object.assign(plan, updatePlanDto);
-    return this.planRepository.save(updatedPlan);
+    const saved = await this.planRepository.save(updatedPlan);
+    try {
+      await this.flowSubscriptionsService.syncFlowPlanFromLocal(saved.id);
+    } catch {
+      // no bloquear
+    }
+    return saved;
   }
 
   async remove(id: string) {

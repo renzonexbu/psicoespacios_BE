@@ -15,6 +15,7 @@ import { MailModule } from '../mail/mail.module';
 import { PasswordResetToken } from '../common/entities/password-reset-token.entity';
 import { RecaptchaService } from '../common/recaptcha/recaptcha.service';
 import { RecaptchaGuard } from '../common/recaptcha/recaptcha.guard';
+import { EmailVerificationToken } from '../common/entities/email-verification-token.entity';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { RecaptchaGuard } from '../common/recaptcha/recaptcha.guard';
       RefreshToken,
       Suscripcion,
       PasswordResetToken,
+      EmailVerificationToken,
     ]),
     PassportModule,
     MailModule,

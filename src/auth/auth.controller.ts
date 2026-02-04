@@ -7,6 +7,7 @@ import {
   Get,
   Patch,
   Param,
+  Query,
 } from '@nestjs/common';
 // import { AuthService } from './auth.service';
 import { AuthService } from './auth.service';
@@ -69,6 +70,15 @@ export class AuthController {
     return {
       success: true,
       message: 'Contraseña actualizada correctamente',
+    };
+  }
+
+  @Get('verify-email')
+  async verifyEmail(@Query('token') token: string) {
+    await this.authService.verifyEmail(token);
+    return {
+      success: true,
+      message: 'Correo confirmado correctamente. Ya puedes iniciar sesión.',
     };
   }
 

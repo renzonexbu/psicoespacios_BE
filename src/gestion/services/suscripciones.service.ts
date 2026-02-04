@@ -20,6 +20,7 @@ import {
   AsignarSuscripcionGratuitaDto,
 } from '../dto/suscripcion.dto';
 import { MailService } from '../../mail/mail.service';
+import { FlowSubscriptionsService } from '../../pagos/services/flow-subscriptions.service';
 
 @Injectable()
 export class SuscripcionesService {
@@ -31,7 +32,15 @@ export class SuscripcionesService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private mailService: MailService,
+    private flowSubscriptionsService: FlowSubscriptionsService,
   ) {}
+
+  async iniciarSuscripcionFlow(planId: string, userId: string) {
+    return await this.flowSubscriptionsService.iniciarSuscripcionFlow(
+      userId,
+      planId,
+    );
+  }
 
   // Método principal para registrar suscripción mensual
   async registrarSuscripcionMensual(
@@ -371,6 +380,18 @@ export class SuscripcionesService {
   ): Promise<Suscripcion> {
     const suscripcion = await this.findOne(id);
 
+    // Cancelar en Flow si aplica (best-effort)
+    if (suscripcion.flowSubscriptionId) {
+      try {
+        await this.flowSubscriptionsService.cancelarSuscripcionFlow(
+          suscripcion.flowSubscriptionId,
+          true,
+        );
+      } catch {
+        // no bloquear
+      }
+    }
+
     suscripcion.estado = EstadoSuscripcion.CANCELADA;
     suscripcion.motivoCancelacion = motivo || 'Cancelada por administrador';
     suscripcion.notasCancelacion = `Cancelada por admin ${adminId}${motivo ? `: ${motivo}` : ''}`;
@@ -392,6 +413,17 @@ export class SuscripcionesService {
       throw new ForbiddenException(
         'No tienes permiso para cancelar esta suscripción',
       );
+    }
+
+    if (suscripcion.flowSubscriptionId) {
+      try {
+        await this.flowSubscriptionsService.cancelarSuscripcionFlow(
+          suscripcion.flowSubscriptionId,
+          true,
+        );
+      } catch {
+        // no bloquear
+      }
     }
 
     suscripcion.estado = EstadoSuscripcion.CANCELADA;

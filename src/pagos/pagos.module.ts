@@ -11,6 +11,7 @@ import { PagoSesionService } from './services/pago-sesion.service';
 import { Pago } from '../common/entities/pago.entity';
 import { User } from '../common/entities/user.entity';
 import { Suscripcion } from '../common/entities/suscripcion.entity';
+import { Plan } from '../common/entities/plan.entity';
 import { SolicitudDerivacion } from '../common/entities/solicitud-derivacion.entity';
 import { Reserva } from '../common/entities/reserva.entity';
 import { Psicologo } from '../common/entities/psicologo.entity';
@@ -19,6 +20,9 @@ import { Voucher } from '../common/entities/voucher.entity';
 import { ReservaPsicologo } from '../common/entities/reserva-psicologo.entity';
 import { Paciente } from '../common/entities/paciente.entity';
 import { MailModule } from '../mail/mail.module';
+import { FlowSubscriptionsService } from './services/flow-subscriptions.service';
+import { FlowSubscriptionsController } from './controllers/flow-subscriptions.controller';
+import { FlowSubscriptionsReconciliationService } from './services/flow-subscriptions.reconciliation.service';
 
 @Module({
   imports: [
@@ -26,6 +30,7 @@ import { MailModule } from '../mail/mail.module';
       Pago,
       User,
       Suscripcion,
+      Plan,
       SolicitudDerivacion,
       Reserva,
       Psicologo,
@@ -39,15 +44,18 @@ import { MailModule } from '../mail/mail.module';
   controllers: [
     PagosController,
     FlowController,
+    FlowSubscriptionsController,
     SimulatePaymentController,
     PagoSesionController,
   ],
   providers: [
     PagosService,
     FlowService,
+    FlowSubscriptionsService,
+    FlowSubscriptionsReconciliationService,
     SimulatePaymentService,
     PagoSesionService,
   ],
-  exports: [PagosService, PagoSesionService],
+  exports: [PagosService, PagoSesionService, FlowService, FlowSubscriptionsService],
 })
 export class PagosModule {}

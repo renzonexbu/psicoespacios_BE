@@ -18,6 +18,12 @@ export class Plan {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  /**
+   * Identificador del plan en Flow (`planId`).
+   */
+  @Column({ type: 'varchar', nullable: true, unique: true })
+  flowPlanId?: string;
+
   @Column({
     type: 'enum',
     enum: TipoPlan,
