@@ -108,8 +108,11 @@ export class BoxReservationService {
       );
     }
 
-    // Validar que el box existe
-    const box = await this.boxRepository.findOne({ where: { id: dto.boxId } });
+    // Validar que el box existe (incl. sede para el mail de confirmación)
+    const box = await this.boxRepository.findOne({
+      where: { id: dto.boxId },
+      relations: ['sede'],
+    });
     if (!box) {
       throw new NotFoundException('Box no encontrado');
     }
@@ -150,12 +153,17 @@ export class BoxReservationService {
     });
 
     const savedReserva = await this.reservaRepository.save(reserva);
+    const sedeNombre = box.sede?.nombre?.trim() || '';
+    const boxNombre =
+      box.nombre?.trim() || `Box ${box.numero}`;
     // Enviar email de confirmación de reserva de box (cuenta default)
     try {
       await this.mailService.sendReservaBoxConfirmada(
         psicologo.email,
         dto.fecha,
         dto.horaInicio,
+        sedeNombre,
+        boxNombre,
       );
     } catch (error) {
       // No bloquear creación por error de email
@@ -262,11 +270,21 @@ export class BoxReservationService {
         const fechaStr = isNaN(fechaObj.getTime())
           ? ''
           : fechaObj.toISOString().split('T')[0]; // YYYY-MM-DD
+        const boxCancel = await this.boxRepository.findOne({
+          where: { id: reserva.boxId },
+          relations: ['sede'],
+        });
+        const sedeNombre = boxCancel?.sede?.nombre?.trim() || '';
+        const boxNombre = boxCancel
+          ? boxCancel.nombre?.trim() || `Box ${boxCancel.numero}`
+          : '';
         await this.mailService.sendReservaBoxCancelada(
           psicologo.email,
           fechaStr,
           reserva.horaInicio,
           canceladaPorAdmin,
+          sedeNombre,
+          boxNombre,
         );
       }
     } catch (error) {

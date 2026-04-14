@@ -220,19 +220,20 @@ export class DocumentosPsicologoController {
     try {
       const documento =
         await this.documentosPsicologoService.findById(documentoId);
-      // Extraer el ID del psicólogo del documento
-      if (documento && documento.psicologo && documento.psicologo.id) {
-        // Necesitamos obtener el ID del usuario desde la tabla psicologo
+      // Priorizar vínculo directo al usuario
+      if (documento?.usuario?.id) {
+        return documento.usuario.id;
+      }
+
+      // Compatibilidad para documentos antiguos que solo tengan vínculo a psicólogo
+      if (documento?.psicologo?.id) {
         const psicologo = await this.documentosPsicologoService[
           'psicologoRepository'
         ].findOne({
           where: { id: documento.psicologo.id },
           relations: ['usuario'],
         });
-
-        if (psicologo && psicologo.usuario) {
-          return psicologo.usuario.id; // Retornar el ID del usuario
-        }
+        if (psicologo?.usuario?.id) return psicologo.usuario.id;
       }
 
       throw new BadRequestException(

@@ -65,6 +65,21 @@ export class ReservasService {
         'No tienes permiso para cancelar esta reserva',
       );
     }
+    if (reserva.estado === EstadoReserva.CANCELADA) {
+      throw new BadRequestException('La reserva ya está cancelada');
+    }
+    if (reserva.estado === EstadoReserva.COMPLETADA) {
+      throw new BadRequestException('No se puede cancelar una reserva completada');
+    }
+
+    const MS_24H = 24 * 60 * 60 * 1000;
+    const inicioReserva = this.getInicioReserva(reserva);
+    if (inicioReserva.getTime() - Date.now() < MS_24H) {
+      throw new BadRequestException(
+        'Solo puedes cancelar con al menos 24 horas de anticipación respecto del inicio de la reserva.',
+      );
+    }
+
     reserva.estado = updateDto.estado || EstadoReserva.CANCELADA;
     const saved = await this.reservaRepository.save(reserva);
     // Enviar email de cancelación al psicólogo (cuenta default)
@@ -74,10 +89,23 @@ export class ReservasService {
       });
       if (usuario?.email) {
         const fechaStr = new Date(saved.fecha).toISOString().split('T')[0];
+        const box = saved.boxId
+          ? await this.boxRepository.findOne({
+              where: { id: saved.boxId },
+              relations: ['sede'],
+            })
+          : null;
+        const sedeNombre = box?.sede?.nombre?.trim() || '';
+        const boxNombre = box
+          ? box.nombre?.trim() || `Box ${box.numero}`
+          : '';
         await this.mailService.sendReservaBoxCancelada(
           usuario.email,
           fechaStr,
           saved.horaInicio,
+          false,
+          sedeNombre,
+          boxNombre,
         );
       }
     } catch (error) {
@@ -530,5 +558,28 @@ export class ReservasService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  /**
+   * Inicio de la reserva en hora local del servidor (fecha calendario + horaInicio).
+   * Para columnas `date` de Postgres se usan componentes UTC del día almacenado.
+   */
+  private getInicioReserva(reserva: Reserva): Date {
+    const raw = reserva.fecha as Date | string;
+    let y: number;
+    let m: number;
+    let d: number;
+    if (raw instanceof Date) {
+      y = raw.getUTCFullYear();
+      m = raw.getUTCMonth();
+      d = raw.getUTCDate();
+    } else {
+      const parts = String(raw).slice(0, 10).split('-').map(Number);
+      y = parts[0];
+      m = parts[1] - 1;
+      d = parts[2];
+    }
+    const [hh, mm] = reserva.horaInicio.split(':').map((n) => parseInt(n, 10));
+    return new Date(y, m, d, hh, mm || 0, 0, 0);
   }
 }

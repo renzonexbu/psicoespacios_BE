@@ -4,6 +4,7 @@ import * as nodemailer from 'nodemailer';
 import * as handlebars from 'handlebars';
 import * as fs from 'fs';
 import * as path from 'path';
+import { formatFechaDiaMesAnio } from '../common/utils/format-fecha';
 
 export interface EmailData {
   to: string;
@@ -560,13 +561,17 @@ export class MailService {
     email: string,
     fecha: string,
     hora: string,
+    sedeNombre?: string,
+    boxNombre?: string,
   ): Promise<boolean> {
     return this.sendEmail({
       to: email,
       template: 'reserva-box-confirmada',
       context: {
-        fecha,
+        fecha: formatFechaDiaMesAnio(fecha),
         hora,
+        sedeNombre,
+        boxNombre,
       },
     });
   }
@@ -576,14 +581,18 @@ export class MailService {
     fecha: string,
     hora: string,
     canceladaPorAdmin = false,
+    sedeNombre?: string,
+    boxNombre?: string,
   ): Promise<boolean> {
     return this.sendEmail({
       to: email,
       template: 'reserva-box-cancelada',
       context: {
-        fecha,
+        fecha: formatFechaDiaMesAnio(fecha),
         hora,
         canceladaPorAdmin,
+        sedeNombre,
+        boxNombre,
         audiencia: 'psicologo',
       },
     });

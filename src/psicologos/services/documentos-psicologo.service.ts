@@ -45,32 +45,29 @@ export class DocumentosPsicologoService {
     userId: string,
     createDto: CreateDocumentoPsicologoDto,
   ): Promise<DocumentoPsicologoResponseDto> {
-    // Buscar el usuario para verificar que existe y es psicólogo
+    // Buscar el usuario para verificar que existe
     const user = await this.psicologoRepository.manager
       .getRepository('users')
       .findOne({
-        where: { id: userId, role: 'PSICOLOGO' },
+        where: { id: userId },
       });
 
     if (!user) {
-      throw new NotFoundException('Usuario no encontrado o no es psicólogo');
+      throw new NotFoundException('Usuario no encontrado');
     }
 
-    // Buscar el registro de psicólogo correspondiente
+    // Buscar el registro de psicólogo (si existe)
     const psicologo = await this.psicologoRepository.findOne({
       where: { usuario: { id: userId } },
     });
-
-    if (!psicologo) {
-      throw new NotFoundException('Registro de psicólogo no encontrado');
-    }
 
     // Crear el documento
     const documento = this.documentoPsicologoRepository.create({
       tipo: createDto.tipo,
       nombre: createDto.nombre,
       urlDocumento: createDto.urlDocumento,
-      psicologo: { id: psicologo.id } as any,
+      usuario: { id: userId } as any,
+      psicologo: psicologo ? ({ id: psicologo.id } as any) : null,
     });
 
     const savedDocumento =
@@ -113,32 +110,30 @@ export class DocumentosPsicologoService {
       );
     }
 
-    // Buscar el usuario para verificar que existe y es psicólogo
+    // Buscar el usuario para verificar que existe
     const user = await this.psicologoRepository.manager
       .getRepository('users')
       .findOne({
-        where: { id: userId, role: 'PSICOLOGO' },
+        where: { id: userId },
       });
 
     if (!user) {
-      console.log('❌ Usuario no encontrado o no es psicólogo:', userId);
-      throw new NotFoundException('Usuario no encontrado o no es psicólogo');
+      console.log('❌ Usuario no encontrado:', userId);
+      throw new NotFoundException('Usuario no encontrado');
     }
 
-    // Buscar el registro de psicólogo correspondiente
+    // Buscar el registro de psicólogo correspondiente (si existe)
     const psicologo = await this.psicologoRepository.findOne({
       where: { usuario: { id: userId } },
     });
-
-    if (!psicologo) {
+    if (psicologo) {
+      console.log('✅ Psicólogo encontrado:', psicologo.id);
+    } else {
       console.log(
-        '❌ Registro de psicólogo no encontrado para usuario:',
+        'ℹ️ Usuario sin registro en psicologo; se guardará solo vínculo a usuario:',
         userId,
       );
-      throw new NotFoundException('Registro de psicólogo no encontrado');
     }
-
-    console.log('✅ Psicólogo encontrado:', psicologo.id);
 
     try {
       console.log('🚀 Creando documento con URL del frontend...');
@@ -147,7 +142,8 @@ export class DocumentosPsicologoService {
       const documento = this.documentoPsicologoRepository.create({
         tipo: uploadDto.tipo,
         nombre: uploadDto.nombre,
-        psicologo: { id: psicologo.id } as any,
+        usuario: { id: userId } as any,
+        psicologo: psicologo ? ({ id: psicologo.id } as any) : null,
         urlDocumento: uploadDto.urlDocumento, // La URL viene del frontend
       });
 
@@ -251,18 +247,10 @@ export class DocumentosPsicologoService {
   async findAllByPsicologo(
     userId: string,
   ): Promise<DocumentoPsicologoResponseDto[]> {
-    // Buscar el registro de psicólogo correspondiente al usuario
-    const psicologo = await this.psicologoRepository.findOne({
-      where: { usuario: { id: userId } },
-    });
-
-    if (!psicologo) {
-      throw new NotFoundException('Registro de psicólogo no encontrado');
-    }
-
     const documentos = await this.documentoPsicologoRepository.find({
-      where: { psicologo: { id: psicologo.id } },
+      where: { usuario: { id: userId } },
       order: { createdAt: 'DESC' },
+      relations: ['psicologo', 'usuario'],
     });
 
     return documentos.map((doc) => this.mapToResponseDto(doc));
@@ -271,7 +259,7 @@ export class DocumentosPsicologoService {
   async findById(id: string): Promise<DocumentoPsicologoResponseDto> {
     const documento = await this.documentoPsicologoRepository.findOne({
       where: { id },
-      relations: ['psicologo'],
+      relations: ['psicologo', 'usuario'],
     });
 
     if (!documento) {
@@ -294,6 +282,11 @@ export class DocumentosPsicologoService {
       psicologo: documento.psicologo
         ? {
             id: documento.psicologo.id,
+          }
+        : undefined,
+      usuario: documento.usuario
+        ? {
+            id: documento.usuario.id,
           }
         : undefined,
     };

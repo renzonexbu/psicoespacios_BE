@@ -212,21 +212,19 @@ export class PacksService {
       asignacion.estado = EstadoPackAsignacion.CANCELADA;
       await manager.save(asignacion);
 
-      // Calcular la fecha de cancelación efectiva: siempre desde el primer día del próximo mes
+      // Cancelar reservas de la asignación desde hoy en adelante (incluye hoy)
       const hoy = new Date();
-      const fechaCancelacionEfectiva = new Date(
+      const inicioHoy = new Date(
         hoy.getFullYear(),
-        hoy.getMonth() + 1,
-        1,
+        hoy.getMonth(),
+        hoy.getDate(),
       );
-
-      // Cancelar todas las reservas futuras relacionadas al pack y usuario
       const reservasCanceladas = await manager.update(
         Reserva,
         {
           packAsignacionId: dto.asignacionId,
           psicologoId: asignacion.usuarioId,
-          fecha: Between(fechaCancelacionEfectiva, new Date(2999, 11, 31)),
+          fecha: Between(inicioHoy, new Date(2999, 11, 31)),
         },
         {
           estado: EstadoReserva.CANCELADA,
@@ -235,8 +233,7 @@ export class PacksService {
 
       return {
         ok: true,
-        mensaje: `Pack cancelado exitosamente. Las reservas a partir del ${fechaCancelacionEfectiva.toLocaleDateString()} han sido canceladas.`,
-        fechaCancelacionEfectiva,
+        mensaje: `Pack cancelado exitosamente. Se cancelaron las reservas desde el ${inicioHoy.toLocaleDateString()} en adelante.`,
         reservasCanceladas: reservasCanceladas.affected || 0,
       };
     });

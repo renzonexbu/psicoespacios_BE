@@ -1,6 +1,12 @@
 <div class="success-box">
   <h2>¡Reserva de Box Confirmada!</h2>
-  <p>Tu reserva de box para el día <strong>{{fecha}}</strong> a las <strong>{{hora}}</strong> hrs. ha sido ingresada con éxito.</p>
+  <p>Tu reserva ha sido ingresada con éxito con los siguientes datos:</p>
+  <ul>
+    {{#if sedeNombre}}<li><strong>Sede:</strong> {{sedeNombre}}</li>{{/if}}
+    {{#if boxNombre}}<li><strong>Box:</strong> {{boxNombre}}</li>{{/if}}
+    <li><strong>Fecha:</strong> {{fecha}}</li>
+    <li><strong>Hora:</strong> {{hora}} hrs.</li>
+  </ul>
   <p>Te recordamos llegar con anticipación y, si es tu primera vez arrendando box con nosotros, encuentra aquí las instrucciones para acceder:</p>
 </div>
 

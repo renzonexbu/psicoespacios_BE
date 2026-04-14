@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Psicologo } from './psicologo.entity';
+import { User } from './user.entity';
 
 export enum TipoDocumento {
   TITULO = 'titulo',
@@ -23,9 +24,13 @@ export class DocumentoPsicologo {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Psicologo, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => Psicologo, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'psicologo_id' })
-  psicologo: Psicologo;
+  psicologo: Psicologo | null;
+
+  @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'usuario_id' })
+  usuario: User;
 
   @Column({ type: 'enum', enum: TipoDocumento, default: TipoDocumento.TITULO })
   tipo: TipoDocumento;
