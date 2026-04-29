@@ -173,8 +173,7 @@ export class MailService {
       'reserva-box-confirmada': 'Reserva de Box Confirmada - PsicoEspacios',
       'reserva-box-cancelada': 'Cancelación de Reserva de Box - PsicoEspacios',
       'reserva-box-cancelada-admin': 'Tu reserva fue cancelada - PsicoEspacios',
-      'sesion-confirmada-derivacion':
-        'Confirmación de sesión del centro de derivación',
+      'sesion-confirmada-derivacion': 'Tu sesión ha sido confirmada - PsicoEspacios',
       'sesion-confirmada-psicologo': 'Nueva sesión confirmada - PsicoEspacios',
       'sesion-cancelada-derivacion':
         'Tu sesión ha sido cancelada - PsicoEspacios',

@@ -73,7 +73,10 @@ export class ReservasService {
     }
 
     const MS_24H = 24 * 60 * 60 * 1000;
-    const inicioReserva = this.getInicioReserva(reserva);
+    const inicioReserva = this.getInicioReservaDesdeFechaYHora(
+      reserva.fecha,
+      reserva.horaInicio,
+    );
     if (inicioReserva.getTime() - Date.now() < MS_24H) {
       throw new BadRequestException(
         'Solo puedes cancelar con al menos 24 horas de anticipación respecto del inicio de la reserva.',
@@ -561,11 +564,14 @@ export class ReservasService {
   }
 
   /**
-   * Inicio de la reserva en hora local del servidor (fecha calendario + horaInicio).
-   * Para columnas `date` de Postgres se usan componentes UTC del día almacenado.
+   * Construye el inicio de la reserva usando EXCLUSIVAMENTE fecha+hora de la reserva.
+   * No utiliza createdAt ni ninguna otra marca temporal.
    */
-  private getInicioReserva(reserva: Reserva): Date {
-    const raw = reserva.fecha as Date | string;
+  private getInicioReservaDesdeFechaYHora(
+    fechaReserva: Date | string,
+    horaInicio: string,
+  ): Date {
+    const raw = fechaReserva;
     let y: number;
     let m: number;
     let d: number;
@@ -579,7 +585,19 @@ export class ReservasService {
       m = parts[1] - 1;
       d = parts[2];
     }
-    const [hh, mm] = reserva.horaInicio.split(':').map((n) => parseInt(n, 10));
+    const [hh, mm] = horaInicio.split(':').map((n) => parseInt(n, 10));
+
+    if (
+      Number.isNaN(y) ||
+      Number.isNaN(m) ||
+      Number.isNaN(d) ||
+      Number.isNaN(hh)
+    ) {
+      throw new BadRequestException(
+        'No fue posible validar la anticipación de cancelación para esta reserva.',
+      );
+    }
+
     return new Date(y, m, d, hh, mm || 0, 0, 0);
   }
 }

@@ -4,9 +4,10 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Psicologo } from '../../common/entities/psicologo.entity';
 import { User } from '../../common/entities/user.entity';
+import { SubrolPsicologo } from '../../common/enums/subrol-psicologo.enum';
 import {
   CreatePsicologoDto,
   UpdatePsicologoDto,
@@ -72,7 +73,12 @@ export class PsicologosService {
   async findAllPublic(): Promise<PsicologoPublicDto[]> {
     const psicologos = await this.psicologoRepository.find({
       relations: ['usuario'],
-      where: { usuario: { estado: 'ACTIVO' } },
+      where: {
+        usuario: {
+          estado: 'ACTIVO',
+          subrol: In([SubrolPsicologo.CDD, SubrolPsicologo.AMBOS]),
+        },
+      },
     });
 
     return psicologos.map((psicologo) => ({
@@ -116,7 +122,13 @@ export class PsicologosService {
 
   async findOnePublic(id: string): Promise<PsicologoPublicDto> {
     const psicologo = await this.psicologoRepository.findOne({
-      where: { id, usuario: { estado: 'ACTIVO' } },
+      where: {
+        id,
+        usuario: {
+          estado: 'ACTIVO',
+          subrol: In([SubrolPsicologo.CDD, SubrolPsicologo.AMBOS]),
+        },
+      },
       relations: ['usuario'],
     });
 

@@ -6,7 +6,14 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, DataSource, MoreThanOrEqual, In } from 'typeorm';
+import {
+  Repository,
+  Between,
+  DataSource,
+  MoreThanOrEqual,
+  In,
+  Not,
+} from 'typeorm';
 import {
   ReservaPsicologo,
   EstadoReservaPsicologo,
@@ -710,8 +717,11 @@ export class ReservasPsicologosService {
       throw new NotFoundException('Psicólogo no encontrado para este usuario');
     }
 
-    // Construir condiciones de búsqueda
-    const whereConditions: any = { psicologo: { id: psicologo.id } };
+    // Construir condiciones de búsqueda (no listar reservas temporales aún sin pago)
+    const whereConditions: any = {
+      psicologo: { id: psicologo.id },
+      estado: Not(EstadoReservaPsicologo.PENDIENTE_PAGO),
+    };
 
     // Si soloFuturas es true, filtrar solo sesiones del día actual en adelante
     if (soloFuturas) {

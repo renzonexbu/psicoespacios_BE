@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Psicologo } from '../../common/entities/psicologo.entity';
 import { Paciente } from '../../common/entities/paciente.entity';
 import { User } from '../../common/entities/user.entity';
+import { SubrolPsicologo } from '../../common/enums/subrol-psicologo.enum';
 import {
   ResultadoMatching,
   PerfilMatchingPaciente,
@@ -610,6 +611,7 @@ export class MatchingService {
         usuario: {
           estado: 'ACTIVO',
           role: 'PSICOLOGO',
+          subrol: In([SubrolPsicologo.CDD, SubrolPsicologo.AMBOS]),
         },
       },
     });

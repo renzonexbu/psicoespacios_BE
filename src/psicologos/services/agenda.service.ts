@@ -16,6 +16,11 @@ import { Psicologo } from '../../common/entities/psicologo.entity';
 import { Sede } from '../../common/entities/sede.entity';
 import { User } from '../../common/entities/user.entity';
 import {
+  PackAsignacion,
+  EstadoPackAsignacion,
+} from '../../packs/entities/pack-asignacion.entity';
+import { PackAsignacionHorario } from '../../packs/entities/pack-asignacion-horario.entity';
+import {
   AgendaDisponibilidadDto,
   AgendaResponseDto,
   DisponibilidadSlotDto,
@@ -40,6 +45,10 @@ export class AgendaService {
     private sedeRepository: Repository<Sede>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(PackAsignacion)
+    private packAsignacionRepository: Repository<PackAsignacion>,
+    @InjectRepository(PackAsignacionHorario)
+    private packAsignacionHorarioRepository: Repository<PackAsignacionHorario>,
   ) {}
 
   // Método existente para agenda completa (con boxes)
@@ -268,6 +277,7 @@ export class AgendaService {
               let hayBoxDisponible = disponibilidadBoxCache.get(cacheKey);
               if (hayBoxDisponible === undefined) {
                 const box = await this.getBoxDisponible({
+                  psicologoId: query.psicologoId,
                   sedeId: disponibilidadDia.sede_id,
                   fecha: fechaString,
                   horaInicio: hora,
@@ -332,6 +342,7 @@ export class AgendaService {
                 let hayBoxDisponible = disponibilidadBoxCache.get(cacheKey);
                 if (hayBoxDisponible === undefined) {
                   const box = await this.getBoxDisponible({
+                    psicologoId: query.psicologoId,
                     sedeId: blk.sedeId,
                     fecha: fechaString,
                     horaInicio: hora,
@@ -555,6 +566,8 @@ export class AgendaService {
     psicologoId: string,
   ): Promise<DisponibilidadSlotDto[]> {
     const slotsActualizados = [...slots];
+    const usuarioPsicologoId =
+      await this.resolveUsuarioPsicologoId(psicologoId);
 
     for (const slot of slotsActualizados) {
       const fechaDate = this.crearFechaLocal(slot.fecha);
@@ -578,6 +591,13 @@ export class AgendaService {
             estado: EstadoReserva.CONFIRMADA,
           },
         });
+        const reservasBoxFiltradas = reservasBox.filter(
+          (reserva) =>
+            !(
+              reserva.packAsignacionId &&
+              reserva.psicologoId === usuarioPsicologoId
+            ),
+        );
 
         // Sesiones con ese mismo box (reservas_sesiones)
         const sesionesBox = await this.reservaPsicologoRepository.find({
@@ -600,7 +620,7 @@ export class AgendaService {
               slot.horaFin,
             ),
           ) ||
-          reservasBox.some((reserva) =>
+          reservasBoxFiltradas.some((reserva) =>
             this.hayConflictoHorarios(
               reserva.horaInicio,
               reserva.horaFin,
@@ -701,12 +721,28 @@ export class AgendaService {
   }
 
   async getBoxDisponible(query: any): Promise<any> {
-    const { sedeId, fecha, horaInicio, horaFin } = query;
+    const { psicologoId, sedeId, fecha, horaInicio, horaFin } = query;
     if (!sedeId || sedeId === 'online') {
       return null;
     }
+    const usuarioPsicologoId = psicologoId
+      ? await this.resolveUsuarioPsicologoId(psicologoId)
+      : null;
+    if (usuarioPsicologoId) {
+      const boxPreferentePack = await this.getBoxPreferentePack({
+        usuarioPsicologoId,
+        sedeId,
+        fecha,
+        horaInicio,
+        horaFin,
+      });
+      if (boxPreferentePack) {
+        return boxPreferentePack;
+      }
+    }
     const boxes = await this.boxRepository.find({
       where: { sede: { id: sedeId }, estado: 'DISPONIBLE' },
+      relations: ['sede'],
     });
     if (boxes.length === 0) {
       return null;
@@ -727,8 +763,16 @@ export class AgendaService {
           estado: EstadoReservaPsicologo.CONFIRMADA,
         },
       });
+      const reservasExistentesFiltradas = reservasExistentes.filter(
+        (reserva) =>
+          !(
+            usuarioPsicologoId &&
+            reserva.packAsignacionId &&
+            reserva.psicologoId === usuarioPsicologoId
+          ),
+      );
       const hayConflicto =
-        reservasExistentes.some((reserva) =>
+        reservasExistentesFiltradas.some((reserva) =>
           this.hayConflictoHorarios(
             reserva.horaInicio,
             reserva.horaFin,
@@ -754,6 +798,74 @@ export class AgendaService {
       }
     }
     return null;
+  }
+
+  private async resolveUsuarioPsicologoId(psicologoId: string): Promise<string> {
+    const usuario = await this.userRepository.findOne({
+      where: { id: psicologoId },
+      select: ['id'],
+    });
+    if (usuario) {
+      return usuario.id;
+    }
+
+    const psicologo = await this.psicologoRepository.findOne({
+      where: [{ id: psicologoId }, { usuario: { id: psicologoId } }],
+      relations: ['usuario'],
+    });
+
+    if (!psicologo?.usuario?.id) {
+      throw new NotFoundException('Psicólogo no encontrado');
+    }
+
+    return psicologo.usuario.id;
+  }
+
+  private async getBoxPreferentePack(params: {
+    usuarioPsicologoId: string;
+    sedeId: string;
+    fecha: string;
+    horaInicio: string;
+    horaFin: string;
+  }): Promise<any | null> {
+    const { usuarioPsicologoId, sedeId, fecha, horaInicio, horaFin } = params;
+    const fechaDate = this.crearFechaLocal(fecha);
+    const diaSemana = ((fechaDate.getDay() + 6) % 7) + 1; // 1=Lunes ... 7=Domingo
+
+    const horariosPack = await this.packAsignacionHorarioRepository.find({
+      where: {
+        diaSemana,
+        asignacion: {
+          usuarioId: usuarioPsicologoId,
+          estado: EstadoPackAsignacion.ACTIVA,
+        },
+      },
+      relations: ['box', 'box.sede', 'asignacion'],
+      order: { horaInicio: 'ASC' },
+    });
+
+    const horarioPack = horariosPack.find(
+      (horario) =>
+        !!horario.box &&
+        horario.box.sede?.id === sedeId &&
+        this.hayConflictoHorarios(
+          horario.horaInicio,
+          horario.horaFin,
+          horaInicio,
+          horaFin,
+        ),
+    );
+
+    if (!horarioPack?.box) {
+      return null;
+    }
+
+    return {
+      id: horarioPack.box.id,
+      numero: horarioPack.box.numero,
+      sedeId: horarioPack.box.sede?.id,
+      sedeNombre: horarioPack.box.sede?.nombre,
+    };
   }
 
   async getBoxById(id: string): Promise<any> {

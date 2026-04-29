@@ -13,6 +13,7 @@ export class FlowService {
   private readonly baseUrl: string;
   private readonly frontUrl: string;
   private readonly apiUrl: string;
+  private readonly flowPaymentMethod: number;
 
   constructor(private readonly configService: ConfigService) {
     // Configuración desde variables de entorno
@@ -43,6 +44,13 @@ export class FlowService {
     this.apiUrl = this.configService.get<string>(
       'API_URL',
       'http://localhost:3000',
+    );
+
+    // Método de pago para Flow:
+    // 1 = tarjeta (recomendado para evitar transferencia manual).
+    // 9 = todos los métodos.
+    this.flowPaymentMethod = Number(
+      this.configService.get<string>('FLOW_PAYMENT_METHOD', '1'),
     );
   }
 
@@ -181,7 +189,7 @@ export class FlowService {
       urlConfirmation: urlConfirmation,
       urlReturn: urlReturn,
       // Parámetros adicionales para mejor UX
-      paymentMethod: 9, // Todos los métodos de pago
+      paymentMethod: this.flowPaymentMethod,
       timeout: 30, // 30 minutos de timeout
     };
 

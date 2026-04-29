@@ -15,6 +15,9 @@ import { ReservaPsicologo } from '../common/entities/reserva-psicologo.entity';
 import { Paciente } from '../common/entities/paciente.entity';
 import { Box } from '../common/entities/box.entity';
 import { DocumentoPsicologo } from '../common/entities/documento-psicologo.entity';
+import { EmailVerificationToken } from '../common/entities/email-verification-token.entity';
+import { PackAsignacion } from '../packs/entities/pack-asignacion.entity';
+import { PackAsignacionHorario } from '../packs/entities/pack-asignacion-horario.entity';
 import { DocumentosPsicologoController } from './controllers/documentos-psicologo.controller';
 import { DocumentosPsicologoService } from './services/documentos-psicologo.service';
 import { BackblazeService } from '../uploads/services/backblaze.service';
@@ -38,6 +41,9 @@ import { MatchingService } from './services/matching.service';
       Paciente,
       Box,
       DocumentoPsicologo,
+      EmailVerificationToken,
+      PackAsignacion,
+      PackAsignacionHorario,
     ]),
     MulterModule.register({
       dest: './uploads/temp',

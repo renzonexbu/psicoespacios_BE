@@ -83,6 +83,8 @@ export class SedesController {
     @Query('hora_inicio') horaInicio: string,
     @Query('hora_fin') horaFin: string,
     @Query('asignar') asignar?: string, // Nuevo parámetro opcional
+    @Query('psicologo_id') psicologoId?: string,
+    @Query('usuario_psicologo_id') usuarioPsicologoId?: string,
   ) {
     // Validar que todos los parámetros requeridos estén presentes
     if (!fecha) {
@@ -143,6 +145,7 @@ export class SedesController {
       horaInicio,
       horaFin,
       asignarBox,
+      usuarioPsicologoId || psicologoId,
     );
   }
 

@@ -303,7 +303,8 @@
                 <h3>📋 Información de tu Cuenta</h3>
                 <p><strong>Nombre:</strong> {{nombre}} {{apellido}}</p>
                 <p><strong>Email:</strong> {{email}}</p>
-                <p><strong>Estado:</strong> Activa y lista para usar</p>
+                <p><strong>Estado:</strong> Pendiente de verificación de correo</p>
+                <p><strong>Activa tu cuenta:</strong> <a href="{{FRONT_URL}}/verify-email?token={{token}}">Confirmar correo</a></p>
             </div>
 
             <div class="psychologist-info">
@@ -324,6 +325,7 @@
             <div class="next-steps">
                 <h3>📝 Próximos Pasos</h3>
                 <ul>
+                    <li>Haz clic en el enlace de activación para verificar tu correo</li>
                     <li>Inicia sesión en la plataforma con las credenciales proporcionadas</li>
                     <li>Cambia tu contraseña temporal por una personal</li>
                     <li>Completa tu perfil de usuario</li>

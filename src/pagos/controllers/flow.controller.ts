@@ -104,8 +104,10 @@ export class FlowController {
     }
 
     try {
-      // Solo procesar si el pago fue exitoso (status = 1)
-      if (body.status !== 1) {
+      // Solo procesar si el pago fue exitoso.
+      // En Flow: status 2 = pagada, status 1 = pendiente.
+      const flowStatus = Number(body.status);
+      if (flowStatus !== 2) {
         this.logger.log(
           `Pago ${body.flowOrder} no exitoso (status: ${body.status}), no se procesará`,
         );
@@ -563,8 +565,24 @@ export class FlowController {
       } else {
         // Pago no exitoso
         this.logger.log(
-          `⚠️ Pago no exitoso (status: ${status}), reserva ${reservaTemporal.id} permanece pendiente`,
+          `⚠️ Pago no exitoso (status: ${statusReal}), reserva ${reservaTemporal.id} permanece pendiente`,
         );
+
+        // Si el pago no se completa (cancelado/pendiente), no dejar la reserva
+        // como pendiente de pago para evitar que el frontend la trate como confirmada.
+        if (reservaTemporal.estado === EstadoReservaPsicologo.PENDIENTE_PAGO) {
+          reservaTemporal.estado = EstadoReservaPsicologo.CANCELADA;
+          await this.reservaRepository.save(reservaTemporal);
+          this.logger.log(
+            `Reserva ${reservaTemporal.id} cancelada por pago no completado en Flow`,
+          );
+        }
+
+        const redirectUrl = `${frontUrl}/agenda/confirmacion-sesion?reservaId=${reservaTemporal.id}&error=payment-not-completed`;
+        this.logger.log(
+          `Redirigiendo a frontend con pago no completado: ${redirectUrl}`,
+        );
+        return res.redirect(redirectUrl);
       }
 
       // Asegurarse de tener la reserva más actualizada antes de redirigir

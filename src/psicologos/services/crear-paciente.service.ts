@@ -7,9 +7,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
+import { createHash, randomBytes } from 'crypto';
 import { User } from '../../common/entities/user.entity';
 import { Paciente } from '../../common/entities/paciente.entity';
 import { Psicologo } from '../../common/entities/psicologo.entity';
+import { EmailVerificationToken } from '../../common/entities/email-verification-token.entity';
 import { CrearPacienteDto } from '../dto/crear-paciente.dto';
 import { CrearPacienteResponseDto } from '../dto/crear-paciente-response.dto';
 import { MailService } from '../../mail/mail.service';
@@ -26,6 +28,8 @@ export class CrearPacienteService {
     private pacienteRepository: Repository<Paciente>,
     @InjectRepository(Psicologo)
     private psicologoRepository: Repository<Psicologo>,
+    @InjectRepository(EmailVerificationToken)
+    private emailVerificationTokenRepository: Repository<EmailVerificationToken>,
     private dataSource: DataSource,
     private mailService: MailService,
   ) {}
@@ -94,7 +98,9 @@ export class CrearPacienteService {
         compania: crearPacienteDto.compania,
         password: hashedPassword,
         role: 'PACIENTE',
-        estado: 'ACTIVO',
+        estado: 'PENDIENTE',
+        emailVerified: false,
+        emailVerifiedAt: null,
       });
 
       const usuarioGuardado = await manager.save(nuevoUsuario);
@@ -119,9 +125,11 @@ export class CrearPacienteService {
       const pacienteGuardado = await manager.save(nuevoPaciente);
       this.logger.log(`Paciente vinculado creado: ${pacienteGuardado.id}`);
 
-      // 7. Enviar email de bienvenida con la contraseña
+      // 7. Generar token de verificación y enviar un solo email de bienvenida
       let emailEnviado = false;
       try {
+        const verificationToken =
+          await this.createEmailVerificationToken(usuarioGuardado);
         emailEnviado = await this.mailService.sendEmail({
           to: crearPacienteDto.email,
           template: 'bienvenida-paciente',
@@ -132,6 +140,7 @@ export class CrearPacienteService {
             password: passwordGenerada,
             psicologoNombre: `${psicologo.usuario.nombre} ${psicologo.usuario.apellido}`,
             psicologoEmail: psicologo.usuario.email,
+            token: verificationToken,
           },
         });
         this.logger.log(`Email de bienvenida enviado: ${emailEnviado}`);
@@ -192,5 +201,19 @@ export class CrearPacienteService {
       .split('')
       .sort(() => Math.random() - 0.5)
       .join('');
+  }
+
+  private async createEmailVerificationToken(user: User): Promise<string> {
+    const rawToken = randomBytes(32).toString('hex');
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 horas
+
+    await this.emailVerificationTokenRepository.save({
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+      usedAt: null,
+    });
+    return rawToken;
   }
 }

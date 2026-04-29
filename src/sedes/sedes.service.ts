@@ -13,6 +13,10 @@ import {
 } from '../common/entities/reserva-psicologo.entity';
 import { CreateSedeDto, UpdateSedeDto, SedePublicDto } from './dto/sede.dto';
 import { Reserva, EstadoReserva } from '../common/entities/reserva.entity';
+import { EstadoPackAsignacion } from '../packs/entities/pack-asignacion.entity';
+import { PackAsignacionHorario } from '../packs/entities/pack-asignacion-horario.entity';
+import { Psicologo } from '../common/entities/psicologo.entity';
+import { User } from '../common/entities/user.entity';
 
 @Injectable()
 export class SedesService {
@@ -25,6 +29,12 @@ export class SedesService {
     private reservaPsicologoRepository: Repository<ReservaPsicologo>,
     @InjectRepository(Reserva)
     private reservaRepository: Repository<Reserva>,
+    @InjectRepository(PackAsignacionHorario)
+    private packAsignacionHorarioRepository: Repository<PackAsignacionHorario>,
+    @InjectRepository(Psicologo)
+    private psicologoRepository: Repository<Psicologo>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
 
   private normalizarDia(dia: string): string {
@@ -54,6 +64,20 @@ export class SedesService {
   private convertirHoraAMinutos(hora: string): number {
     const [hh, mm] = hora.split(':').map(Number);
     return (hh || 0) * 60 + (mm || 0);
+  }
+
+  private haySolapamientoHorarios(
+    inicio1: string,
+    fin1: string,
+    inicio2: string,
+    fin2: string,
+  ): boolean {
+    const inicio1Min = this.convertirHoraAMinutos(inicio1);
+    const fin1Min = this.convertirHoraAMinutos(fin1);
+    const inicio2Min = this.convertirHoraAMinutos(inicio2);
+    const fin2Min = this.convertirHoraAMinutos(fin2);
+
+    return inicio1Min < fin2Min && fin1Min > inicio2Min;
   }
 
   private esHorarioValidoParaSede(
@@ -203,6 +227,7 @@ export class SedesService {
     horaInicio: string,
     horaFin: string,
     asignarBox: boolean = false,
+    psicologoId?: string,
   ) {
     // Validar que la sede existe
     const sede = await this.sedesRepository.findOne({
@@ -289,6 +314,19 @@ export class SedesService {
     }
 
     try {
+      const usuarioPsicologoId = psicologoId
+        ? await this.resolveUsuarioPsicologoId(psicologoId)
+        : null;
+      const boxPreferentePack = usuarioPsicologoId
+        ? await this.getBoxPreferentePack(
+            sedeId,
+            fechaStr,
+            horaInicio,
+            horaFin,
+            usuarioPsicologoId,
+          )
+        : null;
+
       // Primero obtener todos los boxes de la sede
       const boxes = await this.boxesRepository
         .createQueryBuilder('box')
@@ -330,16 +368,29 @@ export class SedesService {
             '(res.horaInicio < :horaFin AND res.horaFin > :horaInicio)',
             { horaInicio, horaFin },
           )
-          .getCount();
+          .getMany();
 
-        if (conflictosSesiones === 0 && conflictosBoxes === 0) {
+        const conflictosBoxesFiltrados = conflictosBoxes.filter((reserva) => {
+          if (!usuarioPsicologoId) {
+            return true;
+          }
+          const esBloquePackDelMismoPsicologo =
+            !!reserva.packAsignacionId &&
+            reserva.psicologoId === usuarioPsicologoId &&
+            boxPreferentePack?.id === box.id;
+          return !esBloquePackDelMismoPsicologo;
+        });
+
+        if (conflictosSesiones === 0 && conflictosBoxesFiltrados.length === 0) {
           boxesDisponibles.push(box);
         }
       }
 
       // Si se solicita asignar automáticamente y hay boxes disponibles
       let boxAsignado: any = null;
-      if (asignarBox && boxesDisponibles.length > 0) {
+      if (asignarBox && boxPreferentePack) {
+        boxAsignado = boxPreferentePack;
+      } else if (asignarBox && boxesDisponibles.length > 0) {
         // Seleccionar el primer box disponible (lógica simple)
         // En el futuro se podría implementar lógica más sofisticada
         boxAsignado = boxesDisponibles[0];
@@ -443,5 +494,62 @@ export class SedesService {
         'Error al asignar box automáticamente: ' + error.message,
       );
     }
+  }
+
+  private async resolveUsuarioPsicologoId(psicologoId: string): Promise<string> {
+    const usuario = await this.userRepository.findOne({
+      where: { id: psicologoId },
+      select: ['id'],
+    });
+    if (usuario) {
+      return usuario.id;
+    }
+
+    const psicologo = await this.psicologoRepository.findOne({
+      where: [{ id: psicologoId }, { usuario: { id: psicologoId } }],
+      relations: ['usuario'],
+    });
+
+    if (!psicologo?.usuario?.id) {
+      throw new NotFoundException('Psicólogo no encontrado');
+    }
+
+    return psicologo.usuario.id;
+  }
+
+  private async getBoxPreferentePack(
+    sedeId: string,
+    fechaStr: string,
+    horaInicio: string,
+    horaFin: string,
+    usuarioPsicologoId: string,
+  ): Promise<Box | null> {
+    const [yy, mm, dd] = fechaStr.split('-').map(Number);
+    const fechaObj = new Date(yy, (mm || 1) - 1, dd || 1);
+    const diaSemana = ((fechaObj.getDay() + 6) % 7) + 1; // 1=Lunes ... 7=Domingo
+
+    const horariosPack = await this.packAsignacionHorarioRepository.find({
+      where: {
+        diaSemana,
+        asignacion: {
+          usuarioId: usuarioPsicologoId,
+          estado: EstadoPackAsignacion.ACTIVA,
+        },
+      },
+      relations: ['box', 'box.sede'],
+    });
+
+    const horarioPack = horariosPack.find(
+      (horario) =>
+        horario.box?.sede?.id === sedeId &&
+        this.haySolapamientoHorarios(
+          horario.horaInicio,
+          horario.horaFin,
+          horaInicio,
+          horaFin,
+        ),
+    );
+
+    return horarioPack?.box || null;
   }
 }
