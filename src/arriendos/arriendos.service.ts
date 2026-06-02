@@ -17,6 +17,7 @@ import {
   UpdateArriendoBoxDto,
 } from './dto/arriendo-box.dto';
 import { MailService } from '../mail/mail.service';
+import { formatFechaDiaMesAnio } from '../common/utils/format-fecha';
 
 @Injectable()
 export class ArriendosService {
@@ -73,7 +74,7 @@ export class ArriendosService {
   async findOne(id: string) {
     const arriendo = await this.arriendoRepository.findOne({
       where: { id },
-      relations: ['box', 'psicologo'],
+      relations: ['box', 'box.sede', 'psicologo'],
     });
 
     if (!arriendo) {
@@ -173,10 +174,40 @@ export class ArriendosService {
           })
         )?.email;
       if (email) {
+        const toYmd = (d: Date | string) => {
+          const dt = d instanceof Date ? d : new Date(d);
+          return isNaN(dt.getTime()) ? '' : dt.toISOString().split('T')[0];
+        };
+        const fmt = (d: Date | string) => {
+          const ymd = toYmd(d);
+          return ymd ? formatFechaDiaMesAnio(ymd) : '';
+        };
+        const formatDia = (dia: string) =>
+          dia ? dia.charAt(0).toUpperCase() + dia.slice(1).toLowerCase() : '';
+        const horariosTexto = (saved.horarios || [])
+          .filter((h) => h.activo !== false)
+          .map(
+            (h) =>
+              `${formatDia(h.dia)} ${h.horaInicio}–${h.horaFin}`,
+          )
+          .join('; ');
+        const sede = saved.box?.sede;
         await this.mailService.sendEmail({
           to: email,
           template: 'reserva-box-cancelada-admin',
-          context: {},
+          context: {
+            sedeNombre: sede?.nombre?.trim(),
+            direccion: [sede?.direccion, sede?.ciudad].filter(Boolean).join(', '),
+            boxNombre: saved.box
+              ? saved.box.nombre?.trim() || `Box ${saved.box.numero}`
+              : '',
+            tipoArriendo: saved.tipoArriendo,
+            fechaInicio: fmt(saved.fechaInicio),
+            fechaFin: fmt(saved.fechaFin),
+            horariosTexto: horariosTexto || undefined,
+            motivoCancelacion: saved.motivoCancelacion || motivo,
+            audiencia: 'psicologo',
+          },
         });
       }
     } catch (error) {

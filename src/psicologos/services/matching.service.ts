@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Psicologo } from '../../common/entities/psicologo.entity';
@@ -1160,44 +1160,58 @@ export class MatchingService {
     return this.configuracionMatching;
   }
 
+  private normalizarModalidadAtencion(
+    modalidad?: string | string[],
+  ): string[] {
+    if (modalidad == null) {
+      return [];
+    }
+    if (Array.isArray(modalidad)) {
+      return modalidad;
+    }
+    return [modalidad];
+  }
+
+  /** Busca fila en `psicologo` por id de usuario (JWT sub), no por id de la entidad psicólogo. */
+  private async findPsicologoByUsuarioId(
+    userId: string,
+  ): Promise<Psicologo | null> {
+    return this.psicologoRepository.findOne({
+      where: { usuario: { id: userId } },
+      relations: ['usuario'],
+    });
+  }
+
   // Método para crear/actualizar el perfil de matching de un psicólogo
   async crearPerfilMatchingPsicologo(
-    psicologoId: string,
+    userId: string,
     perfilDto: any,
   ): Promise<Psicologo> {
     try {
       console.log(
-        `[MatchingService] Iniciando creación de perfil para psicólogo: ${psicologoId}`,
+        `[MatchingService] Iniciando creación de perfil para usuario: ${userId}`,
       );
       console.log(`[MatchingService] Datos recibidos:`, perfilDto);
 
-      // Buscar si ya existe el psicólogo en la tabla CORRECTA
-      let psicologo = await this.psicologoRepository.findOne({
-        where: { id: psicologoId },
-        relations: ['usuario'],
-      });
+      let psicologo = await this.findPsicologoByUsuarioId(userId);
 
       if (!psicologo) {
         console.log(
           `[MatchingService] Psicólogo no existe, creando nuevo registro...`,
         );
 
-        // Buscar el usuario
         const usuario = await this.userRepository.findOne({
-          where: { id: psicologoId },
+          where: { id: userId },
         });
 
         if (!usuario) {
-          throw new Error('Usuario no encontrado');
+          throw new NotFoundException('Usuario no encontrado');
         }
 
         console.log(`[MatchingService] Usuario encontrado:`, usuario.email);
 
-        // Crear nuevo psicólogo en la tabla CORRECTA
         psicologo = this.psicologoRepository.create({
-          // NO especificar ID - se autogenera
           usuario: usuario,
-          // Campos del formulario
           diagnosticos_experiencia: perfilDto.diagnosticos_experiencia || [],
           temas_experiencia: perfilDto.temas_experiencia || [],
           estilo_terapeutico: perfilDto.estilo_terapeutico || [],
@@ -1205,10 +1219,9 @@ export class MatchingService {
           afinidad_paciente_preferida:
             perfilDto.afinidad_paciente_preferida || [],
           genero: perfilDto.genero,
-          modalidad_atencion: Array.isArray(perfilDto.modalidad_atencion)
-            ? perfilDto.modalidad_atencion
-            : [perfilDto.modalidad_atencion],
-          // Campos por defecto
+          modalidad_atencion: this.normalizarModalidadAtencion(
+            perfilDto.modalidad_atencion,
+          ),
           numeroRegistroProfesional: '',
           experiencia: 0,
           descripcion: '',
@@ -1216,13 +1229,12 @@ export class MatchingService {
           precioOnline: null as any,
         });
 
-        console.log(`[MatchingService] Nuevo psicólogo creado:`, psicologo);
+        console.log(`[MatchingService] Nuevo psicólogo creado para usuario`);
       } else {
         console.log(
           `[MatchingService] Psicólogo existente encontrado, actualizando...`,
         );
 
-        // Actualizar campos existentes
         psicologo.diagnosticos_experiencia =
           perfilDto.diagnosticos_experiencia || [];
         psicologo.temas_experiencia = perfilDto.temas_experiencia || [];
@@ -1231,11 +1243,9 @@ export class MatchingService {
         psicologo.afinidad_paciente_preferida =
           perfilDto.afinidad_paciente_preferida || [];
         psicologo.genero = perfilDto.genero;
-        psicologo.modalidad_atencion = Array.isArray(
+        psicologo.modalidad_atencion = this.normalizarModalidadAtencion(
           perfilDto.modalidad_atencion,
-        )
-          ? perfilDto.modalidad_atencion
-          : [perfilDto.modalidad_atencion];
+        );
       }
 
       console.log(`[MatchingService] Guardando psicólogo...`);
@@ -1288,6 +1298,52 @@ export class MatchingService {
 
     // Guardar el paciente actualizado
     return await this.pacienteRepository.save(paciente);
+  }
+
+  /**
+   * Limpia las respuestas del onboarding/matching del psicólogo para que deba completarlo de nuevo.
+   * Opcionalmente deja el usuario en estado PENDIENTE (misma lógica que antes de activar la cuenta).
+   */
+  async resetPerfilMatchingPsicologo(
+    userId: string,
+    options?: { revertirEstadoPendiente?: boolean },
+  ): Promise<Psicologo> {
+    const psicologo = await this.psicologoRepository.findOne({
+      where: { usuario: { id: userId } },
+      relations: ['usuario'],
+    });
+
+    if (!psicologo) {
+      throw new NotFoundException(
+        `No se encontró perfil de psicólogo para el usuario ${userId}`,
+      );
+    }
+
+    psicologo.diagnosticos_experiencia = [];
+    psicologo.temas_experiencia = [];
+    psicologo.estilo_terapeutico = [];
+    psicologo.enfoque_teorico = [];
+    psicologo.afinidad_paciente_preferida = [];
+    psicologo.modalidad_atencion = [];
+    psicologo.genero = '';
+
+    const psicologoGuardado = await this.psicologoRepository.save(psicologo);
+
+    const revertir = options?.revertirEstadoPendiente !== false;
+    if (
+      revertir &&
+      psicologo.usuario &&
+      psicologo.usuario.estado === 'ACTIVO'
+    ) {
+      psicologo.usuario.estado = 'PENDIENTE';
+      await this.userRepository.save(psicologo.usuario);
+    }
+
+    console.log(
+      `[MatchingService] Perfil de matching restablecido para usuario ${userId}`,
+    );
+
+    return psicologoGuardado;
   }
 
   // Método para verificar si un psicólogo tiene perfil de matching completo
@@ -1387,12 +1443,16 @@ export class MatchingService {
     });
   }
 
-  // Método para obtener un psicólogo por ID
-  async obtenerPsicologo(psicologoId: string): Promise<Psicologo | null> {
-    return await this.psicologoRepository.findOne({
-      where: { id: psicologoId },
+  // Método para obtener un psicólogo por id de entidad o por id de usuario
+  async obtenerPsicologo(id: string): Promise<Psicologo | null> {
+    const porEntidad = await this.psicologoRepository.findOne({
+      where: { id },
       relations: ['usuario'],
     });
+    if (porEntidad) {
+      return porEntidad;
+    }
+    return this.findPsicologoByUsuarioId(id);
   }
 
   // Método para verificar si un paciente tiene perfil de matching completo

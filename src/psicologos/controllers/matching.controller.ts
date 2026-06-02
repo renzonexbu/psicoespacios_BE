@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Put,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -261,6 +262,81 @@ export class MatchingController {
       console.error(`[MatchingController] Error al crear perfil:`, error);
       throw new HttpException(
         `Error al crear/actualizar perfil: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * DELETE /matching/psicologo/perfil
+   * Restablece el onboarding del psicólogo autenticado (borra selecciones del formulario).
+   */
+  @Delete('psicologo/perfil')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PSICOLOGO', 'ADMIN')
+  async resetearMiPerfilMatchingPsicologo(@Request() req) {
+    try {
+      const psicologo =
+        await this.matchingService.resetPerfilMatchingPsicologo(req.user.id);
+
+      const perfilCompleto = await this.matchingService.verificarPerfilCompleto(
+        req.user.id,
+      );
+
+      return {
+        success: true,
+        message:
+          'Perfil de onboarding restablecido. Deberás completar el formulario nuevamente al ingresar.',
+        data: {
+          userId: req.user.id,
+          psicologoId: psicologo.id,
+          perfilCompleto,
+        },
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        `Error al restablecer perfil: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * DELETE /matching/psicologo/usuario/:usuarioId/perfil
+   * Restablece el onboarding de un psicólogo (solo administrador).
+   */
+  @Delete('psicologo/usuario/:usuarioId/perfil')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async resetearPerfilMatchingPsicologoPorAdmin(
+    @Param('usuarioId') usuarioId: string,
+  ) {
+    try {
+      const psicologo =
+        await this.matchingService.resetPerfilMatchingPsicologo(usuarioId);
+
+      const perfilCompleto =
+        await this.matchingService.verificarPerfilCompleto(usuarioId);
+
+      return {
+        success: true,
+        message:
+          'Perfil de onboarding del psicólogo restablecido correctamente.',
+        data: {
+          userId: usuarioId,
+          psicologoId: psicologo.id,
+          perfilCompleto,
+        },
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        `Error al restablecer perfil: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

@@ -124,13 +124,13 @@ export class AuthService {
       }
     }
 
-    // Verificar estado de onboarding para usuarios CDD o AMBOS
+    // Onboarding completado = perfil de matching con campos obligatorios llenos
     let hasOnboarding: boolean | undefined = undefined;
     if (
       user.role === 'PSICOLOGO' &&
       (user.subrol === 'CDD' || user.subrol === 'AMBOS')
     ) {
-      hasOnboarding = !!psicologoId;
+      hasOnboarding = await this.psicologoTieneOnboardingCompleto(user.id);
     }
 
     return {
@@ -771,9 +771,36 @@ export class AuthService {
       where: { usuario: { id: userId } },
     });
 
+    if (!psicologo) {
+      return { hasOnboarding: false };
+    }
+
+    const hasOnboarding = await this.psicologoTieneOnboardingCompleto(userId);
+
     return {
-      hasOnboarding: !!psicologo,
-      psicologoId: psicologo?.id,
+      hasOnboarding,
+      psicologoId: psicologo.id,
     };
+  }
+
+  /** Misma lógica que GET /matching/estado-perfil para psicólogos CDD/AMBOS. */
+  private async psicologoTieneOnboardingCompleto(
+    userId: string,
+  ): Promise<boolean> {
+    const psicologo = await this.psicologoRepository.findOne({
+      where: { usuario: { id: userId } },
+    });
+
+    if (!psicologo) {
+      return false;
+    }
+
+    return (
+      psicologo.diagnosticos_experiencia.length > 0 &&
+      psicologo.temas_experiencia.length > 0 &&
+      psicologo.estilo_terapeutico.length > 0 &&
+      Boolean(psicologo.genero) &&
+      psicologo.modalidad_atencion.length > 0
+    );
   }
 }

@@ -1,5 +1,43 @@
+{{#if nombrePaciente}}
+  <p style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">
+    Hola {{nombrePaciente}},
+  </p>
+{{/if}}
+
 <div class="warning-box">
-  <h2>Sesión Cancelada</h2>
-  <p>Tu sesión ha sido cancelada. Si deseas agendar nuevamente, puedes hacerlo desde tu panel.</p>
+  <h2>Sesión cancelada</h2>
+  <p>Te informamos que la sesión con <strong>{{psicologoNombre}}</strong> ha sido <strong>cancelada</strong>.</p>
+  <p>Si deseas agendar nuevamente, puedes hacerlo desde tu panel.</p>
 </div>
 
+<div class="info-box">
+  <h3>Detalles de la sesión cancelada</h3>
+  <p><strong>Fecha:</strong> {{fecha}}</p>
+  <p><strong>Horario:</strong> {{horaInicio}}{{#if horaFin}} – {{horaFin}}{{/if}}</p>
+  {{#if modalidad}}
+    <p><strong>Modalidad:</strong> {{modalidad}}</p>
+  {{/if}}
+  {{#if ubicacion}}
+    <p><strong>Ubicación:</strong> {{ubicacion}}</p>
+  {{/if}}
+  {{#if link}}
+    <p><strong>Enlace (sesión online):</strong> {{link}}</p>
+  {{/if}}
+</div>
+
+{{#if psicologoNombre}}
+  <div class="info-box">
+    <h3>Psicólogo/a</h3>
+    <p><strong>Nombre:</strong> {{psicologoNombre}}</p>
+    {{#if especialidad}}
+      <p><strong>Especialidad:</strong> {{especialidad}}</p>
+    {{/if}}
+    {{#if emailPsicologo}}
+      <p><strong>Email:</strong> {{emailPsicologo}}</p>
+    {{/if}}
+  </div>
+{{/if}}
+
+<p style="margin-top: 16px; font-size: 14px; line-height: 1.5;">
+  Si tienes dudas, contáctanos por nuestros canales oficiales.
+</p>

@@ -30,6 +30,10 @@ import {
 } from '../../common/entities/reserva.entity';
 import { MailService } from '../../mail/mail.service';
 import { FlowService } from './flow.service';
+import {
+  buildUbicacionPresencialDesdeBox,
+  getDetalleUbicacionPresencialFromBox,
+} from '../../common/utils/ubicacion-presencial';
 
 export interface ConfirmarSesionDto {
   psicologoId: string;
@@ -308,9 +312,22 @@ export class PagoSesionService {
       const flowOrderId = flowResult.flowOrder;
       const flowUrl = flowResult.url;
 
+      let ubicacionPresencial: string | undefined;
+      if (dto.modalidad === ModalidadSesion.PRESENCIAL && dto.boxId) {
+        const boxUbicacion = await queryRunner.manager.findOne(Box, {
+          where: { id: dto.boxId },
+          relations: ['sede'],
+        });
+        if (boxUbicacion) {
+          ubicacionPresencial =
+            buildUbicacionPresencialDesdeBox(boxUbicacion);
+        }
+      }
+
       // 8. Guardar referencia de Flow en metadatos
       reservaGuardada.metadatos = {
         ...reservaGuardada.metadatos,
+        ...(ubicacionPresencial ? { ubicacion: ubicacionPresencial } : {}),
         flowOrderId,
         flowUrl,
         flowToken: flowResult.token,
@@ -518,6 +535,9 @@ export class PagoSesionService {
         const fechaStr = reservaTemporal.fecha.toISOString().split('T')[0];
         const modalidad = (reservaTemporal as any).modalidad || 'online';
 
+        const ubicacionEmail =
+          await this.resolveUbicacionEmailPresencial(reservaTemporal);
+
         if (pacienteEmail) {
           await this.mailService.sendSesionConfirmadaDerivacion(
             pacienteEmail,
@@ -529,9 +549,11 @@ export class PagoSesionService {
             nombrePaciente || 'Paciente',
             reservaTemporal.psicologo?.usuario?.especialidad,
             reservaTemporal.psicologo?.usuario?.email,
-            reservaTemporal.modalidad === ModalidadSesion.PRESENCIAL
-              ? reservaTemporal.metadatos?.ubicacion
-              : undefined,
+            ubicacionEmail.ubicacion,
+            undefined,
+            ubicacionEmail.sedeNombre,
+            ubicacionEmail.direccionSede,
+            ubicacionEmail.boxNombre,
           );
         }
 
@@ -544,9 +566,11 @@ export class PagoSesionService {
             fechaStr,
             reservaTemporal.horaInicio,
             modalidad,
-            reservaTemporal.modalidad === ModalidadSesion.PRESENCIAL
-              ? reservaTemporal.metadatos?.ubicacion
-              : undefined,
+            ubicacionEmail.ubicacion,
+            undefined,
+            ubicacionEmail.sedeNombre,
+            ubicacionEmail.direccionSede,
+            ubicacionEmail.boxNombre,
           );
         }
       } catch (error) {
@@ -733,12 +757,8 @@ export class PagoSesionService {
         }
         const especialidad = reservaTemporal.psicologo?.usuario?.especialidad;
         const emailPsicologo = reservaTemporal.psicologo?.usuario?.email;
-        const ubicacion =
-          modalidad === 'presencial'
-            ? (reservaTemporal.metadatos &&
-                reservaTemporal.metadatos.ubicacion) ||
-              undefined
-            : undefined;
+        const ubicacionEmail =
+          await this.resolveUbicacionEmailPresencial(reservaTemporal);
 
         if (pacienteEmail) {
           await this.mailService.sendSesionConfirmadaDerivacion(
@@ -751,7 +771,11 @@ export class PagoSesionService {
             nombrePaciente,
             especialidad,
             emailPsicologo,
-            ubicacion,
+            ubicacionEmail.ubicacion,
+            undefined,
+            ubicacionEmail.sedeNombre,
+            ubicacionEmail.direccionSede,
+            ubicacionEmail.boxNombre,
           );
         }
 
@@ -763,7 +787,11 @@ export class PagoSesionService {
             fechaStr,
             reservaTemporal.horaInicio,
             modalidad,
-            ubicacion,
+            ubicacionEmail.ubicacion,
+            undefined,
+            ubicacionEmail.sedeNombre,
+            ubicacionEmail.direccionSede,
+            ubicacionEmail.boxNombre,
           );
         }
       } catch (error) {
@@ -1012,7 +1040,7 @@ export class PagoSesionService {
             ...reservaGuardada.metadatos,
             reservaBoxId: savedReservaBox.id,
             precioBox: precioBox,
-            ubicacion: `${box.sede?.nombre || 'Sede'} - ${box.sede?.direccion || ''}${box.sede?.ciudad ? ', ' + box.sede.ciudad : ''} - Box ${box.numero}`,
+            ubicacion: buildUbicacionPresencialDesdeBox(box),
           };
 
           await queryRunner.manager.save(ReservaPsicologo, reservaGuardada);
@@ -1055,12 +1083,8 @@ export class PagoSesionService {
         }
         const especialidad = psicologo?.usuario?.especialidad;
         const emailPsicologo = psicologo?.usuario?.email;
-        const ubicacion =
-          modalidad === 'presencial'
-            ? (reservaGuardada.metadatos &&
-                reservaGuardada.metadatos.ubicacion) ||
-              undefined
-            : undefined;
+        const ubicacionEmail =
+          await this.resolveUbicacionEmailPresencial(reservaGuardada);
 
         if (paciente?.email) {
           await this.mailService.sendSesionConfirmadaDerivacion(
@@ -1073,7 +1097,11 @@ export class PagoSesionService {
             nombrePaciente,
             especialidad,
             emailPsicologo,
-            ubicacion,
+            ubicacionEmail.ubicacion,
+            undefined,
+            ubicacionEmail.sedeNombre,
+            ubicacionEmail.direccionSede,
+            ubicacionEmail.boxNombre,
           );
         }
 
@@ -1085,7 +1113,11 @@ export class PagoSesionService {
             dto.fecha,
             dto.horaInicio,
             modalidad,
-            ubicacion,
+            ubicacionEmail.ubicacion,
+            undefined,
+            ubicacionEmail.sedeNombre,
+            ubicacionEmail.direccionSede,
+            ubicacionEmail.boxNombre,
           );
         }
       } catch (error) {
@@ -1585,8 +1617,43 @@ export class PagoSesionService {
     return this.verificarEstadoReserva(reserva.id, usuarioId, usuarioRole);
   }
 
+  /** Ubicación presencial para correos: metadatos o datos del box en BD. */
+  private async resolveUbicacionEmailPresencial(reserva: {
+    modalidad: ModalidadSesion;
+    boxId?: string | null;
+    metadatos?: { ubicacion?: string } | null;
+  }): Promise<{
+    ubicacion?: string;
+    sedeNombre?: string;
+    direccionSede?: string;
+    boxNombre?: string;
+  }> {
+    if (reserva.modalidad !== ModalidadSesion.PRESENCIAL) {
+      return {};
+    }
+    let ubicacion = reserva.metadatos?.ubicacion;
+    if (reserva.boxId) {
+      const box = await this.boxRepository.findOne({
+        where: { id: reserva.boxId },
+        relations: ['sede'],
+      });
+      if (box) {
+        const detalle = getDetalleUbicacionPresencialFromBox(box);
+        ubicacion = ubicacion || detalle.ubicacion;
+        return {
+          ubicacion,
+          sedeNombre: detalle.sedeNombre,
+          direccionSede: detalle.direccionSede,
+          boxNombre: detalle.boxNombre,
+        };
+      }
+    }
+    return { ubicacion };
+  }
+
   /**
-   * Calcular precio del box basado en duración y capacidad
+   * Precio total de la reserva de box: precio/hora del box en BD × duración de la sesión.
+   * Si el box no tiene precio configurado, fallback por capacidad (comportamiento legacy).
    */
   private calcularPrecioBox(
     box: Box,
@@ -1601,12 +1668,17 @@ export class PagoSesionService {
     const duracionMinutos = finMinutos - inicioMinutos;
     const duracionHoras = duracionMinutos / 60;
 
-    let precioPorHora = 5000; // $5,000 CLP por hora base
-
-    if (box.capacidad >= 6) {
-      precioPorHora = 8000; // Box grande
-    } else if (box.capacidad >= 4) {
-      precioPorHora = 6000; // Box mediano
+    const precioHoraBd = Number(box.precio);
+    let precioPorHora: number;
+    if (Number.isFinite(precioHoraBd) && precioHoraBd > 0) {
+      precioPorHora = precioHoraBd;
+    } else {
+      precioPorHora = 5000;
+      if (box.capacidad >= 6) {
+        precioPorHora = 8000;
+      } else if (box.capacidad >= 4) {
+        precioPorHora = 6000;
+      }
     }
 
     const precioTotal = Math.round(precioPorHora * duracionHoras);

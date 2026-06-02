@@ -102,6 +102,9 @@ export class ReservasService {
         const boxNombre = box
           ? box.nombre?.trim() || `Box ${box.numero}`
           : '';
+        const direccionSede = [box?.sede?.direccion, box?.sede?.ciudad]
+          .filter(Boolean)
+          .join(', ');
         await this.mailService.sendReservaBoxCancelada(
           usuario.email,
           fechaStr,
@@ -109,6 +112,8 @@ export class ReservasService {
           false,
           sedeNombre,
           boxNombre,
+          saved.horaFin,
+          direccionSede || undefined,
         );
       }
     } catch (error) {
@@ -598,6 +603,82 @@ export class ReservasService {
       );
     }
 
-    return new Date(y, m, d, hh, mm || 0, 0, 0);
+    // Interpretar SIEMPRE como horario Chile (America/Santiago), independiente del timezone del servidor.
+    const startUtcMs = this.zonedTimeToUtcMs(
+      {
+        year: y,
+        monthIndex: m,
+        day: d,
+        hour: hh,
+        minute: mm || 0,
+      },
+      'America/Santiago',
+    );
+    return new Date(startUtcMs);
+  }
+
+  /**
+   * Convierte un "wall time" en una zona horaria a epoch ms UTC.
+   * Implementación liviana (sin deps) basada en Intl + corrección de offset.
+   */
+  private zonedTimeToUtcMs(
+    input: {
+      year: number;
+      monthIndex: number; // 0-11
+      day: number;
+      hour: number;
+      minute: number;
+    },
+    timeZone: string,
+  ): number {
+    // 1) Suponer que el wall time corresponde a UTC (guess)
+    const utcGuess = Date.UTC(
+      input.year,
+      input.monthIndex,
+      input.day,
+      input.hour,
+      input.minute,
+      0,
+      0,
+    );
+
+    // 2) Ver cómo se "vería" ese instante en la zona horaria objetivo
+    const dtf = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+
+    const parts = dtf.formatToParts(new Date(utcGuess));
+    const get = (type: string) =>
+      parts.find((p) => p.type === type)?.value ?? '';
+
+    const tzYear = parseInt(get('year'), 10);
+    const tzMonth = parseInt(get('month'), 10) - 1;
+    const tzDay = parseInt(get('day'), 10);
+    const tzHour = parseInt(get('hour'), 10);
+    const tzMinute = parseInt(get('minute'), 10);
+    const tzSecond = parseInt(get('second'), 10);
+
+    // 3) Ese "wall time" observado en TZ, si lo interpretamos como UTC,
+    // nos da un desplazamiento (offset) respecto al guess.
+    const asIfUtc = Date.UTC(
+      tzYear,
+      tzMonth,
+      tzDay,
+      tzHour,
+      tzMinute,
+      tzSecond,
+      0,
+    );
+    const offset = asIfUtc - utcGuess;
+
+    // 4) Corregir el guess para obtener el UTC real del wall time deseado.
+    return utcGuess - offset;
   }
 }

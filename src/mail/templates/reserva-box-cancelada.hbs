@@ -1,16 +1,16 @@
 <div class="warning-box">
-  <h2>Cancelación de Reserva de Box</h2>
+  <h2>Cancelación de reserva de box</h2>
   {{#if canceladaPorAdmin}}
     <p>Hemos cancelado tu reserva con los siguientes datos:</p>
   {{else}}
     <p>Hemos recibido la cancelación de tu reserva con los siguientes datos:</p>
   {{/if}}
-  <ul>
+  <ul style="margin: 12px 0; padding-left: 20px;">
     {{#if sedeNombre}}<li><strong>Sede:</strong> {{sedeNombre}}</li>{{/if}}
+    {{#if direccionSede}}<li><strong>Dirección:</strong> {{direccionSede}}</li>{{/if}}
     {{#if boxNombre}}<li><strong>Box:</strong> {{boxNombre}}</li>{{/if}}
     <li><strong>Fecha:</strong> {{fecha}}</li>
-    <li><strong>Hora:</strong> {{hora}} hrs.</li>
+    <li><strong>Horario:</strong> {{horaInicio}}{{#if horaFin}} – {{horaFin}}{{/if}}</li>
   </ul>
   <p>Si necesitas reagendar, puedes hacerlo desde tu panel.</p>
 </div>
-

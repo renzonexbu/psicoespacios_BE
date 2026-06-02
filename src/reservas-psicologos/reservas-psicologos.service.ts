@@ -29,6 +29,11 @@ import { Psicologo } from '../common/entities/psicologo.entity';
 import { Box } from '../common/entities/box.entity';
 import { Paciente } from '../common/entities/paciente.entity';
 import { MailService } from '../mail/mail.service';
+import { formatFechaDiaMesAnio } from '../common/utils/format-fecha';
+import {
+  buildUbicacionPresencialDesdeBox,
+  getDetalleUbicacionPresencialFromBox,
+} from '../common/utils/ubicacion-presencial';
 import {
   CreateReservaPsicologoDto,
   UpdateReservaPsicologoDto,
@@ -278,12 +283,12 @@ export class ReservasPsicologosService {
             `Reserva de box creada con ID: ${savedReservaBox.id} - Precio: $${precioBox}`,
           );
 
-          // Actualizar metadatos de la sesión con información del box
+          // Actualizar metadatos de la sesión con información del box (sede + box para correos y panel)
           savedReserva.metadatos = {
             ...savedReserva.metadatos,
             reservaBoxId: savedReservaBox.id,
             precioBox: precioBox,
-            ubicacion: `${box.sede?.nombre || 'Sede'} - ${box.sede?.direccion || ''}${box.sede?.ciudad ? ', ' + box.sede.ciudad : ''} - Box ${box.numero}`,
+            ubicacion: buildUbicacionPresencialDesdeBox(box),
           };
 
           await manager.save(savedReserva);
@@ -310,8 +315,31 @@ export class ReservasPsicologosService {
           createReservaDto.modalidad === ModalidadSesion.PRESENCIAL
             ? 'Presencial'
             : 'Online';
-        const ubicacion = createReservaDto.metadatos?.ubicacion;
-        const link = createReservaDto.metadatos?.link;
+        // Metadatos guardados incluyen ubicación enriquecida (sede + dirección + box) tras reservar el box
+        let ubicacion =
+          savedReserva.metadatos?.ubicacion ??
+          createReservaDto.metadatos?.ubicacion;
+        let sedeNombre: string | undefined;
+        let direccionSede: string | undefined;
+        let boxNombre: string | undefined;
+        if (
+          createReservaDto.modalidad === ModalidadSesion.PRESENCIAL &&
+          savedReserva.boxId
+        ) {
+          const boxEmail = await manager.findOne(Box, {
+            where: { id: savedReserva.boxId },
+            relations: ['sede'],
+          });
+          if (boxEmail) {
+            const detalle = getDetalleUbicacionPresencialFromBox(boxEmail);
+            sedeNombre = detalle.sedeNombre;
+            direccionSede = detalle.direccionSede;
+            boxNombre = detalle.boxNombre;
+            ubicacion = ubicacion ?? detalle.ubicacion;
+          }
+        }
+        const link =
+          savedReserva.metadatos?.link ?? createReservaDto.metadatos?.link;
         const especialidad = psicologo.usuario.especialidad;
         const emailPsicologo = psicologo.usuario.email;
 
@@ -329,6 +357,9 @@ export class ReservasPsicologosService {
             emailPsicologo,
             ubicacion,
             link,
+            sedeNombre,
+            direccionSede,
+            boxNombre,
           );
         }
 
@@ -342,6 +373,9 @@ export class ReservasPsicologosService {
             modalidadStr,
             ubicacion,
             link,
+            sedeNombre,
+            direccionSede,
+            boxNombre,
           );
         }
 
@@ -935,26 +969,83 @@ export class ReservasPsicologosService {
 
       this.logger.log(`Reserva cancelada: ${id}`);
 
-      // Enviar email al paciente (cuenta ALT)
+      // Enviar email al paciente (cuenta ALT) y al psicólogo con detalle de la hora cancelada
       try {
+        const fechaRaw = new Date(reserva.fecha as any);
+        const fechaYmd = isNaN(fechaRaw.getTime())
+          ? ''
+          : fechaRaw.toISOString().split('T')[0];
+        const fechaFmt = fechaYmd ? formatFechaDiaMesAnio(fechaYmd) : '';
+
+        let ubicacion =
+          reserva.modalidad === ModalidadSesion.PRESENCIAL
+            ? reserva.metadatos?.ubicacion
+            : undefined;
+        if (
+          reserva.modalidad === ModalidadSesion.PRESENCIAL &&
+          reserva.boxId &&
+          !ubicacion
+        ) {
+          const boxUbi = await manager.findOne(Box, {
+            where: { id: reserva.boxId },
+            relations: ['sede'],
+          });
+          if (boxUbi) {
+            ubicacion = buildUbicacionPresencialDesdeBox(boxUbi);
+          }
+        }
+
+        const modalidadStr =
+          reserva.modalidad === ModalidadSesion.PRESENCIAL
+            ? 'Presencial'
+            : 'Online';
+        const nombrePaciente =
+          `${reserva.paciente.nombre} ${reserva.paciente.apellido || ''}`.trim();
+        const psicologoNombre =
+          `${reserva.psicologo.usuario.nombre} ${reserva.psicologo.usuario.apellido || ''}`.trim();
+        const especialidad = reserva.psicologo.usuario.especialidad;
+        const emailPsicologoAddr = reserva.psicologo.usuario.email;
+        const link =
+          reserva.modalidad !== ModalidadSesion.PRESENCIAL
+            ? reserva.metadatos?.link
+            : undefined;
+        const fechaCorreo = fechaFmt || fechaYmd;
+
         const emailPaciente = reserva.paciente?.email;
         if (emailPaciente) {
-          await this.mailService.sendSesionCanceladaDerivacion(emailPaciente);
+          await this.mailService.sendSesionCanceladaDerivacion(emailPaciente, {
+            nombrePaciente,
+            psicologoNombre,
+            fecha: fechaCorreo,
+            horaInicio: reserva.horaInicio,
+            horaFin: reserva.horaFin,
+            modalidad: modalidadStr,
+            ubicacion,
+            link,
+            especialidad,
+            emailPsicologo: emailPsicologoAddr,
+          });
+        }
+
+        if (emailPsicologoAddr) {
+          await this.mailService.sendSesionCanceladaPsicologo(
+            emailPsicologoAddr,
+            {
+              nombrePsicologo: psicologoNombre,
+              pacienteNombre: nombrePaciente,
+              fecha: fechaCorreo,
+              horaInicio: reserva.horaInicio,
+              horaFin: reserva.horaFin,
+              modalidad: modalidadStr,
+              ubicacion,
+              link,
+              emailPaciente: reserva.paciente?.email,
+            },
+          );
         }
       } catch (error) {
         this.logger.warn(
-          `No se pudo enviar email de sesión cancelada al paciente: ${error?.message || error}`,
-        );
-      }
-      // Enviar email al psicólogo (cuenta default)
-      try {
-        const emailPsicologo = reserva.psicologo?.usuario?.email;
-        if (emailPsicologo) {
-          await this.mailService.sendSesionCanceladaPsicologo(emailPsicologo);
-        }
-      } catch (error) {
-        this.logger.warn(
-          `No se pudo enviar email de sesión cancelada al psicólogo: ${error?.message || error}`,
+          `No se pudo enviar email de sesión cancelada: ${error?.message || error}`,
         );
       }
 
@@ -1277,14 +1368,14 @@ export class ReservasPsicologosService {
   }
 
   /**
-   * Calcular precio del box basado en duración y características del box
+   * Precio total de la reserva de box: precio/hora del registro del box × duración de la sesión.
+   * Si el box no tiene precio en BD, se usa el fallback histórico por capacidad.
    */
   private calcularPrecioBox(
     box: Box,
     horaInicio: string,
     horaFin: string,
   ): number {
-    // Calcular duración en horas
     const [horaIni, minIni] = horaInicio.split(':').map(Number);
     const [horaFinNum, minFin] = horaFin.split(':').map(Number);
 
@@ -1293,17 +1384,19 @@ export class ReservasPsicologosService {
     const duracionMinutos = finMinutos - inicioMinutos;
     const duracionHoras = duracionMinutos / 60;
 
-    // Precio base por hora (puedes ajustar estos valores según tu modelo de negocio)
-    let precioPorHora = 5000; // $5,000 CLP por hora base
-
-    // Ajustar precio según capacidad del box
-    if (box.capacidad >= 6) {
-      precioPorHora = 8000; // Box grande
-    } else if (box.capacidad >= 4) {
-      precioPorHora = 6000; // Box mediano
+    const precioHoraBd = Number(box.precio);
+    let precioPorHora: number;
+    if (Number.isFinite(precioHoraBd) && precioHoraBd > 0) {
+      precioPorHora = precioHoraBd;
+    } else {
+      precioPorHora = 5000;
+      if (box.capacidad >= 6) {
+        precioPorHora = 8000;
+      } else if (box.capacidad >= 4) {
+        precioPorHora = 6000;
+      }
     }
 
-    // Calcular precio total
     const precioTotal = Math.round(precioPorHora * duracionHoras);
 
     this.logger.log(

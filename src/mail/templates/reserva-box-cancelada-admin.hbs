@@ -1,4 +1,18 @@
 <div class="warning-box">
-  <h2>Cancelación de Reserva de Box</h2>
-  <p>Tu reserva fue cancelada por nuestro equipo. Si necesitas soporte o reagendamiento, escríbenos a <strong>contacto@psicoespacios.cl</strong>.</p>
+  <h2>Tu arriendo / reserva fue cancelado por el equipo</h2>
+  <p>Te informamos la cancelación registrada por PsicoEspacios. Si necesitas soporte o aclaraciones, escríbenos a <strong>contacto@psicoespacios.cl</strong>.</p>
 </div>
+
+{{#if boxNombre}}
+<div class="info-box">
+  <h3>Detalles de lo cancelado</h3>
+  {{#if sedeNombre}}<p><strong>Sede:</strong> {{sedeNombre}}</p>{{/if}}
+  {{#if direccion}}<p><strong>Dirección:</strong> {{direccion}}</p>{{/if}}
+  <p><strong>Box:</strong> {{boxNombre}}</p>
+  {{#if tipoArriendo}}<p><strong>Tipo de arriendo:</strong> {{tipoArriendo}}</p>{{/if}}
+  {{#if fechaInicio}}<p><strong>Vigencia desde:</strong> {{fechaInicio}}</p>{{/if}}
+  {{#if fechaFin}}<p><strong>Vigencia hasta:</strong> {{fechaFin}}</p>{{/if}}
+  {{#if horariosTexto}}<p><strong>Horarios pactados:</strong> {{horariosTexto}}</p>{{/if}}
+  {{#if motivoCancelacion}}<p><strong>Motivo registrado:</strong> {{motivoCancelacion}}</p>{{/if}}
+</div>
+{{/if}}

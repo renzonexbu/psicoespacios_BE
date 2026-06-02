@@ -10,7 +10,11 @@
   <p><strong>Fecha:</strong> {{fecha}}</p>
   <p><strong>Hora:</strong> {{hora}}</p>
   <p><strong>Modalidad:</strong> {{modalidad}}</p>
-  {{#if ubicacion}}
+  {{#if sedeNombre}}
+    <p><strong>Sede:</strong> {{sedeNombre}}</p>
+    {{#if direccionSede}}<p><strong>Dirección:</strong> {{direccionSede}}</p>{{/if}}
+    {{#if boxNombre}}<p><strong>Box:</strong> {{boxNombre}}</p>{{/if}}
+  {{else if ubicacion}}
     <p><strong>Ubicación:</strong> {{ubicacion}}</p>
   {{/if}}
   {{#if link}}

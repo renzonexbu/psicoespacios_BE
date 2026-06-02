@@ -187,6 +187,17 @@ export class MailService {
       'email-verification': 'Confirma tu correo - PsicoEspacios',
     };
 
+    if (
+      (templateName === 'sesion-cancelada-derivacion' ||
+        templateName === 'sesion-cancelada-psicologo') &&
+      context?.fecha
+    ) {
+      return `Sesión cancelada · ${context.fecha} - PsicoEspacios`;
+    }
+    if (templateName === 'reserva-box-cancelada-admin' && context?.fechaInicio) {
+      return `Arriendo cancelado · ${context.fechaInicio} - PsicoEspacios`;
+    }
+
     return subjects[templateName] || 'PsicoEspacios';
   }
 
@@ -559,18 +570,23 @@ export class MailService {
   async sendReservaBoxConfirmada(
     email: string,
     fecha: string,
-    hora: string,
+    horaInicio: string,
     sedeNombre?: string,
     boxNombre?: string,
+    horaFin?: string,
+    direccionSede?: string,
   ): Promise<boolean> {
     return this.sendEmail({
       to: email,
       template: 'reserva-box-confirmada',
       context: {
         fecha: formatFechaDiaMesAnio(fecha),
-        hora,
+        horaInicio,
+        horaFin,
         sedeNombre,
         boxNombre,
+        direccionSede,
+        audiencia: 'psicologo',
       },
     });
   }
@@ -578,20 +594,24 @@ export class MailService {
   async sendReservaBoxCancelada(
     email: string,
     fecha: string,
-    hora: string,
+    horaInicio: string,
     canceladaPorAdmin = false,
     sedeNombre?: string,
     boxNombre?: string,
+    horaFin?: string,
+    direccionSede?: string,
   ): Promise<boolean> {
     return this.sendEmail({
       to: email,
       template: 'reserva-box-cancelada',
       context: {
         fecha: formatFechaDiaMesAnio(fecha),
-        hora,
+        horaInicio,
+        horaFin,
         canceladaPorAdmin,
         sedeNombre,
         boxNombre,
+        direccionSede,
         audiencia: 'psicologo',
       },
     });
@@ -609,6 +629,9 @@ export class MailService {
     emailPsicologo?: string,
     ubicacion?: string,
     link?: string,
+    sedeNombre?: string,
+    direccionSede?: string,
+    boxNombre?: string,
   ): Promise<boolean> {
     return this.sendEmail({
       to: email,
@@ -618,12 +641,15 @@ export class MailService {
         psicologoNombre,
         especialidad,
         emailPsicologo,
-        fecha,
+        fecha: formatFechaDiaMesAnio(fecha),
         hora,
         modalidad,
         duracion,
         ubicacion,
         link,
+        sedeNombre,
+        direccionSede,
+        boxNombre,
       },
       fromAccount: 'alt',
     });
@@ -637,36 +663,72 @@ export class MailService {
     modalidad: string,
     ubicacion?: string,
     link?: string,
+    sedeNombre?: string,
+    direccionSede?: string,
+    boxNombre?: string,
   ): Promise<boolean> {
     return this.sendEmail({
       to: email,
       template: 'sesion-confirmada-psicologo',
       context: {
         pacienteNombre,
-        fecha,
+        fecha: formatFechaDiaMesAnio(fecha),
         hora,
         modalidad,
         ubicacion,
         link,
+        sedeNombre,
+        direccionSede,
+        boxNombre,
         audiencia: 'psicologo',
       },
     });
   }
 
-  async sendSesionCanceladaDerivacion(email: string): Promise<boolean> {
+  async sendSesionCanceladaDerivacion(
+    email: string,
+    context: {
+      nombrePaciente?: string;
+      psicologoNombre: string;
+      fecha: string;
+      horaInicio: string;
+      horaFin: string;
+      modalidad: string;
+      ubicacion?: string;
+      link?: string;
+      especialidad?: string;
+      emailPsicologo?: string;
+    },
+  ): Promise<boolean> {
     return this.sendEmail({
       to: email,
       template: 'sesion-cancelada-derivacion',
-      context: {},
+      context,
       fromAccount: 'alt',
     });
   }
 
-  async sendSesionCanceladaPsicologo(email: string): Promise<boolean> {
+  async sendSesionCanceladaPsicologo(
+    email: string,
+    context: {
+      nombrePsicologo?: string;
+      pacienteNombre: string;
+      fecha: string;
+      horaInicio: string;
+      horaFin: string;
+      modalidad: string;
+      ubicacion?: string;
+      link?: string;
+      emailPaciente?: string;
+    },
+  ): Promise<boolean> {
     return this.sendEmail({
       to: email,
       template: 'sesion-cancelada-psicologo',
-      context: {},
+      context: {
+        ...context,
+        audiencia: 'psicologo',
+      },
     });
   }
 

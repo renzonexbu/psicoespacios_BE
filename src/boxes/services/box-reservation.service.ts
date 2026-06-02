@@ -22,6 +22,7 @@ import {
   BoxReservationResponseDto,
 } from '../dto/box-reservation.dto';
 import { MailService } from '../../mail/mail.service';
+import { getDetalleUbicacionPresencialFromBox } from '../../common/utils/ubicacion-presencial';
 
 @Injectable()
 export class BoxReservationService {
@@ -153,17 +154,17 @@ export class BoxReservationService {
     });
 
     const savedReserva = await this.reservaRepository.save(reserva);
-    const sedeNombre = box.sede?.nombre?.trim() || '';
-    const boxNombre =
-      box.nombre?.trim() || `Box ${box.numero}`;
+    const detalleUbicacion = getDetalleUbicacionPresencialFromBox(box);
     // Enviar email de confirmación de reserva de box (cuenta default)
     try {
       await this.mailService.sendReservaBoxConfirmada(
         psicologo.email,
         dto.fecha,
         dto.horaInicio,
-        sedeNombre,
-        boxNombre,
+        detalleUbicacion.sedeNombre,
+        detalleUbicacion.boxNombre,
+        dto.horaFin,
+        detalleUbicacion.direccionSede,
       );
     } catch (error) {
       // No bloquear creación por error de email
@@ -278,6 +279,9 @@ export class BoxReservationService {
         const boxNombre = boxCancel
           ? boxCancel.nombre?.trim() || `Box ${boxCancel.numero}`
           : '';
+        const direccionSede = [boxCancel?.sede?.direccion, boxCancel?.sede?.ciudad]
+          .filter(Boolean)
+          .join(', ');
         await this.mailService.sendReservaBoxCancelada(
           psicologo.email,
           fechaStr,
@@ -285,6 +289,8 @@ export class BoxReservationService {
           canceladaPorAdmin,
           sedeNombre,
           boxNombre,
+          reserva.horaFin,
+          direccionSede || undefined,
         );
       }
     } catch (error) {
