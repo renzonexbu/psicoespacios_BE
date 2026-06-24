@@ -74,7 +74,7 @@ import { PacksModule } from './packs/packs.module';
           return config;
         }
 
-        // Configuración para desarrollo local
+        // Configuración para desarrollo local (esquema vía migraciones, no synchronize)
         return {
           type: 'postgres',
           host: configService.get('database.host'),
@@ -83,8 +83,10 @@ import { PacksModule } from './packs/packs.module';
           password: configService.get('database.password'),
           database: configService.get('database.database'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: true, // Desactivamos synchronize para usar migraciones
+          migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
+          migrationsRun: false,
           migrationsTableName: 'migrations_history',
+          synchronize: false,
           logging: process.env.NODE_ENV !== 'production',
         };
       },

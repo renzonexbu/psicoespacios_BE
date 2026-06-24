@@ -81,32 +81,3 @@ export class PacienteWithUserDto {
     updatedAt: Date;
   };
 }
-
-export class CreateFichaSesionDto {
-  @IsDateString()
-  @IsNotEmpty()
-  fechaSesion: string;
-
-  @IsString()
-  @IsNotEmpty()
-  motivo: string;
-
-  @IsString()
-  @IsNotEmpty()
-  observaciones: string;
-
-  @IsString()
-  @IsOptional()
-  tareas?: string;
-
-  @IsString()
-  @IsOptional()
-  acuerdos?: string;
-
-  @IsOptional()
-  documentosAdjuntos?: any[];
-
-  @IsDateString()
-  @IsOptional()
-  proximaSesion?: string;
-}

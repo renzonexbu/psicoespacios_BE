@@ -1,5 +1,7 @@
 # 🏥 PsicoEspacios - Backend
 
+> **Traspaso a nuevo desarrollador:** leer primero [docs/HANDOFF_DESARROLLADOR.md](docs/HANDOFF_DESARROLLADOR.md) y [docs/INDICE_DOCUMENTACION.md](docs/INDICE_DOCUMENTACION.md). Plantilla de entorno: [.env.example](.env.example).
+
 <p>
   <img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS Badge"/>
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript Badge"/>
@@ -165,10 +167,7 @@ Para gestionar migraciones manualmente, puedes usar el script `migrate.sh`:
 
 ## 📚 Documentación API
 
-La documentación de la API está disponible en:
-
-- Swagger UI: \`http://localhost:3000/api\`
-- OpenAPI JSON: \`http://localhost:3000/api-json\`
+La documentación de endpoints está en la carpeta [docs/](docs/). Índice: [docs/INDICE_DOCUMENTACION.md](docs/INDICE_DOCUMENTACION.md). Para traspaso y setup: [docs/HANDOFF_DESARROLLADOR.md](docs/HANDOFF_DESARROLLADOR.md).
 
 ## 🤝 Contribución
 

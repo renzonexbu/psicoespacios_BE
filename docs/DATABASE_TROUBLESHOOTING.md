@@ -73,7 +73,7 @@ docker exec -it psicoespacios_db psql -U psicoespacios_user -d psicoespacios
 # Sistema: PostgreSQL
 # Servidor: postgres (¡importante: usar este nombre exacto!)
 # Usuario: psicoespacios_user
-# Contraseña: psicoespacios_password
+# Contraseña: psicoespacios_pass
 # Base de datos: psicoespacios
 ```
 

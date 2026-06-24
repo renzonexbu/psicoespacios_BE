@@ -13,7 +13,6 @@ export { PerfilDerivacion } from './perfil-derivacion.entity';
 export { Pago } from './pago.entity';
 export { Voucher } from './voucher.entity';
 export { Blog } from './blog.entity';
-export { FichaSesion } from './ficha-sesion.entity';
 export { Reporte } from './reporte.entity';
 export { ConfiguracionSistema } from './configuracion-sistema.entity';
 export { HistorialPaciente } from './historial-paciente.entity';

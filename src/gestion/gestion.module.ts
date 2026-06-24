@@ -30,7 +30,6 @@ import { Plan } from '../common/entities/plan.entity';
 import { Suscripcion } from '../common/entities/suscripcion.entity';
 import { Paciente } from '../common/entities/paciente.entity';
 import { Psicologo } from '../common/entities/psicologo.entity';
-import { FichaSesion } from '../common/entities/ficha-sesion.entity';
 import { User } from '../common/entities/user.entity';
 import { Reserva } from '../common/entities/reserva.entity';
 import { ReservaPsicologo } from '../common/entities/reserva-psicologo.entity';
@@ -46,7 +45,6 @@ import { PagosModule } from '../pagos/pagos.module';
       Suscripcion,
       Paciente,
       Psicologo,
-      FichaSesion,
       User,
       Reserva,
       ReservaPsicologo,

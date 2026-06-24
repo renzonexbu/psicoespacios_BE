@@ -7,6 +7,6 @@ export default registerAs('database', () => ({
     ? parseInt(process.env.DATABASE_PORT, 10)
     : 5432,
   username: process.env.DATABASE_USER || 'psicoespacios_user',
-  password: process.env.DATABASE_PASSWORD || 'psicoespacios_password',
+  password: process.env.DATABASE_PASSWORD || 'psicoespacios_pass',
   database: process.env.DATABASE_NAME || 'psicoespacios',
 }));
