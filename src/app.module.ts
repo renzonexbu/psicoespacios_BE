@@ -31,6 +31,7 @@ import { ReservasPsicologosModule } from './reservas-psicologos/reservas-psicolo
 import { MailModule } from './mail/mail.module';
 import { ConsolidadoModule } from './consolidado/consolidado.module';
 import { PacksModule } from './packs/packs.module';
+import { FullDbExportController } from './admin/full-db-export.controller';
 
 @Module({
   imports: [
@@ -114,6 +115,7 @@ import { PacksModule } from './packs/packs.module';
     ConsolidadoModule,
     PacksModule,
   ],
+  controllers: [FullDbExportController],
 })
 export class AppModule implements OnModuleInit, NestModule {
   constructor(private configService: ConfigService) {}
