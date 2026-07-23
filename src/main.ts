@@ -29,16 +29,20 @@ async function bootstrap() {
     console.log('Aplicación NestJS creada exitosamente');
 
     const legacyReadOnly = process.env.LEGACY_READ_ONLY !== 'false';
-    const writeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+    const allowedLegacyPaths = new Set(['/api/v1/health']);
 
     if (legacyReadOnly) {
       app.use((req: Request, res: Response, next: NextFunction) => {
-        if (writeMethods.has(req.method)) {
+        const pathWithoutQuery = req.originalUrl.split('?')[0];
+        const isCorsPreflight = req.method === 'OPTIONS';
+        const isAllowedLegacyPath = allowedLegacyPaths.has(pathWithoutQuery);
+
+        if (!isCorsPreflight && !isAllowedLegacyPath) {
           return res.status(410).json({
             statusCode: 410,
             message:
-              'Backend historico de PsicoEspacios en modo solo lectura. Usa https://psicoespacios.cl.',
-            error: 'Legacy backend read-only',
+              'Backend historico de PsicoEspacios deshabilitado. Usa https://psicoespacios.cl.',
+            error: 'Legacy backend disabled',
           });
         }
 
