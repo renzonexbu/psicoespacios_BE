@@ -12,6 +12,7 @@ import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import * as express from 'express';
 import { join } from 'path';
 import { BadRequestException } from '@nestjs/common';
+import { Request, Response, NextFunction } from 'express';
 
 async function bootstrap() {
   try {
@@ -26,6 +27,24 @@ async function bootstrap() {
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
     });
     console.log('Aplicación NestJS creada exitosamente');
+
+    const legacyReadOnly = process.env.LEGACY_READ_ONLY !== 'false';
+    const writeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+    if (legacyReadOnly) {
+      app.use((req: Request, res: Response, next: NextFunction) => {
+        if (writeMethods.has(req.method)) {
+          return res.status(410).json({
+            statusCode: 410,
+            message:
+              'Backend historico de PsicoEspacios en modo solo lectura. Usa https://psicoespacios.cl.',
+            error: 'Legacy backend read-only',
+          });
+        }
+
+        next();
+      });
+    }
 
     // Servir archivos estáticos de /uploads
     app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
